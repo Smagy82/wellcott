@@ -1,0 +1,138 @@
+{
+  "version": "2026-07",
+  "note": "Curated list — not a live feed. Verify every url and phone before shipping; they change. Display strings are English (app audience = US patients).",
+  "organizations": [
+    {
+      "id": "dollar-for",
+      "name": "Dollar For",
+      "category": "hospital_bills",
+      "whatItDoes": "Helps you apply for hospital charity care. Nonprofit hospitals are required to offer financial assistance, and Dollar For handles the paperwork for you.",
+      "whoQualifies": "Anyone with a bill from a nonprofit hospital. Based on income and family size.",
+      "bestForUninsured": true,
+      "actionType": "apply",
+      "url": "https://dollarfor.org",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "needymeds",
+      "name": "NeedyMeds",
+      "category": "prescriptions",
+      "whatItDoes": "Free directory of prescription savings programs, patient assistance programs, and low-cost clinics. Free drug discount card.",
+      "whoQualifies": "Anyone. No income or insurance requirement for the discount card.",
+      "bestForUninsured": true,
+      "actionType": "directory",
+      "url": "https://www.needymeds.org",
+      "phone": "800-503-6897",
+      "coverage": "national"
+    },
+    {
+      "id": "unitedway-211",
+      "name": "211 (United Way)",
+      "category": "local_referral",
+      "whatItDoes": "Free, confidential helpline that connects you to local health, food, housing, and financial-assistance resources.",
+      "whoQualifies": "Anyone, any situation.",
+      "bestForUninsured": true,
+      "actionType": "call",
+      "url": "https://www.211.org",
+      "phone": "211",
+      "coverage": "national"
+    },
+    {
+      "id": "hrsa-helpline",
+      "name": "HRSA health center helpline",
+      "category": "find_care",
+      "whatItDoes": "Federal helpline to locate a nearby community health center and confirm services.",
+      "whoQualifies": "Anyone looking for low-cost primary care.",
+      "bestForUninsured": true,
+      "actionType": "call",
+      "url": "https://findahealthcenter.hrsa.gov",
+      "phone": "1-877-464-4772",
+      "coverage": "national"
+    },
+    {
+      "id": "nafc-free-clinics",
+      "name": "Free and charitable clinics (NAFC)",
+      "category": "free_clinics",
+      "whatItDoes": "Directory of volunteer-run free and charitable clinics and pharmacies, often at no cost for the uninsured.",
+      "whoQualifies": "Usually uninsured or underinsured, income-based. Varies by clinic.",
+      "bestForUninsured": true,
+      "actionType": "directory",
+      "url": "https://nafcclinics.org/get-care",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "medicaid-chip",
+      "name": "Medicaid and CHIP",
+      "category": "government",
+      "whatItDoes": "Free or very low-cost government health coverage for people with low income. CHIP covers children.",
+      "whoQualifies": "Income-based. Limits vary by state; some states have not expanded Medicaid.",
+      "bestForUninsured": true,
+      "actionType": "apply",
+      "url": "https://www.medicaid.gov",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "aca-marketplace",
+      "name": "ACA Marketplace (HealthCare.gov)",
+      "category": "government",
+      "whatItDoes": "Health insurance with income-based subsidies. Some plans have low or zero monthly premiums.",
+      "whoQualifies": "Most people without job or government coverage. Subsidies are income-based.",
+      "bestForUninsured": true,
+      "actionType": "apply",
+      "url": "https://www.healthcare.gov",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "goodrx",
+      "name": "GoodRx",
+      "category": "prescriptions",
+      "whatItDoes": "Compares prescription prices and gives discount coupons at pharmacies nationwide.",
+      "whoQualifies": "Anyone. Works in place of insurance.",
+      "bestForUninsured": true,
+      "actionType": "info",
+      "url": "https://www.goodrx.com",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "totalassist-pan-paf",
+      "name": "TotalAssist (PAN + Patient Advocate Foundation)",
+      "category": "copay_disease_specific",
+      "whatItDoes": "Copay and out-of-pocket grants plus free case management for around 150 serious and chronic conditions.",
+      "whoQualifies": "Usually need insurance and a specific qualifying diagnosis. Rarely covers full cost for the uninsured.",
+      "bestForUninsured": false,
+      "actionType": "apply",
+      "url": "https://www.totalassist.org",
+      "phone": "866-512-3861",
+      "coverage": "national"
+    },
+    {
+      "id": "healthwell",
+      "name": "HealthWell Foundation",
+      "category": "copay_disease_specific",
+      "whatItDoes": "Grants for copays, premiums, deductibles, and travel for underinsured patients with specific diseases.",
+      "whoQualifies": "Must have insurance and a covered diagnosis. Income up to about 500% of the federal poverty level.",
+      "bestForUninsured": false,
+      "actionType": "apply",
+      "url": "https://www.healthwellfoundation.org",
+      "phone": "",
+      "coverage": "national"
+    },
+    {
+      "id": "undue-medical-debt",
+      "name": "Undue Medical Debt",
+      "category": "medical_debt",
+      "whatItDoes": "Buys and forgives medical debt. You cannot apply — recipients are notified once their debt is cleared.",
+      "whoQualifies": "Selected automatically, income-based. Informational only.",
+      "bestForUninsured": true,
+      "actionType": "info",
+      "url": "https://unduemedicaldebt.org",
+      "phone": "",
+      "coverage": "national"
+    }
+  ]
+}
