@@ -84,3 +84,11 @@ npx expo start --tunnel --clear
 - НИКОГДА в git/приложение: service_role key, Database Password, HRSA_TOKEN, GOOGLE_API_KEY.
 
 Полное описание — в README.md.
+
+## Google Places enrichment — ДЕНЬГИ, читать перед любым прогоном
+
+⚠️ ДЕНЬГИ: enrichment платный ($0.04/клиника). Скрипт ОБЯЗАН брать только необогащённые
+клиники (WHERE google_enriched IS NULL/0), НИКОГДА не перезапрашивать google_enriched=1 —
+это повторная оплата за уже готовое. Уже обогащены: CA/NY/NJ/IL + Fort Wayne (2985 клиник).
+Перед любым прогоном проверять фильтр и делать пробный COUNT_ONLY подсчёт стоимости.
+Places API в Google Cloud ОТКЛЮЧЁН — включать только осознанно перед прогоном.
