@@ -33,6 +33,14 @@ npx expo start --tunnel --clear
   Никаких хардкод-цветов в экранах. Акцент — голубой `#4A90D9`.
 - Тексты — через обёртку `src/components/Text.tsx` (Poppins по умолчанию).
 
+## ШРИФТ — КРИТИЧНО
+ВЕСЬ текст в приложении — ТОЛЬКО Poppins (через src/theme.ts font.* и обёртку src/components/Text.tsx).
+- НИКОГДА не импортировать Text напрямую из 'react-native' — только обёртку src/components/Text.tsx.
+- Заголовки экранов навигации (headerTitleStyle) ОБЯЗАТЕЛЬНО с fontFamily Poppins — задано глобально в корневом _layout.
+- Любой новый экран/компонент: проверить что заголовок хедера и все тексты идут Poppins.
+- Запрещён системный/дефолтный шрифт где-либо в UI.
+Перед завершением любой задачи с UI — grep -rn "from 'react-native'" на предмет прямого импорта Text.
+
 ## i18n — правила
 
 Весь UI-текст только через `useTranslation()` + `t('section.key')`. Добавляя строку:
