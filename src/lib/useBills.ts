@@ -5,7 +5,7 @@ export type Bill = {
   id: string;
   visit_id: string | null;
   amount: number;
-  category: string;
+  category: string; // stored as JSON array string '["visit","labs"]' or legacy plain 'visit'
   bill_date: string;
   merchant: string | null;
   photo_path: string | null;
@@ -16,12 +16,22 @@ export type Bill = {
 export type AddBillPayload = {
   visit_id?: string | null;
   amount: number;
-  category: string;
+  categories: string[]; // always an array; serialized to JSON on insert
   bill_date: string; // YYYY-MM-DD
   merchant?: string | null;
   photo_path?: string | null;
   note?: string | null;
 };
+
+/** Parse the stored category field into an array. Handles both legacy plain strings and JSON arrays. */
+export function parseCategories(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [String(parsed)];
+  } catch {
+    return [raw]; // legacy format: plain string like 'visit'
+  }
+}
 
 export function useBills() {
   const [bills, setBills] = useState<Bill[]>([]);
@@ -46,11 +56,12 @@ export function useBills() {
     const uid = userData.user?.id;
     if (!uid) return { ok: false, error: 'Not logged in' };
 
+    const cats = payload.categories.length > 0 ? payload.categories : ['other'];
     const row = {
       user_id: uid,
       visit_id: payload.visit_id ?? null,
       amount: payload.amount,
-      category: payload.category,
+      category: JSON.stringify(cats),
       bill_date: payload.bill_date,
       merchant: payload.merchant ?? null,
       photo_path: payload.photo_path ?? null,

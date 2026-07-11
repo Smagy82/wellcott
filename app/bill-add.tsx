@@ -23,7 +23,6 @@ import { theme } from '../src/theme';
 const { colors, radius, font } = theme;
 
 const CATEGORIES = ['visit', 'labs', 'meds', 'procedure', 'other'] as const;
-type Category = typeof CATEGORIES[number];
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -38,7 +37,7 @@ export default function BillAddScreen() {
   const { addBill } = useBills();
 
   const [amountText, setAmountText] = useState('');
-  const [category, setCategory] = useState<Category>('other');
+  const [categories, setCategories] = useState<string[]>(['other']);
   const [merchant, setMerchant] = useState('');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -76,7 +75,9 @@ export default function BillAddScreen() {
       else photo_path = uploaded;
     }
     const result = await addBill({
-      amount, category, bill_date: toYMD(date),
+      amount,
+      categories: categories.length > 0 ? categories : ['other'],
+      bill_date: toYMD(date),
       merchant: merchant.trim() || null,
       note: note.trim() || null,
       photo_path, visit_id: null,
@@ -104,12 +105,18 @@ export default function BillAddScreen() {
         <Text style={styles.label}>{t('billAdd.category')}</Text>
         <View style={styles.chipRow}>
           {CATEGORIES.map((c) => {
-            const active = category === c;
+            const active = categories.includes(c);
             return (
               <TouchableOpacity
                 key={c}
                 style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setCategory(c)}
+                onPress={() =>
+                  setCategories(prev =>
+                    prev.includes(c)
+                      ? prev.length > 1 ? prev.filter(x => x !== c) : prev
+                      : [...prev, c],
+                  )
+                }
               >
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>
                   {t(`billAdd.cat_${c}`, { defaultValue: c })}

@@ -11,7 +11,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
-import { useBills } from '../src/lib/useBills';
+import { useBills, parseCategories } from '../src/lib/useBills';
 import { getSignedUrl } from '../src/lib/uploadPhoto';
 import type { Bill } from '../src/lib/useBills';
 import { theme } from '../src/theme';
@@ -42,8 +42,7 @@ function PhotoThumb({ path }: { path: string }) {
 
 function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
   const { t } = useTranslation();
-  const cat = CATEGORY_COLORS[item.category] ?? CATEGORY_COLORS.other;
-  const catLabel = t(`billAdd.cat_${item.category}`, { defaultValue: item.category });
+  const cats = parseCategories(item.category);
 
   return (
     <View style={styles.card}>
@@ -51,8 +50,17 @@ function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
       <View style={styles.cardBody}>
         <View style={styles.cardTop}>
           <Text style={styles.amount}>{formatAmount(Number(item.amount))}</Text>
-          <View style={[styles.badge, { backgroundColor: cat.bg }]}>
-            <Text style={[styles.badgeText, { color: cat.text }]}>{catLabel}</Text>
+          <View style={styles.badgeRow}>
+            {cats.map((c) => {
+              const col = CATEGORY_COLORS[c] ?? CATEGORY_COLORS.other;
+              return (
+                <View key={c} style={[styles.badge, { backgroundColor: col.bg }]}>
+                  <Text style={[styles.badgeText, { color: col.text }]}>
+                    {t(`billAdd.cat_${c}`, { defaultValue: c })}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         </View>
         {item.merchant ? <Text style={styles.merchant}>{item.merchant}</Text> : null}
@@ -138,8 +146,9 @@ const styles = StyleSheet.create({
   photoThumb: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: '#EEE' },
   photoPlaceholder: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: '#E8EDF2' },
   cardBody: { flex: 1 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' },
   amount: { fontFamily: font.bold, fontSize: 18, color: colors.text },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   badge: { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   badgeText: { fontFamily: font.semibold, fontSize: 11 },
   merchant: { fontFamily: font.regular, fontSize: 13, color: colors.text, marginBottom: 2 },
