@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Linking,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -65,6 +66,16 @@ export default function ClinicDetailScreen() {
   const handleDirections = () => {
     const q = encodeURIComponent(`${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`);
     Linking.openURL(`https://maps.google.com/?q=${q}`);
+  };
+
+  const handleShare = async () => {
+    const parts = [
+      clinic.name,
+      `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`,
+    ];
+    if (clinic.phone) parts.push(clinic.phone);
+    parts.push('', t('clinicDetail.shareFooter'));
+    try { await Share.share({ message: parts.join('\n') }); } catch { /* cancelled */ }
   };
 
   const fav = isFavorite(clinic.id);
@@ -167,6 +178,9 @@ export default function ClinicDetailScreen() {
         <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={handleDirections}>
           <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={[styles.btn, styles.btnShare]} onPress={handleShare}>
+          <Ionicons name="share-outline" size={18} color={colors.primary} />
+        </TouchableOpacity>
       </View>
 
       {/* Prescription savings */}
@@ -267,6 +281,7 @@ const styles = StyleSheet.create({
   btnFillText: { fontFamily: font.bold, color: '#fff', fontSize: 15 },
   btnOutline: { borderWidth: 1.5, borderColor: colors.primary },
   btnOutlineText: { fontFamily: font.bold, color: colors.primary, fontSize: 15 },
+  btnShare: { borderWidth: 1.5, borderColor: colors.primary, flex: 0, width: 48, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
 
   backBtn: { marginTop: 12 },
   backBtnText: { fontFamily: font.semibold, color: colors.primary, fontSize: 14 },

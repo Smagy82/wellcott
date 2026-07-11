@@ -10,7 +10,8 @@
     "somethingWentWrong": "Something went wrong",
     "enableLocation": "Enable location",
     "financialHelp": "Financial help",
-    "failedToSave": "Failed to save"
+    "failedToSave": "Failed to save",
+    "share": "Share"
   },
   "tabs": {
     "clinics": "Clinics",
@@ -45,7 +46,8 @@
     "callToConfirmHours": "Call to confirm hours.",
     "cantAffordCare": "Can't afford care?",
     "cantAffordCareSub": "Ask their patient financial services, or get help finding assistance.",
-    "disclaimer": "Prices and services vary — always call ahead. Information is for reference only."
+    "disclaimer": "Prices and services vary — always call ahead. Information is for reference only.",
+    "shareFooter": "Found on Wellcott — find affordable clinics: https://wellcott.app"
   },
   "help": {
     "title": "Financial help",
@@ -82,7 +84,10 @@
     "signingOut": "Signing out…",
     "language": "Language",
     "about": "About",
-    "aboutSub": "App info, checklist & legal"
+    "aboutSub": "App info, checklist & legal",
+    "shareApp": "Share Wellcott",
+    "shareAppSub": "Tell a friend about Wellcott",
+    "shareAppText": "Wellcott helps you find affordable clinics with or without insurance: https://wellcott.app"
   },
   "auth": {
     "appName": "ClinicFinder",

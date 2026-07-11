@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -78,6 +79,10 @@ export default function ProfileScreen() {
     await supabase.auth.signOut();
   };
 
+  const handleShareApp = async () => {
+    try { await Share.share({ message: t('profile.shareAppText') }); } catch { /* cancelled */ }
+  };
+
   if (loadingUser) {
     return (
       <View style={styles.center}>
@@ -150,6 +155,14 @@ export default function ProfileScreen() {
             })}
           </View>
         </View>
+        <MenuCard
+          iconName="share-social-outline"
+          iconBg={colors.tintBlue}
+          iconColor={colors.tintBlueIcon}
+          title={t('profile.shareApp')}
+          subtitle={t('profile.shareAppSub')}
+          onPress={handleShareApp}
+        />
         <MenuCard
           iconName="information-circle-outline"
           iconBg={colors.tintMint}
