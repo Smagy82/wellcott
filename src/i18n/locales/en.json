@@ -79,7 +79,8 @@
     "expenses": "Expenses",
     "expensesSub": "Track what you paid",
     "signOut": "Sign out",
-    "signingOut": "Signing out…"
+    "signingOut": "Signing out…",
+    "language": "Language"
   },
   "auth": {
     "appName": "ClinicFinder",

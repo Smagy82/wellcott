@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
+import { setLanguage, type AppLanguage } from '../../src/i18n/index';
 import { theme } from '../../src/theme';
 
 const { colors, radius, spacing, font, shadow } = theme;
@@ -59,7 +60,7 @@ function MenuCard({ iconName, iconBg, iconColor, title, subtitle, onPress }: Car
 }
 
 export default function ProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [loadingUser, setLoadingUser] = useState(true);
@@ -124,6 +125,31 @@ export default function ProfileScreen() {
           subtitle={t('profile.expensesSub')}
           onPress={() => router.push('/bills')}
         />
+      </View>
+
+      <View style={[styles.section, { marginTop: spacing.md }]}>
+        <View style={styles.card}>
+          <View style={[styles.iconBox, { backgroundColor: colors.tintLilac }]}>
+            <Ionicons name="language-outline" size={24} color={colors.tintLilacIcon} />
+          </View>
+          <Text style={[styles.cardTitle, { flex: 1 }]}>{t('profile.language')}</Text>
+          <View style={styles.langChips}>
+            {(['en', 'es'] as AppLanguage[]).map((lang) => {
+              const active = i18n.language === lang;
+              return (
+                <TouchableOpacity
+                  key={lang}
+                  style={[styles.langChip, active && styles.langChipActive]}
+                  onPress={() => setLanguage(lang)}
+                >
+                  <Text style={[styles.langChipText, active && styles.langChipTextActive]}>
+                    {lang.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </View>
 
       <TouchableOpacity
@@ -200,4 +226,17 @@ const styles = StyleSheet.create({
   },
   signOutBtnDisabled: { opacity: 0.5 },
   signOutText: { fontFamily: font.medium, color: colors.danger, fontSize: 15 },
+
+  langChips: { flexDirection: 'row', gap: 6 },
+  langChip: {
+    borderWidth: 1.5,
+    borderColor: '#D0D8E0',
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 14,
+    backgroundColor: colors.card,
+  },
+  langChipActive: { borderColor: colors.primary, backgroundColor: colors.tintBlue },
+  langChipText: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted },
+  langChipTextActive: { color: colors.primary },
 });
