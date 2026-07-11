@@ -18,17 +18,26 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
       Через expo-splash-screen, настройка в app.json.
 
 ### 2. Аутентификация — довести до боевого состояния
-- [ ] Включить обратно **Confirm email** в Supabase (сейчас ВЫКЛЮЧЕН для разработки).
-- [ ] Настроить свой SMTP (Resend), иначе письма Supabase почти не доходят / в спам.
-      Без этого реальные юзеры не смогут подтвердить регистрацию.
+- [x] Resend SMTP настроен: домен wellcott.app verified, SMTP в Supabase (smtp.resend.com:465,
+      sender noreply@wellcott.app), Confirm email ВКЛЮЧЁН. Письмо реально доходит (Inbox, не спам).
+- [x] Фирменный HTML-шаблон письма Confirm signup (палитра Небо и солнце) — вставить в
+      Supabase → Auth → Emails → Templates. Исходник: confirm-signup-email.html.
+
+### Auth UX — доработать (не блокер, но важно для качества)
+- [ ] Экран «Проверьте почту» после Sign up: сейчас юзер остаётся на форме регистрации и не
+      понимает что делать. Нужен экран/сообщение «Мы отправили письмо на {email}, подтвердите».
+- [ ] Deep link возврата в приложение: ссылка из письма открывается в браузере и НЕ возвращает
+      в приложение. Нужно настроить: (а) URL scheme / deep linking в Expo (app.json scheme),
+      (б) Redirect URL в Supabase → Auth → URL Configuration, (в) экран «Успешно! Регистрация
+      завершена» после подтверждения. ⚠️ В Expo Go и нативном билде ведёт себя по-разному —
+      тестировать на нативном билде (EAS).
+- [ ] Переименовать CLINICFINDER → Wellcott: ключ auth.appName в en.json И es.json всё ещё
+      «ClinicFinder». Поменять на «Wellcott» (на экране регистрации видно старое имя).
 
 ### 3. Обязательное для ревью сторов
-- [ ] Экран «About / О приложении» с дисклеймерами:
-      - информация справочная, не медицинская/юридическая консультация
-      - цены плавающие (sliding scale) — звонить заранее
-      - affiliate-дисклеймер (SingleCare: «not insurance», см. п.6)
-      Тексты дисклеймеров уже сформулированы в футере лендинга (не медсовет / sliding scale /
-      звонить заранее / affiliate) — перенести их в About-экран приложения.
+- [x] **Подтверждение email настроено** (SMTP Resend, фирменный шаблон — см. п.2).
+- [x] **Экран «About / О приложении»** реализован (about.tsx): экстренный дисклеймер 911,
+      чек-лист «что взять на визит», дисклеймеры справочника, affiliate SingleCare.
 - [x] **Privacy Policy** — задеплоена на https://wellcott.app/privacy (обязательный URL для сторов ГОТОВ)
       Хостинг: Cloudflare (проект 'wellcott', тип Worker со статик-ассетами, аккаунт
       Lopatyn.music@gmail.com). Custom domains: wellcott.app + www.wellcott.app, SSL active.
