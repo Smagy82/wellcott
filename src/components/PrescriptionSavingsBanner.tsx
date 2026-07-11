@@ -4,12 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { openPrescriptionSavings } from '../config/partners';
 import { theme } from '../theme';
 
-const { font } = theme;
-
-const GREEN = '#1D9E75';
-const BG    = '#E4F5EE';
-const TITLE = '#0F5C43';
-const BODY  = '#1A7A5C';
+const { colors, font, radius } = theme;
 
 export function PrescriptionSavingsBanner() {
   const { t } = useTranslation();
@@ -28,7 +23,7 @@ export function PrescriptionSavingsBanner() {
         <Text style={styles.body}>{t('prescriptions.bannerSub')}</Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={18} color={GREEN} />
+      <Ionicons name="chevron-forward" size={18} color={colors.primary} />
     </Pressable>
   );
 }
@@ -38,8 +33,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: BG,
-    borderRadius: 16,
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.md,
     padding: 16,
     marginBottom: 10,
   },
@@ -48,13 +43,13 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 48,
     height: 48,
-    borderRadius: 13,
-    backgroundColor: GREEN,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   textBlock: { flex: 1 },
-  title: { fontFamily: font.medium, fontSize: 15, color: TITLE, marginBottom: 3 },
-  body:  { fontFamily: font.regular, fontSize: 13, color: BODY, lineHeight: 18 },
+  title: { fontFamily: font.medium, fontSize: 15, color: colors.tintBlueIcon, marginBottom: 3 },
+  body:  { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, lineHeight: 18 },
 });

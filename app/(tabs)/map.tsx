@@ -1,18 +1,18 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
 import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import { Ionicons } from '@expo/vector-icons';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { findAllClinicsForMap, type MapClinic } from '../../src/lib/clinicSearch';
 import { getDb } from '../../src/lib/database';
 import { theme } from '../../src/theme';
 
-const { colors, radius, font } = theme;
+const { colors, radius, font, shadow } = theme;
 
-// Географический центр USA — фолбэк если ближайших нет
 const US_REGION = {
   latitude: 39.8,
   longitude: -98.6,
@@ -22,14 +22,13 @@ const US_REGION = {
 
 export default function MapScreen() {
   const { t } = useTranslation();
-  // useNearbyClinics нужен только для: статуса разрешения и initialRegion (центр на юзере)
   const { clinics: nearbyClinics, status, retry } = useNearbyClinics(25);
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
 
   const [allClinics, setAllClinics] = useState<MapClinic[]>([]);
 
-  // Загружаем все клиники ПОСЛЕ того как карта смонтировалась (status ready = геолокация есть).
-  // useEffect выполняется после рендера → карта видна, затем через ~50ms появляются маркеры.
   useEffect(() => {
     if (status !== 'ready') return;
     let cancelled = false;
@@ -43,6 +42,28 @@ export default function MapScreen() {
   const requestLocation = async () => {
     await Location.requestForegroundPermissionsAsync();
     retry();
+  };
+
+  // Центрировать на текущей позиции. Разрешение уже выдано (status==='ready'),
+  // повторного диалога не будет.
+  const goToMyLocation = async () => {
+    if (!mapRef.current) return;
+    try {
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      mapRef.current.animateToRegion(
+        {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        },
+        500,
+      );
+    } catch {
+      // геолокация недоступна — молча игнорируем
+    }
   };
 
   if (status === 'loading') {
@@ -88,33 +109,59 @@ export default function MapScreen() {
     : US_REGION;
 
   return (
-    <MapView
-      style={styles.map}
-      provider={PROVIDER_DEFAULT}
-      initialRegion={initialRegion}
-      showsUserLocation
-      clusterColor={colors.primary}
-      clusterTextColor="#ffffff"
-      radius={50}
-      animationEnabled={false}
-    >
-      {allClinics.map((c) => (
-        <Marker
-          key={c.id}
-          coordinate={{ latitude: c.latitude, longitude: c.longitude }}
-          title={c.name}
-          description={`${c.address}, ${c.city}`}
-          onCalloutPress={() => router.push(`/clinic/${encodeURIComponent(c.id)}`)}
-          pinColor={colors.primary}
-          tracksViewChanges={false}
-        />
-      ))}
-    </MapView>
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={PROVIDER_DEFAULT}
+        initialRegion={initialRegion}
+        showsUserLocation
+        clusterColor={colors.primary}
+        clusterTextColor="#ffffff"
+        radius={50}
+        animationEnabled={false}
+      >
+        {allClinics.map((c) => (
+          <Marker
+            key={c.id}
+            coordinate={{ latitude: c.latitude, longitude: c.longitude }}
+            title={c.name}
+            description={`${c.address}, ${c.city}`}
+            onCalloutPress={() => router.push(`/clinic/${encodeURIComponent(c.id)}`)}
+            pinColor={colors.primary}
+            tracksViewChanges={false}
+          />
+        ))}
+      </MapView>
+
+      <TouchableOpacity
+        style={styles.locateBtn}
+        onPress={goToMyLocation}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="navigate" size={22} color="#fff" />
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1 },
   map: { flex: 1 },
+
+  locateBtn: {
+    position: 'absolute',
+    bottom: 96,
+    right: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow,
+  },
+
   center: {
     flex: 1,
     alignItems: 'center',

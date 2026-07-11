@@ -6,15 +6,13 @@ import { theme } from '../theme';
 
 const { colors, font, shadow, radius, spacing } = theme;
 
-const GREEN = '#1D9E75';
-
 export function PrescriptionSavingsCard() {
   const { t } = useTranslation();
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Ionicons name="medkit" size={22} color={GREEN} style={{ marginRight: 8 }} />
+        <Ionicons name="medkit" size={22} color={colors.primary} style={{ marginRight: 8 }} />
         <Text style={styles.cardTitle}>{t('prescriptions.cardTitle')}</Text>
       </View>
 
@@ -64,8 +62,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GREEN,
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
     paddingVertical: 13,
   },
   btnPressed: { opacity: 0.82 },
