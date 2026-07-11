@@ -82,6 +82,26 @@ export async function findAllClinicsForMap(
   );
 }
 
+/** Подсказки городов по префиксу. Возвращает [] если query короче 2 символов. */
+export interface CitySuggestion {
+  city: string;
+  state: string;
+}
+
+export async function suggestCities(
+  db: SQLite.SQLiteDatabase,
+  query: string,
+  limit = 6,
+): Promise<CitySuggestion[]> {
+  if (query.trim().length < 2) return [];
+  return db.getAllAsync<CitySuggestion>(
+    `SELECT DISTINCT city, state FROM clinics
+     WHERE LOWER(city) LIKE LOWER(?) || '%'
+     ORDER BY city LIMIT ?`,
+    [query.trim(), limit],
+  );
+}
+
 /** Поиск по всей базе (имя + город), без привязки к радиусу. Регистр игнорируется. */
 export async function searchClinicsByText(
   db: SQLite.SQLiteDatabase,

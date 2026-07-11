@@ -190,6 +190,10 @@
     "contactTitle": "¿Preguntas?",
     "privacyPolicy": "Política de privacidad"
   },
+  "share": {
+    "acceptsLine": "✓ Atienden sin seguro · Pago según tus ingresos",
+    "buttonA11y": ""
+  },
   "prescriptions": {
     "bannerTitle": "Ahorre en recetas",
     "bannerSub": "Tarjeta gratis, hasta 80% de descuento. Sin seguro.",

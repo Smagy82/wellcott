@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Linking,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import { getDb } from '../../src/lib/database';
 import { getClinicById } from '../../src/lib/clinicSearch';
 import type { Clinic } from '../../src/types/clinic';
 import { useFavorites } from '../../src/lib/useFavorites';
+import { shareClinic } from '../../src/lib/shareClinic';
 import { theme } from '../../src/theme';
 import { PrescriptionSavingsCard } from '../../src/components/PrescriptionSavingsCard';
 
@@ -68,15 +68,7 @@ export default function ClinicDetailScreen() {
     Linking.openURL(`https://maps.google.com/?q=${q}`);
   };
 
-  const handleShare = async () => {
-    const parts = [
-      clinic.name,
-      `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`,
-    ];
-    if (clinic.phone) parts.push(clinic.phone);
-    parts.push('', t('clinicDetail.shareFooter'));
-    try { await Share.share({ message: parts.join('\n') }); } catch { /* cancelled */ }
-  };
+  const handleShare = () => shareClinic(clinic, t);
 
   const fav = isFavorite(clinic.id);
 

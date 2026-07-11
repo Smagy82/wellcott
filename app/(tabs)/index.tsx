@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
   Linking,
   Pressable,
   StyleSheet,
@@ -9,12 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
+import { shareClinic } from '../../src/lib/shareClinic';
 import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
-import { searchClinicsByText } from '../../src/lib/clinicSearch';
+import { searchClinicsByText, suggestCities, type CitySuggestion } from '../../src/lib/clinicSearch';
 import { getDb } from '../../src/lib/database';
 import type { ClinicWithDistance } from '../../src/types/clinic';
 import { theme } from '../../src/theme';
@@ -22,12 +25,21 @@ import { PrescriptionSavingsBanner } from '../../src/components/PrescriptionSavi
 
 const { colors, radius, font, shadow, spacing } = theme;
 
+const SHARE_GHOST_GUARD_MS = 1000;
 const RADII = [10, 25, 50] as const;
 type Radius = typeof RADII[number];
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 
-function ClinicCard({ item }: { item: ClinicWithDistance }) {
+function ClinicCard({
+  item,
+  onShare,
+  isShareGuarded,
+}: {
+  item: ClinicWithDistance;
+  onShare: (item: ClinicWithDistance) => void;
+  isShareGuarded: () => boolean;
+}) {
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -45,7 +57,7 @@ function ClinicCard({ item }: { item: ClinicWithDistance }) {
   return (
     <Pressable
       style={styles.card}
-      onPress={() => router.push(`/clinic/${encodeURIComponent(item.id)}`)}
+      onPress={() => { if (isShareGuarded()) return; router.push(`/clinic/${encodeURIComponent(item.id)}`); }}
     >
       <View style={styles.cardHeader}>
         <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
@@ -86,6 +98,13 @@ function ClinicCard({ item }: { item: ClinicWithDistance }) {
         >
           <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.btnShare}
+          onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
+          accessibilityLabel={t('share.buttonA11y')}
+        >
+          <Ionicons name="share-outline" size={17} color={colors.primary} />
+        </TouchableOpacity>
       </View>
     </Pressable>
   );
@@ -117,6 +136,31 @@ function SearchBar({
   );
 }
 
+function SuggestionList({
+  suggestions,
+  onSelect,
+}: {
+  suggestions: CitySuggestion[];
+  onSelect: (s: CitySuggestion) => void;
+}) {
+  if (suggestions.length === 0) return null;
+  return (
+    <View style={styles.suggestions}>
+      {suggestions.map((s, i) => (
+        <TouchableOpacity
+          key={`${s.city}-${s.state}`}
+          style={[styles.suggestion, i < suggestions.length - 1 && styles.suggestionBorder]}
+          onPress={() => onSelect(s)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="location-outline" size={14} color={colors.primary} style={styles.suggestionIcon} />
+          <Text style={styles.suggestionText}>{s.city}, {s.state}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 function RadiusChips({ selected, onSelect }: { selected: Radius; onSelect: (r: Radius) => void }) {
   return (
     <View style={styles.chips}>
@@ -143,6 +187,8 @@ export default function ClinicsScreen() {
   const [radius, setRadius] = useState<Radius>(25);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { clinics, status, retry } = useNearbyClinics(radius);
 
@@ -158,6 +204,46 @@ export default function ClinicsScreen() {
   useEffect(() => {
     runTextSearch(query);
   }, [query, runTextSearch]);
+
+  useEffect(() => {
+    if (!showSuggestions || query.trim().length < 2) {
+      setCitySuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const db = await getDb();
+        const results = await suggestCities(db, query.trim());
+        if (!cancelled) setCitySuggestions(results);
+      } catch { if (!cancelled) setCitySuggestions([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [query, showSuggestions]);
+
+  const shareJustClosedAt = useRef(0);
+
+  const handleClinicShare = (clinic: ClinicWithDistance) => {
+    shareClinic(
+      clinic,
+      t,
+      () => { shareJustClosedAt.current = Date.now(); }, // метка ДО открытия sheet
+    ).then(() => { shareJustClosedAt.current = Date.now(); }); // метка после закрытия
+  };
+
+  const isShareGuarded = () => Date.now() - shareJustClosedAt.current < SHARE_GHOST_GUARD_MS;
+
+  const handleQueryChange = (v: string) => {
+    setQuery(v);
+    setShowSuggestions(true);
+  };
+
+  const handleSuggestionSelect = (s: CitySuggestion) => {
+    setQuery(s.city);
+    setShowSuggestions(false);
+    setCitySuggestions([]);
+    Keyboard.dismiss();
+  };
 
   // Если есть поисковый запрос — показываем результаты по всей базе (без радиуса).
   // Если пусто — показываем клиники в радиусе от геолокации.
@@ -178,15 +264,16 @@ export default function ClinicsScreen() {
         <View style={styles.listTop}>
           <SearchBar
             value={query}
-            onChange={setQuery}
+            onChange={handleQueryChange}
             placeholder={t('clinicList.searchPlaceholderCity')}
           />
+          <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
         </View>
         {hasQuery ? (
           <FlatList
             data={textResults}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ClinicCard item={item} />}
+            renderItem={({ item }) => <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} />}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
               <Text style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</Text>
@@ -229,14 +316,15 @@ export default function ClinicsScreen() {
 
   const ListTop = (
     <View style={styles.listTop}>
-      <SearchBar value={query} onChange={setQuery} />
-      <RadiusChips selected={radius} onSelect={(r) => { setRadius(r); setQuery(''); }} />
+      <SearchBar value={query} onChange={handleQueryChange} />
+      <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+      <RadiusChips selected={radius} onSelect={(r) => { setRadius(r); setQuery(''); setShowSuggestions(false); }} />
       {!isSearching && (
         <Text style={styles.listHeader}>
           {t('clinicList.clinicsNearby', { count: filtered.length, radius })}
         </Text>
       )}
-      <PrescriptionSavingsBanner />
+      <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
     </View>
   );
 
@@ -244,7 +332,7 @@ export default function ClinicsScreen() {
     <FlatList
       data={filtered}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ClinicCard item={item} />}
+      renderItem={({ item }) => <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} />}
       contentContainerStyle={styles.list}
       ListHeaderComponent={ListTop}
       keyboardShouldPersistTaps="handled"
@@ -336,4 +424,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   btnOutlineText: { fontFamily: font.semibold, color: colors.primary, fontSize: 13 },
+  btnShare: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingVertical: 7,
+    width: 44,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+
+  suggestions: {
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    marginBottom: 8,
+    overflow: 'hidden',
+    ...shadow,
+  },
+  suggestion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  suggestionBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E4EAF0',
+  },
+  suggestionIcon: { marginRight: 8 },
+  suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
 });

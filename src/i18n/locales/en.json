@@ -190,6 +190,10 @@
     "contactTitle": "Questions?",
     "privacyPolicy": "Privacy Policy"
   },
+  "share": {
+    "acceptsLine": "✓ Accepts uninsured · Pay on a sliding scale",
+    "buttonA11y": "Share clinic"
+  },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",
     "bannerSub": "Free card, up to 80% off. No insurance needed.",

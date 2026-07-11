@@ -6,13 +6,13 @@ import { theme } from '../theme';
 
 const { colors, font, radius } = theme;
 
-export function PrescriptionSavingsBanner() {
+export function PrescriptionSavingsBanner({ isShareGuarded }: { isShareGuarded?: () => boolean }) {
   const { t } = useTranslation();
 
   return (
     <Pressable
       style={({ pressed }) => [styles.wrap, pressed && styles.pressed]}
-      onPress={openPrescriptionSavings}
+      onPress={() => { if (isShareGuarded?.()) return; openPrescriptionSavings(); }}
     >
       <View style={styles.iconBox}>
         <Ionicons name="medkit" size={26} color="#fff" />
