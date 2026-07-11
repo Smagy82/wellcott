@@ -147,6 +147,25 @@
     "cat_procedure": "procedure",
     "cat_other": "other"
   },
+  "costs": {
+    "navTitle": "What things cost",
+    "title": "What care usually costs without insurance",
+    "subtitle": "These are rough national ranges, not prices for any specific clinic. Sliding-scale clinics in this app are often much cheaper. Always call ahead to confirm your cost.",
+    "primaryCareTitle": "Primary care visit (self-pay)",
+    "primaryCarePrice": "$40–300",
+    "primaryCareSub": "Average around $160 nationwide. Retail and urgent care clinics often $80–250.",
+    "labsTitle": "Basic blood test",
+    "labsPrice": "$29–99 per test at independent labs",
+    "labsSub": "The same test can cost 3–10× more at a hospital. Always ask for the cash/self-pay price.",
+    "fqhcTitle": "Sliding-scale community clinic (FQHC)",
+    "fqhcPrice": "Based on your income",
+    "fqhcSub": "For low-income uninsured patients, often very little — or free. This is what most clinics in this app offer.",
+    "whyTitle": "Why this matters",
+    "whyBody": "An ER visit without insurance averages about $2,715 — more than 10× a primary care visit. A community clinic can handle most non-emergencies for a fraction of that.",
+    "disclaimer": "Prices vary by region and provider and change over time. This is general information, not a quote or medical advice. Ranges based on 2025–2026 self-pay data. Call the clinic to confirm your cost.",
+    "helpEntryTitle": "What things cost",
+    "helpEntrySub": "National price ranges for self-pay patients"
+  },
   "about": {
     "emergencyTitle": "Not for emergencies",
     "emergencyBody": "This app is not for medical emergencies. If this is an emergency, call 911 or go to the nearest emergency room.",

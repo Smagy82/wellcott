@@ -1,5 +1,7 @@
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import helpData from '../../assets/financial-help.json';
 import type { FinancialHelpOrg, FinancialHelpCategory } from '../../src/types/financialHelp';
 import { theme } from '../../src/theme';
@@ -58,6 +60,7 @@ function SectionHeader({ title, note }: { title: string; note?: string }) {
 
 export default function HelpScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -65,6 +68,18 @@ export default function HelpScreen() {
         <Text style={styles.headerTitle}>{t('help.title')}</Text>
         <Text style={styles.headerSub}>{t('help.subtitle')}</Text>
       </View>
+
+      {/* Costs entry */}
+      <TouchableOpacity style={styles.costsEntry} onPress={() => router.push('/costs')} activeOpacity={0.75}>
+        <View style={styles.costsIconBox}>
+          <Ionicons name="cash-outline" size={22} color={colors.tintYellowIcon} />
+        </View>
+        <View style={styles.costsText}>
+          <Text style={styles.costsTitle}>{t('costs.helpEntryTitle')}</Text>
+          <Text style={styles.costsSub}>{t('costs.helpEntrySub')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </TouchableOpacity>
 
       <SectionHeader title={t('help.sectionForYou')} />
       {forUninsured.map((org) => <OrgCard key={org.id} org={org} />)}
@@ -127,6 +142,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   actionBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 13 },
+
+  costsEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    marginBottom: 4,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  costsIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: colors.tintYellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  costsText: { flex: 1 },
+  costsTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 2 },
+  costsSub:   { fontFamily: font.regular,  fontSize: 12, color: colors.textMuted },
 
   disclaimer: {
     fontFamily: font.regular,

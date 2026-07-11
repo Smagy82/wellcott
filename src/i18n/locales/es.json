@@ -147,6 +147,25 @@
     "cat_procedure": "procedimiento",
     "cat_other": "otro"
   },
+  "costs": {
+    "navTitle": "Cuánto cuesta la atención",
+    "title": "Cuánto suele costar la atención sin seguro",
+    "subtitle": "Estos son rangos nacionales aproximados, no precios de ninguna clínica específica. Las clínicas con escala móvil en esta app suelen ser mucho más baratas. Siempre llame antes para confirmar su costo.",
+    "primaryCareTitle": "Visita de atención primaria (pago directo)",
+    "primaryCarePrice": "$40–300",
+    "primaryCareSub": "Promedio de alrededor de $160 a nivel nacional. Las clínicas de venta al por menor y de atención urgente suelen cobrar $80–250.",
+    "labsTitle": "Análisis de sangre básico",
+    "labsPrice": "$29–99 por análisis en laboratorios independientes",
+    "labsSub": "El mismo análisis puede costar 3–10 veces más en un hospital. Siempre pregunte por el precio de pago en efectivo.",
+    "fqhcTitle": "Clínica comunitaria con escala móvil (FQHC)",
+    "fqhcPrice": "Según sus ingresos",
+    "fqhcSub": "Para pacientes sin seguro de bajos ingresos, a menudo muy poco — o gratis. Esto es lo que ofrece la mayoría de las clínicas en esta app.",
+    "whyTitle": "Por qué esto importa",
+    "whyBody": "Una visita a urgencias sin seguro cuesta en promedio $2,715 — más de 10 veces una visita de atención primaria. Una clínica comunitaria puede atender la mayoría de las situaciones no urgentes por mucho menos.",
+    "disclaimer": "Los precios varían según la región y el proveedor, y cambian con el tiempo. Esta es información general, no una cotización ni asesoramiento médico. Rangos basados en datos de pago directo 2025–2026. Llame a la clínica para confirmar su costo.",
+    "helpEntryTitle": "Cuánto cuesta la atención",
+    "helpEntrySub": "Rangos de precios nacionales para pacientes de pago directo"
+  },
   "about": {
     "emergencyTitle": "No es para emergencias",
     "emergencyBody": "Esta aplicación no es para emergencias médicas. Si esto es una emergencia, llame al 911 o vaya a la sala de emergencias más cercana.",

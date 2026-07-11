@@ -101,11 +101,30 @@ export default function ClinicDetailScreen() {
         {clinic.siteType ? <Text style={styles.headerType}>{clinic.siteType}</Text> : null}
       </View>
 
-      {/* Trust badge */}
-      <View style={styles.trustBadge}>
-        <Text style={styles.trustTitle}>{t('clinicDetail.acceptsWithoutInsurance')}</Text>
-        <Text style={styles.trustSub}>{t('clinicDetail.slidingScaleInfo')}</Text>
-      </View>
+      {/* Badges */}
+      {(clinic.acceptsUninsured || clinic.slidingScale) && (
+        <View style={styles.badgesSection}>
+          <View style={styles.badges}>
+            {clinic.acceptsUninsured && (
+              <View style={[styles.badge, styles.badgeMint]}>
+                <Text style={[styles.badgeText, { color: colors.tintMintIcon }]}>
+                  {t('clinicList.acceptsUninsured')}
+                </Text>
+              </View>
+            )}
+            {clinic.slidingScale && (
+              <View style={[styles.badge, styles.badgeBlue]}>
+                <Text style={[styles.badgeText, { color: colors.tintBlueIcon }]}>
+                  {t('clinicList.slidingScale')}
+                </Text>
+              </View>
+            )}
+          </View>
+          {clinic.slidingScale && (
+            <Text style={styles.badgeNote}>{t('clinicDetail.slidingScaleInfo')}</Text>
+          )}
+        </View>
+      )}
 
       {/* Info section */}
       <View style={styles.section}>
@@ -186,14 +205,16 @@ const styles = StyleSheet.create({
   heartBtn: { paddingTop: 2 },
   headerType: { fontFamily: font.regular, color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 4 },
 
-  trustBadge: {
-    backgroundColor: colors.tintMint,
-    margin: spacing.lg,
-    borderRadius: radius.sm,
-    padding: 14,
+  badgesSection: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  trustTitle: { fontFamily: font.semibold, color: colors.tintMintIcon, fontSize: 14, marginBottom: 4 },
-  trustSub: { fontFamily: font.regular, color: colors.tintMintIcon, fontSize: 13, lineHeight: 18 },
+  badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 8 },
+  badge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
+  badgeMint: { backgroundColor: colors.tintMint },
+  badgeBlue: { backgroundColor: colors.tintBlue },
+  badgeText: { fontFamily: font.semibold, fontSize: 12 },
+  badgeNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 
   section: {
     backgroundColor: colors.card,

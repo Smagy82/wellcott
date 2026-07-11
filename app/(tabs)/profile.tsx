@@ -128,17 +128,6 @@ export default function ProfileScreen() {
       </View>
 
       <View style={[styles.section, { marginTop: spacing.md }]}>
-        <MenuCard
-          iconName="information-circle-outline"
-          iconBg={colors.tintMint}
-          iconColor={colors.tintMintIcon}
-          title={t('profile.about')}
-          subtitle={t('profile.aboutSub')}
-          onPress={() => router.push('/about')}
-        />
-      </View>
-
-      <View style={[styles.section, { marginTop: spacing.md }]}>
         <View style={styles.card}>
           <View style={[styles.iconBox, { backgroundColor: colors.tintLilac }]}>
             <Ionicons name="language-outline" size={24} color={colors.tintLilacIcon} />
@@ -161,6 +150,14 @@ export default function ProfileScreen() {
             })}
           </View>
         </View>
+        <MenuCard
+          iconName="information-circle-outline"
+          iconBg={colors.tintMint}
+          iconColor={colors.tintMintIcon}
+          title={t('profile.about')}
+          subtitle={t('profile.aboutSub')}
+          onPress={() => router.push('/about')}
+        />
       </View>
 
       <TouchableOpacity
