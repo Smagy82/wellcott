@@ -1,0 +1,155 @@
+{
+  "common": {
+    "retry": "Retry",
+    "call": "Call",
+    "directions": "Directions",
+    "back": "← Back",
+    "done": "Done",
+    "pleaseWait": "Please wait…",
+    "locationOff": "Location is off",
+    "somethingWentWrong": "Something went wrong",
+    "enableLocation": "Enable location",
+    "financialHelp": "Financial help",
+    "failedToSave": "Failed to save"
+  },
+  "tabs": {
+    "clinics": "Clinics",
+    "map": "Map",
+    "help": "Help",
+    "profile": "Profile"
+  },
+  "clinicList": {
+    "searchPlaceholder": "Search by name or city…",
+    "searchPlaceholderCity": "Enter city or ZIP…",
+    "clinicsNearby": "{{count}} clinics within {{radius}} miles",
+    "noResultsForQuery": "No results for \"{{query}}\".",
+    "noClinicsInRadius": "No clinics within {{radius}} miles. Try a larger radius.",
+    "locationOffSub": "Turn on location, or search by city above.",
+    "noLocationResults": "No clinics found for \"{{query}}\".",
+    "acceptsUninsured": "Accepts uninsured",
+    "slidingScale": "Sliding scale"
+  },
+  "map": {
+    "findingClinics": "Finding clinics near you…",
+    "locationOffSub": "Turn on location to see the map.",
+    "noClinicsNearby": "No clinics nearby."
+  },
+  "clinicDetail": {
+    "notFound": "Clinic not found.",
+    "acceptsWithoutInsurance": "Accepts patients without insurance",
+    "slidingScaleInfo": "You pay on a sliding scale based on your income. You can't be turned away for inability to pay.",
+    "labelAddress": "Address",
+    "labelPhone": "Phone",
+    "labelWebsite": "Website",
+    "labelHours": "Hours",
+    "callToConfirmHours": "Call to confirm hours.",
+    "cantAffordCare": "Can't afford care?",
+    "cantAffordCareSub": "Ask their patient financial services, or get help finding assistance.",
+    "disclaimer": "Prices and services vary — always call ahead. Information is for reference only."
+  },
+  "help": {
+    "title": "Financial help",
+    "subtitle": "Help paying for care, medications, and bills.",
+    "sectionForYou": "For you",
+    "sectionWithInsurance": "If you have insurance",
+    "sectionWithInsuranceNote": "These usually require insurance and a specific diagnosis.",
+    "disclaimer": "Verify contact details before calling — programs change. Not a medical or legal referral.",
+    "whoLabel": "Who: ",
+    "actionApply": "Apply",
+    "actionOpen": "Open",
+    "actionCall": "Call {{phone}}",
+    "cat_hospital_bills": "Hospital bills",
+    "cat_prescriptions": "Prescriptions",
+    "cat_local_referral": "Local help",
+    "cat_find_care": "Find care",
+    "cat_free_clinics": "Free clinics",
+    "cat_government": "Government",
+    "cat_copay_disease_specific": "Copay grants",
+    "cat_medical_debt": "Medical debt"
+  },
+  "profile": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "defaultName": "Guest",
+    "savedClinics": "Saved clinics",
+    "savedClinicsSub": "Your favorite clinics",
+    "visitHistory": "Visit history",
+    "visitHistorySub": "Where you've been",
+    "expenses": "Expenses",
+    "expensesSub": "Track what you paid",
+    "signOut": "Sign out",
+    "signingOut": "Signing out…"
+  },
+  "auth": {
+    "appName": "ClinicFinder",
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "fullName": "Full name",
+    "email": "Email",
+    "password": "Password",
+    "signUp": "Sign up",
+    "loading": "Please wait…",
+    "noAccount": "Don't have an account? Sign up",
+    "haveAccount": "Already have an account? Sign in",
+    "errorGeneric": "Something went wrong"
+  },
+  "favorites": {
+    "empty": "No saved clinics yet",
+    "emptySub": "Tap the heart on any clinic to save it here"
+  },
+  "visits": {
+    "empty": "No visits yet",
+    "emptySub": "Add your first visit"
+  },
+  "visitAdd": {
+    "clinicOptional": "Clinic (optional)",
+    "sourceNone": "None",
+    "sourceSaved": "From saved",
+    "sourceManual": "Enter name",
+    "noSavedClinics": "No saved clinics yet.",
+    "clinicNamePlaceholder": "Clinic or provider name",
+    "visitDate": "Visit date",
+    "reasonOptional": "Reason (optional)",
+    "reasonPlaceholder": "e.g. Check-up, Lab work, Dental…",
+    "noteOptional": "Note (optional)",
+    "notePlaceholder": "Any notes about this visit…",
+    "saveVisit": "Save visit"
+  },
+  "bills": {
+    "totalSpent": "Total spent",
+    "empty": "No expenses yet",
+    "emptySub": "Add your first bill"
+  },
+  "billAdd": {
+    "amount": "Amount *",
+    "amountPlaceholder": "0.00",
+    "category": "Category",
+    "whereOptional": "Where (optional)",
+    "wherePlaceholder": "Clinic, pharmacy, lab…",
+    "date": "Date",
+    "noteOptional": "Note (optional)",
+    "notePlaceholder": "Any details…",
+    "photoOptional": "Photo of receipt (optional)",
+    "photoLibrary": "Library",
+    "photoCamera": "Camera",
+    "errorPhotoLibrary": "Photo library permission denied.",
+    "errorCamera": "Camera permission denied.",
+    "errorInvalidAmount": "Enter a valid amount.",
+    "saveExpense": "Save expense",
+    "uploading": "Uploading…",
+    "cat_visit": "visit",
+    "cat_labs": "labs",
+    "cat_meds": "meds",
+    "cat_procedure": "procedure",
+    "cat_other": "other"
+  },
+  "prescriptions": {
+    "bannerTitle": "Save on prescriptions",
+    "bannerSub": "Free card, up to 80% off. No insurance needed.",
+    "cardTitle": "Prescription savings",
+    "cardBody": "Show a free discount card at the pharmacy and save up to 80% on medications. Works without insurance.",
+    "cardButton": "Get free savings card",
+    "cardDisclaimer": "Free service via SingleCare. Not insurance."
+  }
+}

@@ -6,11 +6,13 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "clinicexpo",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "userInterfaceStyle": "light"
     },
     "android": {
+      "userInterfaceStyle": "light",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -41,7 +43,10 @@
         {
           "locationWhenInUsePermission": "ClinicFinder uses your location to find clinics near you."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

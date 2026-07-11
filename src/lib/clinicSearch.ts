@@ -60,16 +60,39 @@ export async function getClinicById(
   return row ? rowToClinic(row) : null;
 }
 
-/** Поиск по названию/городу (для строки поиска). */
+/** Минимальный набор полей для пинов карты. */
+export interface MapClinic {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Все клиники — только поля нужные карте (без hours_json и тяжёлых колонок).
+ * ~10k строк, ~30-50ms на устройстве. Не вызывать синхронно в рендере.
+ */
+export async function findAllClinicsForMap(
+  db: SQLite.SQLiteDatabase,
+): Promise<MapClinic[]> {
+  return db.getAllAsync<MapClinic>(
+    'SELECT id, name, address, city, latitude, longitude FROM clinics',
+  );
+}
+
+/** Поиск по всей базе (имя + город), без привязки к радиусу. Регистр игнорируется. */
 export async function searchClinicsByText(
   db: SQLite.SQLiteDatabase,
   query: string,
-  limit = 50,
+  limit = 100,
 ): Promise<ClinicWithDistance[]> {
-  const q = `%${query.trim()}%`;
+  const q = `%${query.trim().toLowerCase()}%`;
   const rows = await db.getAllAsync<ClinicRow>(
     `SELECT * FROM clinics
-      WHERE name LIKE ? OR city LIKE ?
+      WHERE LOWER(name) LIKE ? OR LOWER(city) LIKE ?
+      ORDER BY name
       LIMIT ?`,
     [q, q, limit],
   );

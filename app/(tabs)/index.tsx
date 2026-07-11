@@ -11,19 +11,24 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { searchClinicsByText } from '../../src/lib/clinicSearch';
 import { getDb } from '../../src/lib/database';
 import type { ClinicWithDistance } from '../../src/types/clinic';
+import { theme } from '../../src/theme';
+import { PrescriptionSavingsBanner } from '../../src/components/PrescriptionSavingsBanner';
 
-const TINT = '#0F6E56';
+const { colors, radius, font, shadow, spacing } = theme;
+
 const RADII = [10, 25, 50] as const;
 type Radius = typeof RADII[number];
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 
 function ClinicCard({ item }: { item: ClinicWithDistance }) {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleCall = () => {
@@ -55,13 +60,13 @@ function ClinicCard({ item }: { item: ClinicWithDistance }) {
 
       <View style={styles.badges}>
         {item.acceptsUninsured && (
-          <View style={[styles.badge, styles.badgeGreen]}>
-            <Text style={styles.badgeText}>Accepts uninsured</Text>
+          <View style={[styles.badge, styles.badgeMint]}>
+            <Text style={[styles.badgeText, { color: colors.tintMintIcon }]}>{t('clinicList.acceptsUninsured')}</Text>
           </View>
         )}
         {item.slidingScale && (
           <View style={[styles.badge, styles.badgeBlue]}>
-            <Text style={styles.badgeText}>Sliding scale</Text>
+            <Text style={[styles.badgeText, { color: colors.tintBlueIcon }]}>{t('clinicList.slidingScale')}</Text>
           </View>
         )}
       </View>
@@ -69,41 +74,42 @@ function ClinicCard({ item }: { item: ClinicWithDistance }) {
       <View style={styles.actions}>
         {item.phone ? (
           <TouchableOpacity
-            style={styles.btn}
+            style={styles.btnFill}
             onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
           >
-            <Text style={styles.btnText}>Call</Text>
+            <Text style={styles.btnFillText}>{t('common.call')}</Text>
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
-          style={[styles.btn, styles.btnOutline]}
+          style={styles.btnOutline}
           onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
         >
-          <Text style={[styles.btnText, styles.btnOutlineText]}>Directions</Text>
+          <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
       </View>
     </Pressable>
   );
 }
 
-// ── Search + filter bar ───────────────────────────────────────────────────────
+// ── Search + chips ────────────────────────────────────────────────────────────
 
 function SearchBar({
   value,
   onChange,
-  placeholder = 'Search by name or city…',
+  placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <TextInput
       style={styles.searchInput}
       value={value}
       onChangeText={onChange}
-      placeholder={placeholder}
-      placeholderTextColor="#aaa"
+      placeholder={placeholder ?? t('clinicList.searchPlaceholder')}
+      placeholderTextColor={colors.textMuted}
       clearButtonMode="while-editing"
       returnKeyType="search"
       autoCorrect={false}
@@ -111,13 +117,7 @@ function SearchBar({
   );
 }
 
-function RadiusChips({
-  selected,
-  onSelect,
-}: {
-  selected: Radius;
-  onSelect: (r: Radius) => void;
-}) {
+function RadiusChips({ selected, onSelect }: { selected: Radius; onSelect: (r: Radius) => void }) {
   return (
     <View style={styles.chips}>
       {RADII.map((r) => {
@@ -128,9 +128,7 @@ function RadiusChips({
             style={[styles.chip, active && styles.chipActive]}
             onPress={() => onSelect(r)}
           >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>
-              {r} mi
-            </Text>
+            <Text style={[styles.chipText, active && styles.chipTextActive]}>{r} mi</Text>
           </TouchableOpacity>
         );
       })}
@@ -141,46 +139,38 @@ function RadiusChips({
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ClinicsScreen() {
+  const { t } = useTranslation();
   const [radius, setRadius] = useState<Radius>(25);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
 
   const { clinics, status, retry } = useNearbyClinics(radius);
 
-  // Text search against DB (used when no-permission or explicit query)
   const runTextSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setTextResults([]); return; }
     try {
       const db = await getDb();
-      const results = await searchClinicsByText(db, q, 50);
+      const results = await searchClinicsByText(db, q, 100);
       setTextResults(results);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }, []);
 
-  // When no-permission: search DB by city/name on query change
   useEffect(() => {
-    if (status === 'no-permission') runTextSearch(query);
-  }, [query, status, runTextSearch]);
+    runTextSearch(query);
+  }, [query, runTextSearch]);
 
-  // Client-side filter when geo is ready
+  // Если есть поисковый запрос — показываем результаты по всей базе (без радиуса).
+  // Если пусто — показываем клиники в радиусе от геолокации.
   const filtered = useMemo(() => {
-    if (status !== 'ready' || !query.trim()) return clinics;
-    const q = query.toLowerCase();
-    return clinics.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.city.toLowerCase().includes(q),
-    );
-  }, [clinics, query, status]);
+    if (query.trim()) return textResults;
+    return clinics;
+  }, [clinics, query, textResults]);
 
   const requestLocation = async () => {
     await Location.requestForegroundPermissionsAsync();
     retry();
   };
 
-  // ── No-permission screen ──────────────────────────────────────────────────
   if (status === 'no-permission') {
     const hasQuery = query.trim().length > 0;
     return (
@@ -189,10 +179,9 @@ export default function ClinicsScreen() {
           <SearchBar
             value={query}
             onChange={setQuery}
-            placeholder="Enter city or ZIP…"
+            placeholder={t('clinicList.searchPlaceholderCity')}
           />
         </View>
-
         {hasQuery ? (
           <FlatList
             data={textResults}
@@ -200,17 +189,15 @@ export default function ClinicsScreen() {
             renderItem={({ item }) => <ClinicCard item={item} />}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
-              <Text style={styles.statusText}>No clinics found for "{query}".</Text>
+              <Text style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</Text>
             }
           />
         ) : (
           <View style={styles.center}>
-            <Text style={styles.permTitle}>Location is off</Text>
-            <Text style={styles.statusText}>
-              Turn on location, or search by city above.
-            </Text>
+            <Text style={styles.permTitle}>{t('common.locationOff')}</Text>
+            <Text style={styles.statusText}>{t('clinicList.locationOffSub')}</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={requestLocation}>
-              <Text style={styles.primaryBtnText}>Enable location</Text>
+              <Text style={styles.primaryBtnText}>{t('common.enableLocation')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -218,32 +205,27 @@ export default function ClinicsScreen() {
     );
   }
 
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (status === 'loading') {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={TINT} />
-        <Text style={styles.statusText}>Finding clinics near you…</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.statusText}>{t('map.findingClinics')}</Text>
       </View>
     );
   }
 
-  // ── Error ─────────────────────────────────────────────────────────────────
   if (status === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.permTitle}>Something went wrong</Text>
-        <Text style={styles.statusText}>Pull to retry.</Text>
+        <Text style={styles.permTitle}>{t('common.somethingWentWrong')}</Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={retry}>
-          <Text style={styles.primaryBtnText}>Retry</Text>
+          <Text style={styles.primaryBtnText}>{t('common.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // ── Ready ─────────────────────────────────────────────────────────────────
   const isSearching = query.trim().length > 0;
-  const displayList = filtered;
 
   const ListTop = (
     <View style={styles.listTop}>
@@ -251,15 +233,16 @@ export default function ClinicsScreen() {
       <RadiusChips selected={radius} onSelect={(r) => { setRadius(r); setQuery(''); }} />
       {!isSearching && (
         <Text style={styles.listHeader}>
-          {displayList.length} clinics within {radius} miles
+          {t('clinicList.clinicsNearby', { count: filtered.length, radius })}
         </Text>
       )}
+      <PrescriptionSavingsBanner />
     </View>
   );
 
   return (
     <FlatList
-      data={displayList}
+      data={filtered}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <ClinicCard item={item} />}
       contentContainerStyle={styles.list}
@@ -268,8 +251,8 @@ export default function ClinicsScreen() {
       ListEmptyComponent={
         <Text style={styles.statusText}>
           {isSearching
-            ? `No results for "${query}".`
-            : `No clinics within ${radius} miles. Try a larger radius or search by city.`}
+            ? t('clinicList.noResultsForQuery', { query })
+            : t('clinicList.noClinicsInRadius', { radius })}
         </Text>
       }
     />
@@ -279,94 +262,78 @@ export default function ClinicsScreen() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#F7F9F8' },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#F7F9F8',
-  },
-  permTitle: { fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 6 },
-  statusText: { fontSize: 14, color: '#555', textAlign: 'center', marginBottom: 18 },
+  flex: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
+  permTitle: { fontFamily: font.bold, fontSize: 18, color: colors.text, marginBottom: 6 },
+  statusText: { fontFamily: font.regular, fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 18 },
   primaryBtn: {
-    backgroundColor: TINT,
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
     paddingVertical: 11,
     paddingHorizontal: 28,
     marginTop: 4,
   },
-  primaryBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
 
-  listTop: { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 4 },
+  listTop: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
   searchInput: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    fontFamily: font.regular,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E4EAF0',
     paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingVertical: 10,
     fontSize: 14,
-    color: '#111',
+    color: colors.text,
     marginBottom: 10,
+    ...shadow,
   },
   chips: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   chip: {
-    borderRadius: 20,
+    borderRadius: radius.pill,
     paddingVertical: 5,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: TINT,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: colors.card,
   },
-  chipActive: { backgroundColor: TINT },
-  chipText: { fontSize: 13, color: TINT, fontWeight: '600' },
+  chipActive: { backgroundColor: colors.primary },
+  chipText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary },
   chipTextActive: { color: '#fff' },
-  listHeader: { fontSize: 12, color: '#888', marginBottom: 6, marginLeft: 2 },
+  listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, marginBottom: 6, marginLeft: 2 },
 
-  list: { paddingHorizontal: 12, paddingBottom: 32 },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: 32 },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
     padding: 14,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...shadow,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  clinicName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111',
-    marginRight: 8,
-  },
-  distance: { fontSize: 13, color: TINT, fontWeight: '600', flexShrink: 0 },
-  address: { fontSize: 13, color: '#555', marginBottom: 8 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+  clinicName: { fontFamily: font.semibold, flex: 1, fontSize: 15, color: colors.text, marginRight: 8 },
+  distance: { fontFamily: font.semibold, fontSize: 13, color: colors.primary, flexShrink: 0 },
+  address: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, marginBottom: 8 },
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeGreen: { backgroundColor: '#E6F4EF' },
-  badgeBlue: { backgroundColor: '#E6EFF8' },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#333' },
+  badgeMint: { backgroundColor: colors.tintMint },
+  badgeBlue: { backgroundColor: colors.tintBlue },
+  badgeText: { fontFamily: font.semibold, fontSize: 11 },
   actions: { flexDirection: 'row', gap: 8 },
-  btn: {
-    backgroundColor: TINT,
-    borderRadius: 8,
+  btnFill: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
     paddingVertical: 7,
     paddingHorizontal: 16,
   },
-  btnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  btnFillText: { fontFamily: font.semibold, color: '#fff', fontSize: 13 },
   btnOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: TINT,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
   },
-  btnOutlineText: { color: TINT },
+  btnOutlineText: { fontFamily: font.semibold, color: colors.primary, fontSize: 13 },
 });

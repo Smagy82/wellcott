@@ -9,19 +9,24 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { getDb } from '../../src/lib/database';
 import { getClinicById } from '../../src/lib/clinicSearch';
 import type { Clinic } from '../../src/types/clinic';
+import { useFavorites } from '../../src/lib/useFavorites';
+import { theme } from '../../src/theme';
+import { PrescriptionSavingsCard } from '../../src/components/PrescriptionSavingsCard';
 
-const TINT = '#0F6E56';
-const TRUST_BG = '#E1F5EE';
-const TRUST_TEXT = '#085041';
+const { colors, radius, font, shadow, spacing } = theme;
 
 export default function ClinicDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     (async () => {
@@ -36,19 +41,15 @@ export default function ClinicDetailScreen() {
   }, [id]);
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={TINT} />
-      </View>
-    );
+    return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;
   }
 
   if (!clinic) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>Clinic not found.</Text>
+        <Text style={styles.errorText}>{t('clinicDetail.notFound')}</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>← Back</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -60,14 +61,13 @@ export default function ClinicDetailScreen() {
     catch { return []; }
   })();
 
-  const handleCall = () => {
-    if (clinic.phone) Linking.openURL(`tel:${clinic.phone}`);
-  };
-
+  const handleCall = () => { if (clinic.phone) Linking.openURL(`tel:${clinic.phone}`); };
   const handleDirections = () => {
     const q = encodeURIComponent(`${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`);
     Linking.openURL(`https://maps.google.com/?q=${q}`);
   };
+
+  const fav = isFavorite(clinic.id);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -75,85 +75,85 @@ export default function ClinicDetailScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
-          <Text style={styles.backLabel}>← Back</Text>
+          <Text style={styles.backLabel}>{t('common.back')}</Text>
         </TouchableOpacity>
-        <Text style={styles.headerName}>{clinic.name}</Text>
-        {clinic.siteType ? (
-          <Text style={styles.headerType}>{clinic.siteType}</Text>
-        ) : null}
+        <View style={styles.headerNameRow}>
+          <Text style={styles.headerName}>{clinic.name}</Text>
+          <TouchableOpacity
+            style={styles.heartBtn}
+            onPress={() => {
+              console.log('HEART pressed:', clinic.id, clinic.name);
+              toggleFavorite({
+                clinic_id: clinic.id,
+                clinic_name: clinic.name,
+                clinic_address: `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`,
+              });
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={fav ? 'heart' : 'heart-outline'}
+              size={26}
+              color={fav ? colors.danger : 'rgba(255,255,255,0.75)'}
+            />
+          </TouchableOpacity>
+        </View>
+        {clinic.siteType ? <Text style={styles.headerType}>{clinic.siteType}</Text> : null}
       </View>
 
       {/* Trust badge */}
       <View style={styles.trustBadge}>
-        <Text style={styles.trustTitle}>Accepts patients without insurance</Text>
-        <Text style={styles.trustSub}>
-          You pay on a sliding scale based on your income. You can't be turned away for inability to pay.
-        </Text>
+        <Text style={styles.trustTitle}>{t('clinicDetail.acceptsWithoutInsurance')}</Text>
+        <Text style={styles.trustSub}>{t('clinicDetail.slidingScaleInfo')}</Text>
       </View>
 
       {/* Info section */}
       <View style={styles.section}>
-        <InfoRow label="Address">
+        <InfoRow label={t('clinicDetail.labelAddress')}>
           {clinic.address}, {clinic.city}, {clinic.state} {clinic.zip}
         </InfoRow>
-
-        {clinic.phone ? (
-          <InfoRow label="Phone">{clinic.phone}</InfoRow>
-        ) : null}
-
+        {clinic.phone ? <InfoRow label={t('clinicDetail.labelPhone')}>{clinic.phone}</InfoRow> : null}
         {clinic.website ? (
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Website</Text>
-            <Text
-              style={[styles.rowValue, styles.link]}
-              onPress={() => Linking.openURL(clinic.website!)}
-            >
+            <Text style={styles.rowLabel}>{t('clinicDetail.labelWebsite')}</Text>
+            <Text style={[styles.rowValue, styles.link]} onPress={() => Linking.openURL(clinic.website!)}>
               {clinic.website}
             </Text>
           </View>
         ) : null}
-
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Hours</Text>
-          {hours.length > 0 ? (
-            hours.map((line) => (
-              <Text key={line} style={styles.rowValue}>{line}</Text>
-            ))
-          ) : (
-            <Text style={styles.rowValue}>Call to confirm hours.</Text>
-          )}
+          <Text style={styles.rowLabel}>{t('clinicDetail.labelHours')}</Text>
+          {hours.length > 0
+            ? hours.map((line) => <Text key={line} style={styles.rowValue}>{line}</Text>)
+            : <Text style={styles.rowValue}>{t('clinicDetail.callToConfirmHours')}</Text>}
         </View>
       </View>
 
       {/* Can't afford care */}
       <View style={styles.helpBlock}>
-        <Text style={styles.helpTitle}>Can't afford care?</Text>
-        <Text style={styles.helpBody}>
-          Ask their patient financial services, or get help finding assistance.
-        </Text>
-        <TouchableOpacity
-          style={styles.helpBtn}
-          onPress={() => router.push('/(tabs)/help')}
-        >
-          <Text style={styles.helpBtnText}>Financial help</Text>
+        <Text style={styles.helpTitle}>{t('clinicDetail.cantAffordCare')}</Text>
+        <Text style={styles.helpBody}>{t('clinicDetail.cantAffordCareSub')}</Text>
+        <TouchableOpacity style={styles.helpBtn} onPress={() => router.push('/(tabs)/help')}>
+          <Text style={styles.helpBtnText}>{t('common.financialHelp')}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Action buttons */}
+      {/* Actions */}
       <View style={styles.actions}>
         {clinic.phone ? (
           <TouchableOpacity style={[styles.btn, styles.btnFill]} onPress={handleCall}>
-            <Text style={styles.btnFillText}>Call</Text>
+            <Text style={styles.btnFillText}>{t('common.call')}</Text>
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={handleDirections}>
-          <Text style={styles.btnOutlineText}>Directions</Text>
+          <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.disclaimer}>
-        Prices and services vary — always call ahead. Information is for reference only.
-      </Text>
+      {/* Prescription savings */}
+      <PrescriptionSavingsCard />
+
+      <Text style={styles.disclaimer}>{t('clinicDetail.disclaimer')}</Text>
     </ScrollView>
   );
 }
@@ -168,92 +168,92 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F7F9F8' },
+  scroll: { flex: 1, backgroundColor: colors.bg },
   content: { paddingBottom: 48 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  errorText: { fontSize: 15, color: '#555', marginBottom: 16 },
+  errorText: { fontFamily: font.regular, fontSize: 15, color: colors.textMuted, marginBottom: 16 },
 
   header: {
-    backgroundColor: TINT,
-    paddingTop: 16,
+    backgroundColor: colors.primary,
+    paddingTop: spacing.lg,
     paddingBottom: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
   backRow: { marginBottom: 10 },
-  backLabel: { color: 'rgba(255,255,255,0.85)', fontSize: 14 },
-  headerName: { color: '#fff', fontSize: 20, fontWeight: '700', lineHeight: 26 },
-  headerType: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 4 },
+  backLabel: { fontFamily: font.regular, color: 'rgba(255,255,255,0.85)', fontSize: 14 },
+  headerNameRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  headerName: { fontFamily: font.bold, color: '#fff', fontSize: 20, lineHeight: 26, flex: 1, marginRight: 10 },
+  heartBtn: { paddingTop: 2 },
+  headerType: { fontFamily: font.regular, color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 4 },
 
   trustBadge: {
-    backgroundColor: TRUST_BG,
-    margin: 16,
-    borderRadius: 10,
+    backgroundColor: colors.tintMint,
+    margin: spacing.lg,
+    borderRadius: radius.sm,
     padding: 14,
   },
-  trustTitle: { color: TRUST_TEXT, fontSize: 14, fontWeight: '700', marginBottom: 4 },
-  trustSub: { color: TRUST_TEXT, fontSize: 13, lineHeight: 18 },
+  trustTitle: { fontFamily: font.semibold, color: colors.tintMintIcon, fontSize: 14, marginBottom: 4 },
+  trustSub: { fontFamily: font.regular, color: colors.tintMintIcon, fontSize: 13, lineHeight: 18 },
 
   section: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    borderRadius: 10,
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.sm,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
+    ...shadow,
   },
   row: {
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: '#E5EAF0',
   },
   rowLabel: {
+    fontFamily: font.semibold,
     fontSize: 11,
-    color: '#888',
-    fontWeight: '600',
+    color: colors.textMuted,
     marginBottom: 3,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  rowValue: { fontSize: 14, color: '#111', lineHeight: 20 },
-  link: { color: TINT, textDecorationLine: 'underline' },
+  rowValue: { fontFamily: font.regular, fontSize: 14, color: colors.text, lineHeight: 20 },
+  link: { color: colors.primary, textDecorationLine: 'underline' },
 
   helpBlock: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    borderRadius: 10,
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.lg,
+    borderRadius: radius.sm,
     padding: 14,
     marginBottom: 20,
+    ...shadow,
   },
-  helpTitle: { fontSize: 14, fontWeight: '700', color: '#111', marginBottom: 4 },
-  helpBody: { fontSize: 13, color: '#555', lineHeight: 18, marginBottom: 10 },
+  helpTitle: { fontFamily: font.semibold, fontSize: 14, color: colors.text, marginBottom: 4 },
+  helpBody: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, lineHeight: 18, marginBottom: 10 },
   helpBtn: {
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: TINT,
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.sm,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
-  helpBtnText: { color: TINT, fontSize: 13, fontWeight: '600' },
+  helpBtnText: { fontFamily: font.semibold, color: colors.primary, fontSize: 13 },
 
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginHorizontal: 16,
-    marginBottom: 20,
-  },
-  btn: { flex: 1, borderRadius: 10, paddingVertical: 13, alignItems: 'center' },
-  btnFill: { backgroundColor: TINT },
-  btnFillText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  btnOutline: { borderWidth: 1.5, borderColor: TINT },
-  btnOutlineText: { color: TINT, fontSize: 15, fontWeight: '700' },
+  actions: { flexDirection: 'row', gap: 10, marginHorizontal: spacing.lg, marginBottom: 20 },
+  btn: { flex: 1, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
+  btnFill: { backgroundColor: colors.primary },
+  btnFillText: { fontFamily: font.bold, color: '#fff', fontSize: 15 },
+  btnOutline: { borderWidth: 1.5, borderColor: colors.primary },
+  btnOutlineText: { fontFamily: font.bold, color: colors.primary, fontSize: 15 },
 
   backBtn: { marginTop: 12 },
-  backBtnText: { color: TINT, fontSize: 14 },
+  backBtnText: { fontFamily: font.semibold, color: colors.primary, fontSize: 14 },
 
   disclaimer: {
+    fontFamily: font.regular,
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
     textAlign: 'center',
     marginHorizontal: 24,
     lineHeight: 16,

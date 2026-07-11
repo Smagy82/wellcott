@@ -1,0 +1,155 @@
+{
+  "common": {
+    "retry": "",
+    "call": "",
+    "directions": "",
+    "back": "",
+    "done": "",
+    "pleaseWait": "",
+    "locationOff": "",
+    "somethingWentWrong": "",
+    "enableLocation": "",
+    "financialHelp": "",
+    "failedToSave": ""
+  },
+  "tabs": {
+    "clinics": "",
+    "map": "Map",
+    "help": "",
+    "profile": ""
+  },
+  "clinicList": {
+    "searchPlaceholder": "",
+    "searchPlaceholderCity": "",
+    "clinicsNearby": "",
+    "noResultsForQuery": "",
+    "noClinicsInRadius": "",
+    "locationOffSub": "",
+    "noLocationResults": "",
+    "acceptsUninsured": "",
+    "slidingScale": ""
+  },
+  "map": {
+    "findingClinics": "",
+    "locationOffSub": "",
+    "noClinicsNearby": ""
+  },
+  "clinicDetail": {
+    "notFound": "",
+    "acceptsWithoutInsurance": "",
+    "slidingScaleInfo": "",
+    "labelAddress": "",
+    "labelPhone": "",
+    "labelWebsite": "",
+    "labelHours": "",
+    "callToConfirmHours": "",
+    "cantAffordCare": "",
+    "cantAffordCareSub": "",
+    "disclaimer": ""
+  },
+  "help": {
+    "title": "",
+    "subtitle": "",
+    "sectionForYou": "",
+    "sectionWithInsurance": "",
+    "sectionWithInsuranceNote": "",
+    "disclaimer": "",
+    "whoLabel": "",
+    "actionApply": "",
+    "actionOpen": "",
+    "actionCall": "",
+    "cat_hospital_bills": "",
+    "cat_prescriptions": "",
+    "cat_local_referral": "",
+    "cat_find_care": "",
+    "cat_free_clinics": "",
+    "cat_government": "",
+    "cat_copay_disease_specific": "",
+    "cat_medical_debt": ""
+  },
+  "profile": {
+    "greetingMorning": "",
+    "greetingAfternoon": "",
+    "greetingEvening": "",
+    "defaultName": "Guest",
+    "savedClinics": "",
+    "savedClinicsSub": "",
+    "visitHistory": "",
+    "visitHistorySub": "",
+    "expenses": "",
+    "expensesSub": "",
+    "signOut": "",
+    "signingOut": ""
+  },
+  "auth": {
+    "appName": "ClinicFinder",
+    "signIn": "",
+    "createAccount": "",
+    "fullName": "",
+    "email": "Email",
+    "password": "",
+    "signUp": "",
+    "loading": "",
+    "noAccount": "",
+    "haveAccount": "",
+    "errorGeneric": ""
+  },
+  "favorites": {
+    "empty": "",
+    "emptySub": ""
+  },
+  "visits": {
+    "empty": "",
+    "emptySub": ""
+  },
+  "visitAdd": {
+    "clinicOptional": "",
+    "sourceNone": "",
+    "sourceSaved": "",
+    "sourceManual": "",
+    "noSavedClinics": "",
+    "clinicNamePlaceholder": "",
+    "visitDate": "",
+    "reasonOptional": "",
+    "reasonPlaceholder": "",
+    "noteOptional": "",
+    "notePlaceholder": "",
+    "saveVisit": ""
+  },
+  "bills": {
+    "totalSpent": "",
+    "empty": "",
+    "emptySub": ""
+  },
+  "billAdd": {
+    "amount": "",
+    "amountPlaceholder": "0.00",
+    "category": "",
+    "whereOptional": "",
+    "wherePlaceholder": "",
+    "date": "",
+    "noteOptional": "",
+    "notePlaceholder": "",
+    "photoOptional": "",
+    "photoLibrary": "",
+    "photoCamera": "",
+    "errorPhotoLibrary": "",
+    "errorCamera": "",
+    "errorInvalidAmount": "",
+    "saveExpense": "",
+    "uploading": "",
+    "cat_visit": "",
+    "cat_labs": "",
+    "cat_meds": "",
+    "cat_procedure": "",
+    "cat_other": ""
+  },
+  "prescriptions": {
+    "bannerTitle": "",
+    "bannerSub": "",
+    "cardTitle": "",
+    "cardBody": "",
+    "cardButton": "",
+    "cardDisclaimer": ""
+  }
+}

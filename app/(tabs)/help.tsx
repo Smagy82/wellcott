@@ -1,28 +1,14 @@
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import helpData from '../../assets/financial-help.json';
 import type { FinancialHelpOrg, FinancialHelpCategory } from '../../src/types/financialHelp';
+import { theme } from '../../src/theme';
 
-const TINT = '#0F6E56';
+const { colors, radius, font, shadow, spacing } = theme;
 
 const orgs = helpData.organizations as FinancialHelpOrg[];
-const forUninsured = orgs.filter((o) => o.bestForUninsured);
+const forUninsured  = orgs.filter((o) => o.bestForUninsured);
 const withInsurance = orgs.filter((o) => !o.bestForUninsured);
-
-const CATEGORY_LABELS: Record<FinancialHelpCategory, string> = {
-  hospital_bills:       'Hospital bills',
-  prescriptions:        'Prescriptions',
-  local_referral:       'Local help',
-  find_care:            'Find care',
-  free_clinics:         'Free clinics',
-  government:           'Government',
-  copay_disease_specific: 'Copay grants',
-  medical_debt:         'Medical debt',
-};
-
-function actionLabel(org: FinancialHelpOrg): string {
-  if (org.actionType === 'call' && org.phone) return `Call ${org.phone}`;
-  return org.actionType === 'apply' ? 'Apply' : 'Open';
-}
 
 function handleAction(org: FinancialHelpOrg) {
   if (org.actionType === 'call' && org.phone) {
@@ -33,21 +19,29 @@ function handleAction(org: FinancialHelpOrg) {
 }
 
 function OrgCard({ org }: { org: FinancialHelpOrg }) {
+  const { t } = useTranslation();
+
+  const catKey = `help.cat_${org.category}` as const;
+  const actionLabel = (): string => {
+    if (org.actionType === 'call' && org.phone) return t('help.actionCall', { phone: org.phone });
+    return org.actionType === 'apply' ? t('help.actionApply') : t('help.actionOpen');
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <Text style={styles.orgName}>{org.name}</Text>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{CATEGORY_LABELS[org.category]}</Text>
+          <Text style={styles.badgeText}>{t(catKey)}</Text>
         </View>
       </View>
       <Text style={styles.whatItDoes}>{org.whatItDoes}</Text>
       <Text style={styles.whoQualifies}>
-        <Text style={styles.whoLabel}>Who: </Text>
+        <Text style={styles.whoLabel}>{t('help.whoLabel')}</Text>
         {org.whoQualifies}
       </Text>
       <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(org)}>
-        <Text style={styles.actionBtnText}>{actionLabel(org)}</Text>
+        <Text style={styles.actionBtnText}>{actionLabel()}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -63,93 +57,81 @@ function SectionHeader({ title, note }: { title: string; note?: string }) {
 }
 
 export default function HelpScreen() {
+  const { t } = useTranslation();
+
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Financial help</Text>
-        <Text style={styles.headerSub}>Help paying for care, medications, and bills.</Text>
+        <Text style={styles.headerTitle}>{t('help.title')}</Text>
+        <Text style={styles.headerSub}>{t('help.subtitle')}</Text>
       </View>
 
-      <SectionHeader title="For you" />
-      {forUninsured.map((org) => (
-        <OrgCard key={org.id} org={org} />
-      ))}
+      <SectionHeader title={t('help.sectionForYou')} />
+      {forUninsured.map((org) => <OrgCard key={org.id} org={org} />)}
 
       <SectionHeader
-        title="If you have insurance"
-        note="These usually require insurance and a specific diagnosis."
+        title={t('help.sectionWithInsurance')}
+        note={t('help.sectionWithInsuranceNote')}
       />
-      {withInsurance.map((org) => (
-        <OrgCard key={org.id} org={org} />
-      ))}
+      {withInsurance.map((org) => <OrgCard key={org.id} org={org} />)}
 
-      <Text style={styles.disclaimer}>
-        Verify contact details before calling — programs change. Not a medical or legal referral.
-      </Text>
+      <Text style={styles.disclaimer}>{t('help.disclaimer')}</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F7F9F8' },
+  scroll: { flex: 1, backgroundColor: colors.bg },
   content: { paddingBottom: 48 },
 
   header: {
-    backgroundColor: TINT,
-    paddingTop: 16,
+    backgroundColor: colors.primary,
+    paddingTop: spacing.lg,
     paddingBottom: 20,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.lg,
   },
-  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '700' },
-  headerSub: { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 4 },
+  headerTitle: { fontFamily: font.bold, color: '#fff', fontSize: 22 },
+  headerSub: { fontFamily: font.regular, color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
 
-  sectionHeader: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 6 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
-  sectionNote: { fontSize: 12, color: '#888', marginTop: 3, lineHeight: 16 },
+  sectionHeader: { paddingHorizontal: spacing.lg, paddingTop: 20, paddingBottom: 6 },
+  sectionTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text },
+  sectionNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, marginTop: 3, lineHeight: 16 },
 
   card: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
+    backgroundColor: colors.card,
+    marginHorizontal: spacing.lg,
     marginBottom: 10,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: 14,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    ...shadow,
   },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 6,
-  },
-  orgName: { flex: 1, fontSize: 15, fontWeight: '700', color: '#111', marginRight: 8 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
+  orgName: { fontFamily: font.semibold, flex: 1, fontSize: 15, color: colors.text, marginRight: 8 },
   badge: {
-    backgroundColor: '#E6F4EF',
+    backgroundColor: colors.tintMint,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     flexShrink: 0,
   },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#085041' },
-  whatItDoes: { fontSize: 13, color: '#333', lineHeight: 19, marginBottom: 6 },
-  whoQualifies: { fontSize: 12, color: '#777', lineHeight: 17, marginBottom: 12 },
-  whoLabel: { fontWeight: '600', color: '#555' },
+  badgeText: { fontFamily: font.semibold, fontSize: 11, color: colors.tintMintIcon },
+  whatItDoes: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 19, marginBottom: 6 },
+  whoQualifies: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 17, marginBottom: 12 },
+  whoLabel: { fontFamily: font.semibold, color: colors.textMuted },
 
   actionBtn: {
     alignSelf: 'flex-start',
-    backgroundColor: TINT,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
     paddingVertical: 7,
     paddingHorizontal: 16,
   },
-  actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  actionBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 13 },
 
   disclaimer: {
+    fontFamily: font.regular,
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
     textAlign: 'center',
     marginHorizontal: 24,
     marginTop: 12,
