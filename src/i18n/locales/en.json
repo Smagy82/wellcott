@@ -80,7 +80,9 @@
     "expensesSub": "Track what you paid",
     "signOut": "Sign out",
     "signingOut": "Signing out…",
-    "language": "Language"
+    "language": "Language",
+    "about": "About",
+    "aboutSub": "App info, checklist & legal"
   },
   "auth": {
     "appName": "ClinicFinder",
@@ -144,6 +146,25 @@
     "cat_meds": "meds",
     "cat_procedure": "procedure",
     "cat_other": "other"
+  },
+  "about": {
+    "emergencyTitle": "Not for emergencies",
+    "emergencyBody": "This app is not for medical emergencies. If this is an emergency, call 911 or go to the nearest emergency room.",
+    "appTitle": "About Wellcott",
+    "appDescription": "Wellcott helps you find community health centers across the U.S. that accept self-pay and sliding-scale patients — no insurance required.",
+    "bringTitle": "What to bring to your first visit",
+    "bringId": "Photo ID (any government-issued ID)",
+    "bringIncome": "Proof of income (recent pay stub or benefits letter) — needed for the lowest sliding-scale fee",
+    "bringAddress": "Proof of address (a utility bill or any mail)",
+    "bringMeds": "A list of medications you take",
+    "bringNote": "Without proof of income, a clinic may charge its standard rate until you can verify. If you don't have these, most clinics will still see you.",
+    "disclaimersTitle": "Important",
+    "disclaimer1": "Information is for reference only — not medical or legal advice.",
+    "disclaimer2": "Prices vary. Most clinics use a sliding scale based on income — always call ahead to confirm.",
+    "disclaimer3": "Federally funded health centers must see you regardless of insurance or ability to pay.",
+    "disclaimer4": "Prescription savings are provided via SingleCare and are not insurance. We may earn a referral fee.",
+    "contactTitle": "Questions?",
+    "privacyPolicy": "Privacy Policy"
   },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",

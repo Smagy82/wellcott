@@ -80,7 +80,9 @@
     "expensesSub": "Registre lo que pagó",
     "signOut": "Cerrar sesión",
     "signingOut": "Cerrando sesión…",
-    "language": "Idioma"
+    "language": "Idioma",
+    "about": "Acerca de",
+    "aboutSub": "Información, lista y términos legales"
   },
   "auth": {
     "appName": "ClinicFinder",
@@ -144,6 +146,25 @@
     "cat_meds": "medicamentos",
     "cat_procedure": "procedimiento",
     "cat_other": "otro"
+  },
+  "about": {
+    "emergencyTitle": "No es para emergencias",
+    "emergencyBody": "Esta aplicación no es para emergencias médicas. Si esto es una emergencia, llame al 911 o vaya a la sala de emergencias más cercana.",
+    "appTitle": "Sobre Wellcott",
+    "appDescription": "Wellcott le ayuda a encontrar centros de salud comunitarios en todo EE.UU. que aceptan pacientes de pago propio y con escala móvil — sin seguro requerido.",
+    "bringTitle": "Qué traer a su primera visita",
+    "bringId": "Identificación con foto (cualquier documento de identidad emitido por el gobierno)",
+    "bringIncome": "Comprobante de ingresos (recibo de pago reciente o carta de beneficios) — necesario para la tarifa más baja de escala móvil",
+    "bringAddress": "Comprobante de domicilio (recibo de servicios o cualquier correspondencia)",
+    "bringMeds": "Una lista de los medicamentos que toma",
+    "bringNote": "Sin comprobante de ingresos, la clínica puede cobrar su tarifa estándar hasta que pueda verificar. Si no tiene estos documentos, la mayoría de las clínicas igual lo atenderán.",
+    "disclaimersTitle": "Importante",
+    "disclaimer1": "La información es solo de referencia, no es asesoramiento médico ni legal.",
+    "disclaimer2": "Los precios varían. La mayoría de las clínicas usan una escala móvil según los ingresos — llame siempre antes para confirmar.",
+    "disclaimer3": "Los centros de salud financiados federalmente deben atenderle independientemente de su seguro o capacidad de pago.",
+    "disclaimer4": "Los ahorros en recetas se ofrecen a través de SingleCare y no son un seguro. Podemos recibir una comisión por referencia.",
+    "contactTitle": "¿Preguntas?",
+    "privacyPolicy": "Política de privacidad"
   },
   "prescriptions": {
     "bannerTitle": "Ahorre en recetas",
