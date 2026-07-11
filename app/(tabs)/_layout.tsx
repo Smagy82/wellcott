@@ -14,6 +14,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.card },
+        tabBarLabelStyle: { fontFamily: font.semibold, fontSize: 10 },
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.primary,
         headerTitleStyle: { fontFamily: font.semibold, color: colors.text, fontSize: 17 },

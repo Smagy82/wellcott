@@ -101,15 +101,16 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={navTheme}>
       <StatusBar style="dark" />
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="favorites" options={{ title: 'Saved clinics', ...headerStyle }} />
-        <Stack.Screen name="visits"    options={{ title: 'Visit history', ...headerStyle }} />
-        <Stack.Screen name="visit-add" options={{ title: 'Add visit', presentation: 'modal', ...headerStyle }} />
-        <Stack.Screen name="bills"     options={{ title: 'Expenses', ...headerStyle }} />
-        <Stack.Screen name="bill-add"  options={{ title: 'Add expense', presentation: 'modal', ...headerStyle }} />
-        <Stack.Screen name="modal"     options={{ presentation: 'modal' }} />
+      <Stack screenOptions={{ ...headerStyle }}>
+        <Stack.Screen name="(tabs)"      options={{ headerShown: false }} />
+        <Stack.Screen name="auth"        options={{ headerShown: false }} />
+        <Stack.Screen name="clinic/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="favorites"   options={{ title: 'Saved clinics' }} />
+        <Stack.Screen name="visits"      options={{ title: 'Visit history' }} />
+        <Stack.Screen name="visit-add"   options={{ title: 'Add visit', presentation: 'modal' }} />
+        <Stack.Screen name="bills"       options={{ title: 'Expenses' }} />
+        <Stack.Screen name="bill-add"    options={{ title: 'Add expense', presentation: 'modal' }} />
+        <Stack.Screen name="modal"       options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );
