@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Copy, Check, CaretRight } from 'phosphor-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Text } from '../src/components/Text';
 import { theme } from '../src/theme';
@@ -80,11 +80,9 @@ export default function GoodFaithEstimateScreen() {
               onPress={handleCopy}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={copied ? 'checkmark-outline' : 'copy-outline'}
-                size={15}
-                color={colors.tintBlueIcon}
-              />
+              {copied
+                ? <Check size={15} color={colors.tintBlueIcon} />
+                : <Copy size={15} color={colors.tintBlueIcon} />}
               <Text style={styles.copyBtnText}>
                 {copied ? t('gfe.script.copied') : t('gfe.script.copy')}
               </Text>
@@ -106,7 +104,7 @@ export default function GoodFaithEstimateScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.fqhcCtaText}>{t('gfe.fqhc.cta')}</Text>
-            <Ionicons name="chevron-forward" size={14} color={colors.tintPeachIcon} />
+            <CaretRight size={14} color={colors.tintPeachIcon} />
           </TouchableOpacity>
         </View>
 

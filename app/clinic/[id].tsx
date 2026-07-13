@@ -10,7 +10,7 @@ import {
 import { Text } from '../../src/components/Text';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Heart, ShareNetwork, CaretRight, Calculator, FileText, List } from 'phosphor-react-native';
 import { getDb } from '../../src/lib/database';
 import { getClinicById } from '../../src/lib/clinicSearch';
 import type { Clinic } from '../../src/types/clinic';
@@ -96,8 +96,8 @@ export default function ClinicDetailScreen() {
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons
-              name={fav ? 'heart' : 'heart-outline'}
+            <Heart
+              weight={fav ? 'fill' : 'regular'}
               size={26}
               color={fav ? colors.danger : 'rgba(255,255,255,0.75)'}
             />
@@ -138,12 +138,12 @@ export default function ClinicDetailScreen() {
           activeOpacity={0.8}
           onPress={() => router.push(`/sliding-scale?state=${clinic.state}`)}
         >
-          <Ionicons name="calculator-outline" size={22} color={colors.tintPeachIcon} />
+          <Calculator size={22} color={colors.tintPeachIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.ctaTitle}>{t('clinicDetail.estimatorTitle')}</Text>
             <Text style={styles.ctaSub}>{t('clinicDetail.estimatorSubtitle')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.tintPeachIcon} />
+          <CaretRight size={18} color={colors.tintPeachIcon} />
         </TouchableOpacity>
       )}
 
@@ -153,12 +153,12 @@ export default function ClinicDetailScreen() {
         activeOpacity={0.8}
         onPress={() => router.push('/good-faith-estimate')}
       >
-        <Ionicons name="document-text-outline" size={22} color={colors.tintMintIcon} />
+        <FileText size={22} color={colors.tintMintIcon} />
         <View style={{ flex: 1 }}>
           <Text style={styles.gfeCtaTitle}>{t('gfe.cta.title')}</Text>
           <Text style={styles.gfeCtaSub}>{t('gfe.cta.subtitle')}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.tintMintIcon} />
+        <CaretRight size={18} color={colors.tintMintIcon} />
       </TouchableOpacity>
 
       {/* First visit prep CTA */}
@@ -167,12 +167,12 @@ export default function ClinicDetailScreen() {
         activeOpacity={0.8}
         onPress={() => router.push(`/first-visit?clinicId=${encodeURIComponent(id ?? '')}`)}
       >
-        <Ionicons name="list-outline" size={22} color={colors.tintBlueIcon} />
+        <List size={22} color={colors.tintBlueIcon} />
         <View style={{ flex: 1 }}>
           <Text style={styles.prepCtaTitle}>{t('firstVisit.ctaTitle')}</Text>
           <Text style={styles.prepCtaSub}>{t('firstVisit.ctaSub')}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+        <CaretRight size={18} color={colors.tintBlueIcon} />
       </TouchableOpacity>
 
       {/* Info section */}
@@ -217,7 +217,7 @@ export default function ClinicDetailScreen() {
           <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.btn, styles.btnShare]} onPress={handleShare}>
-          <Ionicons name="share-outline" size={18} color={colors.primary} />
+          <ShareNetwork size={18} color={colors.primary} />
         </TouchableOpacity>
       </View>
 

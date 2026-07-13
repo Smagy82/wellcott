@@ -2,7 +2,7 @@ import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-n
 import { Text } from '../src/components/Text';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { CheckSquare, Square, WarningCircle, Calculator, CalendarBlank, Copy, Check, Phone, CaretRight } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { theme } from '../src/theme';
@@ -80,12 +80,9 @@ export default function FirstVisitScreen() {
                 activeOpacity={0.7}
                 onPress={() => toggle(id)}
               >
-                <Ionicons
-                  name={checked ? 'checkbox' : 'square-outline'}
-                  size={24}
-                  color={checked ? colors.primary : colors.textLight}
-                  style={styles.checkIcon}
-                />
+                {checked
+                  ? <CheckSquare size={24} color={colors.primary} style={styles.checkIcon} />
+                  : <Square size={24} color={colors.textLight} style={styles.checkIcon} />}
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.checkTitle, checked && styles.checkTitleDone]}>
                     {t(`firstVisit.item_${id}_title`)}
@@ -98,12 +95,7 @@ export default function FirstVisitScreen() {
         </View>
 
         <View style={styles.warningCard}>
-          <Ionicons
-            name="alert-circle-outline"
-            size={20}
-            color={colors.tintPeachIcon}
-            style={styles.warningIcon}
-          />
+          <WarningCircle size={20} color={colors.tintPeachIcon} style={styles.warningIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.warningTitle}>{t('firstVisit.incomeWarning_title')}</Text>
             <Text style={styles.warningBody}>{t('firstVisit.incomeWarning_body')}</Text>
@@ -115,12 +107,12 @@ export default function FirstVisitScreen() {
           activeOpacity={0.8}
           onPress={() => router.push('/sliding-scale')}
         >
-          <Ionicons name="calculator-outline" size={22} color={colors.tintBlueIcon} />
+          <Calculator size={22} color={colors.tintBlueIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.scaleTitle}>{t('firstVisit.scaleCta_title')}</Text>
             <Text style={styles.scaleSub}>{t('firstVisit.scaleCta_sub')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+          <CaretRight size={18} color={colors.tintBlueIcon} />
         </TouchableOpacity>
 
         <View style={styles.card}>
@@ -133,12 +125,9 @@ export default function FirstVisitScreen() {
               style={[styles.scriptBtn, styles.scriptBtnOutline]}
               onPress={handleCopy}
             >
-              <Ionicons
-                name={copied ? 'checkmark' : 'copy-outline'}
-                size={16}
-                color={colors.primary}
-                style={{ marginRight: 6 }}
-              />
+              {copied
+                ? <Check size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                : <Copy size={16} color={colors.primary} style={{ marginRight: 6 }} />}
               <Text style={styles.scriptBtnOutlineText}>
                 {copied ? t('firstVisit.script_copied') : t('firstVisit.script_copy')}
               </Text>
@@ -148,12 +137,7 @@ export default function FirstVisitScreen() {
                 style={[styles.scriptBtn, styles.scriptBtnFill]}
                 onPress={() => Linking.openURL(`tel:${clinic.phone}`)}
               >
-                <Ionicons
-                  name="call-outline"
-                  size={16}
-                  color="#fff"
-                  style={{ marginRight: 6 }}
-                />
+                <Phone size={16} color="#fff" style={{ marginRight: 6 }} />
                 <Text style={styles.scriptBtnFillText}>{t('firstVisit.script_call')}</Text>
               </TouchableOpacity>
             ) : null}
@@ -166,12 +150,12 @@ export default function FirstVisitScreen() {
             activeOpacity={0.8}
             onPress={() => router.push('/visit-add')}
           >
-            <Ionicons name="calendar-outline" size={22} color={colors.tintMintIcon} />
+            <CalendarBlank size={22} color={colors.tintMintIcon} />
             <View style={{ flex: 1 }}>
               <Text style={styles.historyTitle}>{t('firstVisit.historyEntry_title')}</Text>
               <Text style={styles.historySub}>{t('firstVisit.historyEntry_sub')}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.tintMintIcon} />
+            <CaretRight size={18} color={colors.tintMintIcon} />
           </TouchableOpacity>
         ) : null}
 

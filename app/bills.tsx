@@ -10,7 +10,7 @@ import { Text } from '../src/components/Text';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash, Receipt, Plus } from 'phosphor-react-native';
 import { useBills, parseCategories } from '../src/lib/useBills';
 import { getSignedUrl } from '../src/lib/uploadPhoto';
 import type { Bill } from '../src/lib/useBills';
@@ -68,7 +68,7 @@ function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
         {item.note ? <Text style={styles.note} numberOfLines={2}>{item.note}</Text> : null}
       </View>
       <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.deleteBtn}>
-        <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
+        <Trash size={20} color={colors.muted} />
       </TouchableOpacity>
     </View>
   );
@@ -100,14 +100,14 @@ export default function BillsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Ionicons name="receipt-outline" size={52} color={colors.textMuted} />
+            <Receipt size={52} color={colors.muted} />
             <Text style={styles.emptyTitle}>{t('bills.empty')}</Text>
             <Text style={styles.emptySub}>{t('bills.emptySub')}</Text>
           </View>
         }
       />
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/bill-add')} activeOpacity={0.85}>
-        <Ionicons name="add" size={28} color="#fff" />
+        <Plus size={28} color="#fff" />
       </TouchableOpacity>
     </View>
   );

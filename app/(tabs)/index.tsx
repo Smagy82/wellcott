@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Animated as RNAnimated,
   FlatList,
   Keyboard,
   Linking,
@@ -13,7 +14,24 @@ import { Text } from '../../src/components/Text';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import {
+  MagnifyingGlass,
+  MapPin,
+  Phone,
+  NavigationArrow,
+  ShareNetwork,
+  Heart,
+} from 'phosphor-react-native';
 import { shareClinic } from '../../src/lib/shareClinic';
 import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
@@ -27,114 +45,234 @@ const { colors, radius, font, shadow, spacing } = theme;
 
 const SHARE_GHOST_GUARD_MS = 1000;
 const RADII = [10, 25, 50] as const;
-type Radius = typeof RADII[number];
+type RadiusValue = typeof RADII[number];
 
-// ── Card ─────────────────────────────────────────────────────────────────────
+const HEADER_LARGE_H = 92;
+const COLLAPSE_AT = 44;
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+type ToastState = { visible: boolean; text: string; icon: 'phone' | 'directions' };
+
+function Toast({ state }: { state: ToastState }) {
+  const translateY = useSharedValue(14);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (state.visible) {
+      translateY.value = 14;
+      opacity.value = 0;
+      translateY.value = withSpring(0, { mass: 0.8, damping: 12, stiffness: 200 });
+      opacity.value = withTiming(1, { duration: 180 });
+    } else {
+      translateY.value = withTiming(14, { duration: 200 });
+      opacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [state.visible, state.text]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.toast, style]} pointerEvents="none">
+      {state.icon === 'phone'
+        ? <Phone weight="fill" size={14} color={colors.bannerAccent} />
+        : <NavigationArrow weight="fill" size={14} color={colors.bannerAccent} />}
+      <Text style={styles.toastText}>{state.text}</Text>
+    </Animated.View>
+  );
+}
+
+// ── Heart button ──────────────────────────────────────────────────────────────
+
+function HeartButton({
+  saved,
+  onToggle,
+}: {
+  saved: boolean;
+  onToggle: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const ringScale = useSharedValue(0.4);
+  const ringOpacity = useSharedValue(0);
+
+  const heartStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: ringScale.value }],
+    opacity: ringOpacity.value,
+  }));
+
+  const handlePress = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    scale.value = withSequence(
+      withSpring(0.3, { mass: 0.4, damping: 8, stiffness: 300 }),
+      withSpring(1.35, { mass: 0.4, damping: 8, stiffness: 300 }),
+      withSpring(0.9, { mass: 0.4, damping: 10, stiffness: 200 }),
+      withSpring(1, { mass: 0.6, damping: 12, stiffness: 180 }),
+    );
+    ringScale.value = withSequence(
+      withTiming(0.4, { duration: 0 }),
+      withSpring(2, { mass: 0.6, damping: 10, stiffness: 150 }),
+    );
+    ringOpacity.value = withSequence(
+      withTiming(1, { duration: 60 }),
+      withTiming(0, { duration: 500 }),
+    );
+    onToggle();
+  };
+
+  return (
+    <View style={styles.heartWrap}>
+      <Animated.View style={[styles.heartRing, ringStyle]} />
+      <Pressable onPress={handlePress} style={styles.heartBtn} hitSlop={8}>
+        <Animated.View style={heartStyle}>
+          <Heart
+            weight={saved ? 'fill' : 'regular'}
+            size={20}
+            color={saved ? colors.primary : colors.heartIdle}
+          />
+        </Animated.View>
+      </Pressable>
+    </View>
+  );
+}
+
+// ── Clinic Card ───────────────────────────────────────────────────────────────
 
 function ClinicCard({
   item,
+  saved,
+  onToggleSave,
   onShare,
   isShareGuarded,
+  onToast,
 }: {
   item: ClinicWithDistance;
+  saved: boolean;
+  onToggleSave: (id: string) => void;
   onShare: (item: ClinicWithDistance) => void;
   isShareGuarded: () => boolean;
+  onToast: (text: string, icon: 'phone' | 'directions') => void;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const cardScale = useSharedValue(1);
+  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
+
+  const handlePressIn = () => {
+    cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 });
+  };
+  const handlePressOut = () => {
+    cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 });
+  };
 
   const handleCall = () => {
-    if (item.phone) Linking.openURL(`tel:${item.phone}`);
+    if (item.phone) {
+      Linking.openURL(`tel:${item.phone}`);
+      onToast(`Calling ${item.name}…`, 'phone');
+    }
   };
 
   const handleDirections = () => {
     const q = encodeURIComponent(`${item.address}, ${item.city}, ${item.state} ${item.zip}`);
     Linking.openURL(`https://maps.google.com/?q=${q}`);
+    onToast('Opening directions…', 'directions');
   };
 
   const showDistance = Number.isFinite(item.distanceMiles);
 
   return (
     <Pressable
-      style={styles.card}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={() => { if (isShareGuarded()) return; router.push(`/clinic/${encodeURIComponent(item.id)}`); }}
     >
-      <View style={styles.cardHeader}>
+      <Animated.View style={[styles.card, cardStyle]}>
+        <HeartButton saved={saved} onToggle={() => onToggleSave(item.id)} />
+
         <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
-        {showDistance && (
-          <Text style={styles.distance}>{item.distanceMiles.toFixed(1)} mi</Text>
-        )}
-      </View>
 
-      <Text style={styles.address}>
-        {item.address}, {item.city}, {item.state} {item.zip}
-      </Text>
+        <View style={styles.addressRow}>
+          <MapPin size={13} weight="fill" color={colors.primary} />
+          <Text style={styles.address} numberOfLines={1}>
+            {item.address}, {item.city}, {item.state} {item.zip}
+          </Text>
+          {showDistance && (
+            <Text style={styles.distance}>{item.distanceMiles.toFixed(1)} mi</Text>
+          )}
+        </View>
 
-      <View style={styles.badges}>
-        {item.acceptsUninsured && (
-          <View style={[styles.badge, styles.badgeMint]}>
-            <Text style={[styles.badgeText, { color: colors.tintMintIcon }]}>{t('clinicList.acceptsUninsured')}</Text>
-          </View>
-        )}
-        {item.slidingScale && (
-          <View style={[styles.badge, styles.badgeBlue]}>
-            <Text style={[styles.badgeText, { color: colors.tintBlueIcon }]}>{t('clinicList.slidingScale')}</Text>
-          </View>
-        )}
-      </View>
+        <View style={styles.badges}>
+          {item.acceptsUninsured && (
+            <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
+              <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
+            </View>
+          )}
+          {item.slidingScale && (
+            <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
+              <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
+            </View>
+          )}
+        </View>
 
-      <View style={styles.actions}>
-        {item.phone ? (
+        <View style={styles.actions}>
+          {item.phone ? (
+            <TouchableOpacity
+              style={styles.btnCall}
+              onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
+              activeOpacity={0.82}
+            >
+              <Phone weight="fill" size={14} color="#fff" />
+              <Text style={styles.btnCallText}>{t('common.call')}</Text>
+            </TouchableOpacity>
+          ) : null}
           <TouchableOpacity
-            style={styles.btnFill}
-            onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
+            style={styles.btnDir}
+            onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
+            activeOpacity={0.82}
           >
-            <Text style={styles.btnFillText}>{t('common.call')}</Text>
+            <NavigationArrow size={14} color={colors.primaryDark} />
+            <Text style={styles.btnDirText}>{t('common.directions')}</Text>
           </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity
-          style={styles.btnOutline}
-          onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
-        >
-          <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.btnShare}
-          onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
-          accessibilityLabel={t('share.buttonA11y')}
-        >
-          <Ionicons name="share-outline" size={17} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.btnShare}
+            onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
+            accessibilityLabel={t('share.buttonA11y')}
+            activeOpacity={0.82}
+          >
+            <ShareNetwork size={17} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </Pressable>
   );
 }
 
-// ── Search + chips ────────────────────────────────────────────────────────────
+// ── Radius chips ──────────────────────────────────────────────────────────────
 
-function SearchBar({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-}) {
-  const { t } = useTranslation();
+function RadiusChip({ r, active, onPress }: { r: RadiusValue; active: boolean; onPress: () => void }) {
+  const scale = useSharedValue(1);
+  const chipStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  const handlePress = () => {
+    scale.value = withSpring(active ? 1 : 1.05, { mass: 0.5, damping: 10, stiffness: 250 }, () => {
+      if (!active) scale.value = withSpring(1, { mass: 0.5, damping: 12, stiffness: 200 });
+    });
+    onPress();
+  };
+
   return (
-    <TextInput
-      style={styles.searchInput}
-      value={value}
-      onChangeText={onChange}
-      placeholder={placeholder ?? t('clinicList.searchPlaceholder')}
-      placeholderTextColor={colors.textMuted}
-      clearButtonMode="while-editing"
-      returnKeyType="search"
-      autoCorrect={false}
-    />
+    <Pressable onPress={handlePress}>
+      <Animated.View style={[styles.chip, active && styles.chipActive, chipStyle]}>
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>{r} mi</Text>
+      </Animated.View>
+    </Pressable>
   );
 }
+
+// ── Suggestion list ───────────────────────────────────────────────────────────
 
 function SuggestionList({
   suggestions,
@@ -153,29 +291,10 @@ function SuggestionList({
           onPress={() => onSelect(s)}
           activeOpacity={0.7}
         >
-          <Ionicons name="location-outline" size={14} color={colors.primary} style={styles.suggestionIcon} />
+          <MapPin size={14} color={colors.primary} />
           <Text style={styles.suggestionText}>{s.city}, {s.state}</Text>
         </TouchableOpacity>
       ))}
-    </View>
-  );
-}
-
-function RadiusChips({ selected, onSelect }: { selected: Radius; onSelect: (r: Radius) => void }) {
-  return (
-    <View style={styles.chips}>
-      {RADII.map((r) => {
-        const active = r === selected;
-        return (
-          <TouchableOpacity
-            key={r}
-            style={[styles.chip, active && styles.chipActive]}
-            onPress={() => onSelect(r)}
-          >
-            <Text style={[styles.chipText, active && styles.chipTextActive]}>{r} mi</Text>
-          </TouchableOpacity>
-        );
-      })}
     </View>
   );
 }
@@ -184,13 +303,31 @@ function RadiusChips({ selected, onSelect }: { selected: Radius; onSelect: (r: R
 
 export default function ClinicsScreen() {
   const { t } = useTranslation();
-  const [radius, setRadius] = useState<Radius>(25);
+  const insets = useSafeAreaInsets();
+
+  const [radiusMi, setRadiusMi] = useState<RadiusValue>(25);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<ToastState>({ visible: false, text: '', icon: 'phone' });
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { clinics, status, retry } = useNearbyClinics(radius);
+  const { clinics, status, retry } = useNearbyClinics(radiusMi);
+
+  const scrollY = useRef(new RNAnimated.Value(0)).current;
+
+  const glassOpacity = scrollY.interpolate({
+    inputRange: [COLLAPSE_AT, COLLAPSE_AT + 20],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  const largeTitleOpacity = scrollY.interpolate({
+    inputRange: [0, COLLAPSE_AT],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   const runTextSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setTextResults([]); return; }
@@ -201,15 +338,10 @@ export default function ClinicsScreen() {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => {
-    runTextSearch(query);
-  }, [query, runTextSearch]);
+  useEffect(() => { runTextSearch(query); }, [query, runTextSearch]);
 
   useEffect(() => {
-    if (!showSuggestions || query.trim().length < 2) {
-      setCitySuggestions([]);
-      return;
-    }
+    if (!showSuggestions || query.trim().length < 2) { setCitySuggestions([]); return; }
     let cancelled = false;
     (async () => {
       try {
@@ -222,31 +354,31 @@ export default function ClinicsScreen() {
   }, [query, showSuggestions]);
 
   const shareJustClosedAt = useRef(0);
-
   const handleClinicShare = (clinic: ClinicWithDistance) => {
-    shareClinic(
-      clinic,
-      t,
-      () => { shareJustClosedAt.current = Date.now(); }, // метка ДО открытия sheet
-    ).then(() => { shareJustClosedAt.current = Date.now(); }); // метка после закрытия
+    shareClinic(clinic, t, () => { shareJustClosedAt.current = Date.now(); })
+      .then(() => { shareJustClosedAt.current = Date.now(); });
   };
-
   const isShareGuarded = () => Date.now() - shareJustClosedAt.current < SHARE_GHOST_GUARD_MS;
 
-  const handleQueryChange = (v: string) => {
-    setQuery(v);
-    setShowSuggestions(true);
-  };
-
+  const handleQueryChange = (v: string) => { setQuery(v); setShowSuggestions(true); };
   const handleSuggestionSelect = (s: CitySuggestion) => {
-    setQuery(s.city);
-    setShowSuggestions(false);
-    setCitySuggestions([]);
-    Keyboard.dismiss();
+    setQuery(s.city); setShowSuggestions(false); setCitySuggestions([]); Keyboard.dismiss();
   };
 
-  // Если есть поисковый запрос — показываем результаты по всей базе (без радиуса).
-  // Если пусто — показываем клиники в радиусе от геолокации.
+  const handleToggleSave = (id: string) => {
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const showToast = (text: string, icon: 'phone' | 'directions') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ visible: true, text, icon });
+    toastTimer.current = setTimeout(() => setToast((s) => ({ ...s, visible: false })), 1900);
+  };
+
   const filtered = useMemo(() => {
     if (query.trim()) return textResults;
     return clinics;
@@ -257,15 +389,19 @@ export default function ClinicsScreen() {
     retry();
   };
 
+  const BOTTOM_INSET = Math.max(insets.bottom, 16) + 10 + 58 + 12;
+
   if (status === 'no-permission') {
     const hasQuery = query.trim().length > 0;
     return (
       <View style={styles.flex}>
-        <View style={styles.listTop}>
-          <SearchBar
+        <View style={[styles.listTop, { paddingTop: insets.top + 12 }]}>
+          <TextInput
+            style={styles.searchInput}
             value={query}
-            onChange={handleQueryChange}
+            onChangeText={handleQueryChange}
             placeholder={t('clinicList.searchPlaceholderCity')}
+            placeholderTextColor={colors.muted}
           />
           <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
         </View>
@@ -273,11 +409,18 @@ export default function ClinicsScreen() {
           <FlatList
             data={textResults}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} />}
-            contentContainerStyle={styles.list}
-            ListEmptyComponent={
-              <Text style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</Text>
-            }
+            renderItem={({ item }) => (
+              <ClinicCard
+                item={item}
+                saved={savedIds.has(item.id)}
+                onToggleSave={handleToggleSave}
+                onShare={handleClinicShare}
+                isShareGuarded={isShareGuarded}
+                onToast={showToast}
+              />
+            )}
+            contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
+            ListEmptyComponent={<Text style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</Text>}
           />
         ) : (
           <View style={styles.center}>
@@ -314,36 +457,106 @@ export default function ClinicsScreen() {
 
   const isSearching = query.trim().length > 0;
 
-  const ListTop = (
-    <View style={styles.listTop}>
-      <SearchBar value={query} onChange={handleQueryChange} />
-      <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
-      <RadiusChips selected={radius} onSelect={(r) => { setRadius(r); setQuery(''); setShowSuggestions(false); }} />
-      {!isSearching && (
-        <Text style={styles.listHeader}>
-          {t('clinicList.clinicsNearby', { count: filtered.length, radius })}
-        </Text>
-      )}
-      <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
+  const ListHeader = (
+    <View style={{ paddingTop: insets.top + HEADER_LARGE_H + 8 }}>
+      <View style={styles.listTop}>
+        {/* Search bar */}
+        <View style={styles.searchWrap}>
+          <MagnifyingGlass size={16} color={colors.muted} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={handleQueryChange}
+            placeholder={t('clinicList.searchPlaceholder')}
+            placeholderTextColor={colors.muted}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
+            autoCorrect={false}
+          />
+        </View>
+        <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+
+        {/* Radius chips */}
+        <View style={styles.chips}>
+          {RADII.map((r) => (
+            <RadiusChip
+              key={r}
+              r={r}
+              active={r === radiusMi}
+              onPress={() => { setRadiusMi(r); setQuery(''); setShowSuggestions(false); }}
+            />
+          ))}
+        </View>
+
+        {!isSearching && (
+          <Text style={styles.listHeader}>
+            {t('clinicList.clinicsNearby', { count: filtered.length, radius: radiusMi })}
+          </Text>
+        )}
+        <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
+      </View>
     </View>
   );
 
   return (
-    <FlatList
-      data={filtered}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} />}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={ListTop}
-      keyboardShouldPersistTaps="handled"
-      ListEmptyComponent={
-        <Text style={styles.statusText}>
-          {isSearching
-            ? t('clinicList.noResultsForQuery', { query })
-            : t('clinicList.noClinicsInRadius', { radius })}
-        </Text>
-      }
-    />
+    <View style={styles.flex}>
+      {/* Scrollable list */}
+      <RNAnimated.FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ClinicCard
+            item={item}
+            saved={savedIds.has(item.id)}
+            onToggleSave={handleToggleSave}
+            onShare={handleClinicShare}
+            isShareGuarded={isShareGuarded}
+            onToast={showToast}
+          />
+        )}
+        contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
+        ListHeaderComponent={ListHeader}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <Text style={styles.statusText}>
+            {isSearching
+              ? t('clinicList.noResultsForQuery', { query })
+              : t('clinicList.noClinicsInRadius', { radius: radiusMi })}
+          </Text>
+        }
+        onScroll={RNAnimated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
+      />
+
+      {/* Collapsing large header (behind list, above status bar) */}
+      <RNAnimated.View
+        style={[styles.largeHeader, { paddingTop: insets.top + 12, opacity: largeTitleOpacity }]}
+        pointerEvents="none"
+      >
+        <Text style={styles.largeTitle}>{t('tabs.clinics')}</Text>
+        {clinics.length > 0 && (
+          <Text style={styles.largeSub}>{filtered.length} clinics near you</Text>
+        )}
+      </RNAnimated.View>
+
+      {/* Glass bar (fades in on scroll) */}
+      <RNAnimated.View
+        style={[styles.glassBar, { paddingTop: insets.top, opacity: glassOpacity }]}
+        pointerEvents="none"
+      >
+        <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={styles.glassHairline} />
+        <Text style={styles.glassTitle}>{t('tabs.clinics')}</Text>
+      </RNAnimated.View>
+
+      {/* Toast */}
+      <View style={[styles.toastAnchor, { bottom: BOTTOM_INSET + 8 }]} pointerEvents="none">
+        <Toast state={toast} />
+      </View>
+    </View>
   );
 }
 
@@ -353,45 +566,104 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
   permTitle: { fontFamily: font.bold, fontSize: 18, color: colors.text, marginBottom: 6 },
-  statusText: { fontFamily: font.regular, fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 18 },
+  statusText: { fontFamily: font.regular, fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 18 },
   primaryBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.pill,
-    paddingVertical: 11,
-    paddingHorizontal: 28,
-    marginTop: 4,
+    backgroundColor: colors.primary, borderRadius: radius.pill,
+    paddingVertical: 11, paddingHorizontal: 28, marginTop: 4,
   },
   primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
 
-  listTop: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xs },
-  searchInput: {
+  // Large collapsing header
+  largeHeader: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: HEADER_LARGE_H + 80,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'flex-start',
+    backgroundColor: colors.bg,
+    zIndex: 1,
+  },
+  largeTitle: {
+    fontFamily: font.bold,
+    fontSize: 32,
+    color: colors.text,
+    letterSpacing: -0.6,
+  },
+  largeSub: {
     fontFamily: font.regular,
+    fontSize: 14,
+    color: colors.muted,
+    marginTop: 3,
+  },
+
+  // Glass collapsed header
+  glassBar: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 92,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 12,
+    zIndex: 2,
+    overflow: 'hidden',
+  },
+  glassHairline: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(19,78,74,0.08)',
+  },
+  glassTitle: {
+    fontFamily: font.bold,
+    fontSize: 16,
+    color: colors.text,
+  },
+
+  listTop: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: colors.text,
+    paddingHorizontal: 12,
     marginBottom: 10,
     ...shadow,
   },
+  searchInput: {
+    flex: 1,
+    fontFamily: font.regular,
+    fontSize: 14,
+    color: colors.text,
+    paddingVertical: 10,
+  },
+
   chips: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   chip: {
     borderRadius: radius.pill,
-    paddingVertical: 5,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    paddingVertical: 7,
+    paddingHorizontal: 18,
     backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: 'rgba(19,78,74,0.12)',
+    ...shadow,
   },
-  chipActive: { backgroundColor: colors.primary },
-  chipText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: 'rgba(8,145,178,0.28)',
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  chipText: { fontFamily: font.bold, fontSize: 13, color: colors.primaryDark },
   chipTextActive: { color: '#fff' },
-  listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, marginBottom: 6, marginLeft: 2 },
 
-  list: { paddingHorizontal: spacing.lg, paddingBottom: 32 },
+  listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginBottom: 6, marginLeft: 2 },
+  list: { paddingHorizontal: spacing.lg },
+
+  // Card
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
@@ -399,41 +671,72 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     ...shadow,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
-  clinicName: { fontFamily: font.semibold, flex: 1, fontSize: 15, color: colors.text, marginRight: 8 },
-  distance: { fontFamily: font.semibold, fontSize: 13, color: colors.primary, flexShrink: 0 },
-  address: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, marginBottom: 8 },
+  clinicName: {
+    fontFamily: font.bold,
+    fontSize: 16,
+    color: colors.text,
+    paddingRight: 44,
+    marginBottom: 6,
+  },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+  address: { fontFamily: font.regular, fontSize: 13, color: colors.muted, flex: 1 },
+  distance: { fontFamily: font.bold, fontSize: 13, color: colors.primary, flexShrink: 0 },
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeMint: { backgroundColor: colors.tintMint },
-  badgeBlue: { backgroundColor: colors.tintBlue },
-  badgeText: { fontFamily: font.semibold, fontSize: 11 },
-  actions: { flexDirection: 'row', gap: 8 },
-  btnFill: {
+  badgeText: { fontFamily: font.bold, fontSize: 11 },
+
+  actions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  btnCall: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.primary,
     borderRadius: radius.sm,
-    paddingVertical: 7,
-    paddingHorizontal: 16,
+    paddingVertical: 7, paddingHorizontal: 16,
+    shadowColor: 'rgba(8,145,178,0.28)',
+    shadowOpacity: 1, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  btnFillText: { fontFamily: font.semibold, color: '#fff', fontSize: 13 },
-  btnOutline: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+  btnCallText: { fontFamily: font.bold, color: '#fff', fontSize: 13 },
+  btnDir: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: colors.bg,
     borderRadius: radius.sm,
-    paddingVertical: 7,
-    paddingHorizontal: 16,
+    paddingVertical: 7, paddingHorizontal: 14,
   },
-  btnOutlineText: { fontFamily: font.semibold, color: colors.primary, fontSize: 13 },
+  btnDirText: { fontFamily: font.bold, color: colors.primaryDark, fontSize: 13 },
   btnShare: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    backgroundColor: colors.bg,
     borderRadius: radius.sm,
     paddingVertical: 7,
-    width: 44,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
+    width: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
+  // Heart
+  heartWrap: {
+    position: 'absolute',
+    top: 12, right: 12,
+    width: 38, height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartBtn: {
+    width: 38, height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartRing: {
+    position: 'absolute',
+    width: 38, height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+
+  // Suggestions
   suggestions: {
     backgroundColor: colors.card,
     borderRadius: radius.md,
@@ -442,15 +745,23 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   suggestion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 14, paddingVertical: 11,
   },
   suggestionBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  suggestionIcon: { marginRight: 8 },
   suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
+
+  // Toast
+  toastAnchor: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  toast: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    backgroundColor: 'rgba(19,78,74,0.94)',
+    borderRadius: radius.pill,
+    paddingVertical: 9, paddingHorizontal: 18,
+    alignSelf: 'center',
+  },
+  toastText: { fontFamily: font.semibold, fontSize: 13, color: '#fff' },
 });

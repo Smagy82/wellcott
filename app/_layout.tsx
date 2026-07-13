@@ -1,12 +1,12 @@
-import '../src/i18n'; // initialise i18n before any render
+import '../src/i18n';
 
 import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
+  Figtree_400Regular,
+  Figtree_500Medium,
+  Figtree_600SemiBold,
+  Figtree_700Bold,
   useFonts,
-} from '@expo-google-fonts/poppins';
+} from '@expo-google-fonts/figtree';
 import { DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -18,13 +18,9 @@ import { useAuth } from '../src/lib/useAuth';
 import { initLanguage } from '../src/i18n';
 import { theme } from '../src/theme';
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
-export const unstable_settings = {
-  initialRouteName: '(tabs)',
-};
+export const unstable_settings = { initialRouteName: '(tabs)' };
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,36 +28,29 @@ const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: theme.colors.card,
-    card: theme.colors.card,
-    text: theme.colors.text,
-    primary: theme.colors.primary,
+    background: theme.colors.bg,
+    card:       theme.colors.card,
+    text:       theme.colors.text,
+    primary:    theme.colors.primary,
   },
 };
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
+    Figtree_400Regular,
+    Figtree_500Medium,
+    Figtree_600SemiBold,
+    Figtree_700Bold,
   });
   const [langReady, setLangReady] = useState(false);
 
-  useEffect(() => {
-    if (fontError) throw fontError;
-  }, [fontError]);
-
-  useEffect(() => {
-    initLanguage().then(() => setLangReady(true));
-  }, []);
-
+  useEffect(() => { if (fontError) throw fontError; }, [fontError]);
+  useEffect(() => { initLanguage().then(() => setLangReady(true)); }, []);
   useEffect(() => {
     if (fontsLoaded && langReady) SplashScreen.hideAsync();
   }, [fontsLoaded, langReady]);
 
   if (!fontsLoaded || !langReady) return null;
-
   return <RootLayoutNav />;
 }
 
@@ -84,11 +73,8 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
     const inAuth = segments[0] === 'auth';
-    if (!session && !inAuth) {
-      router.replace('/auth');
-    } else if (session && inAuth) {
-      router.replace('/(tabs)');
-    }
+    if (!session && !inAuth) router.replace('/auth');
+    else if (session && inAuth) router.replace('/(tabs)');
   }, [session, loading, segments]);
 
   if (loading) return null;
@@ -105,6 +91,7 @@ function RootLayoutNav() {
         <Stack.Screen name="visit-add"   options={{ title: 'Add visit', presentation: 'modal' }} />
         <Stack.Screen name="bills"       options={{ title: 'Expenses' }} />
         <Stack.Screen name="bill-add"    options={{ title: 'Add expense', presentation: 'modal' }} />
+        <Stack.Screen name="first-visit" options={{ title: 'First Visit Prep' }} />
         <Stack.Screen name="modal"       options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

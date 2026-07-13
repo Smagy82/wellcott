@@ -9,7 +9,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from '../src/components/Text';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Heart } from 'phosphor-react-native';
 import { useFavorites } from '../src/lib/useFavorites';
 import type { Favorite } from '../src/lib/useFavorites';
 import { theme } from '../src/theme';
@@ -30,7 +30,7 @@ export default function FavoritesScreen() {
   if (favorites.length === 0) {
     return (
       <View style={styles.center}>
-        <Ionicons name="heart-outline" size={52} color={colors.textMuted} />
+        <Heart size={52} color={colors.muted} />
         <Text style={styles.emptyTitle}>{t('favorites.empty')}</Text>
         <Text style={styles.emptySub}>{t('favorites.emptySub')}</Text>
       </View>
@@ -60,7 +60,7 @@ export default function FavoritesScreen() {
           reload();
         }}
       >
-        <Ionicons name="heart" size={22} color={colors.danger} />
+        <Heart weight="fill" size={22} color={colors.danger} />
       </TouchableOpacity>
     </TouchableOpacity>
   );

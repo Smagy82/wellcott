@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Calculator, FileText, CaretRight } from 'phosphor-react-native';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
@@ -57,25 +57,25 @@ export default function CostsScreen() {
         {/* Estimator entry */}
         <TouchableOpacity style={styles.estimatorCard} onPress={() => router.push('/sliding-scale')}>
           <View style={styles.estimatorIconBox}>
-            <Ionicons name="calculator-outline" size={22} color="#fff" />
+            <Calculator size={22} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.estimatorTitle}>{t('costs.estimatorEntry')}</Text>
             <Text style={styles.estimatorSub}>{t('costs.estimatorEntrySub')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+          <CaretRight size={18} color={colors.tintBlueIcon} />
         </TouchableOpacity>
 
         {/* GFE entry */}
         <TouchableOpacity style={styles.gfeCard} onPress={() => router.push('/good-faith-estimate')}>
           <View style={styles.gfeIconBox}>
-            <Ionicons name="document-text-outline" size={22} color="#fff" />
+            <FileText size={22} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.gfeTitle}>{t('gfe.entry.title')}</Text>
             <Text style={styles.gfeSub}>{t('gfe.entry.subtitle')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.tintLilacIcon} />
+          <CaretRight size={18} color={colors.tintLilacIcon} />
         </TouchableOpacity>
 
         {/* Cost cards */}

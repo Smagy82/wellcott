@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { CaretDown, CaretUp, WarningCircle } from 'phosphor-react-native';
 import { Text } from '../src/components/Text';
 import { getFpgPercent, getPayClass, FPG_YEAR } from '../src/lib/fpg';
 import { theme } from '../src/theme';
@@ -159,11 +159,9 @@ export default function SlidingScaleScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.accordionTitle}>{t('slidingScale.how.title')}</Text>
-            <Ionicons
-              name={howOpen ? 'chevron-up' : 'chevron-down'}
-              size={18}
-              color={colors.tintBlueIcon}
-            />
+            {howOpen
+              ? <CaretUp size={18} color={colors.tintBlueIcon} />
+              : <CaretDown size={18} color={colors.tintBlueIcon} />}
           </TouchableOpacity>
           {howOpen && (
             <View style={styles.accordionBody}>
@@ -241,7 +239,7 @@ export default function SlidingScaleScreen() {
             <Text style={[styles.stateTriggerText, !selectedState && styles.statePlaceholder]}>
               {selectedStateName ?? t('slidingScale.statePickerPlaceholder')}
             </Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+            <CaretDown size={16} color={colors.muted} />
           </TouchableOpacity>
 
         </View>
@@ -314,8 +312,7 @@ export default function SlidingScaleScreen() {
             </View>
           ))}
           <View style={styles.warningRow}>
-            <Ionicons
-              name="alert-circle-outline"
+            <WarningCircle
               size={18}
               color={colors.tintYellowIcon}
               style={{ marginRight: 8, marginTop: 1 }}

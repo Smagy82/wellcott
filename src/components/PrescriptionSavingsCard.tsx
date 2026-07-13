@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './Text';
-import { Ionicons } from '@expo/vector-icons';
+import { FirstAidKit, ArrowSquareOut } from 'phosphor-react-native';
 import { useTranslation } from 'react-i18next';
 import { openPrescriptionSavings } from '../config/partners';
 import { theme } from '../theme';
@@ -13,7 +13,7 @@ export function PrescriptionSavingsCard() {
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Ionicons name="medkit" size={22} color={colors.primary} style={{ marginRight: 8 }} />
+        <FirstAidKit size={22} color={colors.primary} style={{ marginRight: 8 }} />
         <Text style={styles.cardTitle}>{t('prescriptions.cardTitle')}</Text>
       </View>
 
@@ -23,7 +23,7 @@ export function PrescriptionSavingsCard() {
         style={({ pressed }) => [styles.btn, pressed && styles.btnPressed]}
         onPress={openPrescriptionSavings}
       >
-        <Ionicons name="open-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+        <ArrowSquareOut size={16} color="#fff" style={{ marginRight: 6 }} />
         <Text style={styles.btnText}>{t('prescriptions.cardButton')}</Text>
       </Pressable>
 

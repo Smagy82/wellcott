@@ -13,7 +13,7 @@ import { Text } from '../src/components/Text';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons';
+import { Check, CalendarBlank } from 'phosphor-react-native';
 import { useVisits } from '../src/lib/useVisits';
 import { useFavorites } from '../src/lib/useFavorites';
 import { theme } from '../src/theme';
@@ -104,7 +104,7 @@ export default function VisitAddScreen() {
                     <Text style={[styles.favName, selected && styles.favNameSelected]} numberOfLines={1}>
                       {fav.clinic_name}
                     </Text>
-                    {selected && <Ionicons name="checkmark" size={18} color={colors.primary} />}
+                    {selected && <Check size={18} color={colors.primary} />}
                   </TouchableOpacity>
                 );
               })}
@@ -125,7 +125,7 @@ export default function VisitAddScreen() {
 
         <Text style={styles.label}>{t('visitAdd.visitDate')}</Text>
         <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker(true)}>
-          <Ionicons name="calendar-outline" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+          <CalendarBlank size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={styles.dateBtnText}>{formatDisplay(date)}</Text>
         </TouchableOpacity>
         {showPicker && (

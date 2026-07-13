@@ -9,7 +9,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from '../src/components/Text';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Trash, Clock, Plus } from 'phosphor-react-native';
 import { useVisits } from '../src/lib/useVisits';
 import type { Visit } from '../src/lib/useVisits';
 import { theme } from '../src/theme';
@@ -52,7 +52,7 @@ export default function VisitsScreen() {
           onPress={() => deleteVisit(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={20} color={colors.textMuted} />
+          <Trash size={20} color={colors.muted} />
         </TouchableOpacity>
       </View>
     );
@@ -67,14 +67,14 @@ export default function VisitsScreen() {
         contentContainerStyle={[styles.list, visits.length === 0 && styles.listEmpty]}
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <Ionicons name="time-outline" size={52} color={colors.textMuted} />
+            <Clock size={52} color={colors.muted} />
             <Text style={styles.emptyTitle}>{t('visits.empty')}</Text>
             <Text style={styles.emptySub}>{t('visits.emptySub')}</Text>
           </View>
         }
       />
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/visit-add')} activeOpacity={0.85}>
-        <Ionicons name="add" size={28} color="#fff" />
+        <Plus size={28} color="#fff" />
       </TouchableOpacity>
     </View>
   );

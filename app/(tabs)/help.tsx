@@ -2,9 +2,9 @@ import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-n
 import { Text } from '../../src/components/Text';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { CurrencyDollar, CaretRight } from 'phosphor-react-native';
 import helpData from '../../assets/financial-help.json';
-import type { FinancialHelpOrg, FinancialHelpCategory } from '../../src/types/financialHelp';
+import type { FinancialHelpOrg } from '../../src/types/financialHelp';
 import { theme } from '../../src/theme';
 
 const { colors, radius, font, shadow, spacing } = theme;
@@ -23,7 +23,6 @@ function handleAction(org: FinancialHelpOrg) {
 
 function OrgCard({ org }: { org: FinancialHelpOrg }) {
   const { t } = useTranslation();
-
   const catKey = `help.cat_${org.category}` as const;
   const actionLabel = (): string => {
     if (org.actionType === 'call' && org.phone) return t('help.actionCall', { phone: org.phone });
@@ -43,7 +42,7 @@ function OrgCard({ org }: { org: FinancialHelpOrg }) {
         <Text style={styles.whoLabel}>{t('help.whoLabel')}</Text>
         {org.whoQualifies}
       </Text>
-      <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(org)}>
+      <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(org)} activeOpacity={0.82}>
         <Text style={styles.actionBtnText}>{actionLabel()}</Text>
       </TouchableOpacity>
     </View>
@@ -73,13 +72,13 @@ export default function HelpScreen() {
       {/* Costs entry */}
       <TouchableOpacity style={styles.costsEntry} onPress={() => router.push('/costs')} activeOpacity={0.75}>
         <View style={styles.costsIconBox}>
-          <Ionicons name="cash-outline" size={22} color={colors.tintYellowIcon} />
+          <CurrencyDollar weight="fill" size={22} color={colors.tintYellowIcon} />
         </View>
         <View style={styles.costsText}>
           <Text style={styles.costsTitle}>{t('costs.helpEntryTitle')}</Text>
           <Text style={styles.costsSub}>{t('costs.helpEntrySub')}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        <CaretRight size={18} color={colors.muted} />
       </TouchableOpacity>
 
       <SectionHeader title={t('help.sectionForYou')} />
@@ -98,11 +97,11 @@ export default function HelpScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingBottom: 48 },
+  content: { paddingBottom: 120 },
 
   header: {
     backgroundColor: colors.primary,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     paddingBottom: 20,
     paddingHorizontal: spacing.lg,
   },
@@ -111,29 +110,29 @@ const styles = StyleSheet.create({
 
   sectionHeader: { paddingHorizontal: spacing.lg, paddingTop: 20, paddingBottom: 6 },
   sectionTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text },
-  sectionNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, marginTop: 3, lineHeight: 16 },
+  sectionNote: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginTop: 3, lineHeight: 16 },
 
   card: {
     backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
     marginBottom: 10,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: 14,
     ...shadow,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
   orgName: { fontFamily: font.semibold, flex: 1, fontSize: 15, color: colors.text, marginRight: 8 },
   badge: {
-    backgroundColor: colors.tintMint,
+    backgroundColor: colors.tagGreenBg,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     flexShrink: 0,
   },
-  badgeText: { fontFamily: font.semibold, fontSize: 11, color: colors.tintMintIcon },
+  badgeText: { fontFamily: font.bold, fontSize: 11, color: colors.tagGreenText },
   whatItDoes: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 19, marginBottom: 6 },
-  whoQualifies: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 17, marginBottom: 12 },
-  whoLabel: { fontFamily: font.semibold, color: colors.textMuted },
+  whoQualifies: { fontFamily: font.regular, fontSize: 12, color: colors.muted, lineHeight: 17, marginBottom: 12 },
+  whoLabel: { fontFamily: font.semibold, color: colors.muted },
 
   actionBtn: {
     alignSelf: 'flex-start',
@@ -151,14 +150,13 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
     marginBottom: 4,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     gap: 12,
     ...shadow,
   },
   costsIconBox: {
-    width: 40,
-    height: 40,
+    width: 40, height: 40,
     borderRadius: 10,
     backgroundColor: colors.tintYellow,
     alignItems: 'center',
@@ -166,12 +164,12 @@ const styles = StyleSheet.create({
   },
   costsText: { flex: 1 },
   costsTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 2 },
-  costsSub:   { fontFamily: font.regular,  fontSize: 12, color: colors.textMuted },
+  costsSub:   { fontFamily: font.regular,  fontSize: 12, color: colors.muted },
 
   disclaimer: {
     fontFamily: font.regular,
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.muted,
     textAlign: 'center',
     marginHorizontal: 24,
     marginTop: 12,

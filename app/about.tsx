@@ -2,7 +2,7 @@ import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-n
 import { Text } from '../src/components/Text';
 import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import { Warning, List, CaretRight } from 'phosphor-react-native';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
@@ -21,7 +21,7 @@ export default function AboutScreen() {
         {/* Emergency block */}
         <View style={styles.emergencyCard}>
           <View style={styles.emergencyHeader}>
-            <Ionicons name="warning" size={22} color={colors.danger} style={{ marginRight: 8 }} />
+            <Warning size={22} color={colors.danger} style={{ marginRight: 8 }} />
             <Text style={styles.emergencyTitle}>{t('about.emergencyTitle')}</Text>
           </View>
           <Text style={styles.emergencyBody}>{t('about.emergencyBody')}</Text>
@@ -39,12 +39,12 @@ export default function AboutScreen() {
           activeOpacity={0.8}
           onPress={() => router.push('/first-visit')}
         >
-          <Ionicons name="list-outline" size={22} color={colors.tintBlueIcon} />
+          <List size={22} color={colors.tintBlueIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.prepTitle}>{t('firstVisit.aboutEntry_title')}</Text>
             <Text style={styles.prepSub}>{t('firstVisit.aboutEntry_sub')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+          <CaretRight size={18} color={colors.tintBlueIcon} />
         </TouchableOpacity>
 
         {/* Disclaimers */}

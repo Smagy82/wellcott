@@ -10,7 +10,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Text } from '../../src/components/Text';
 import { useTranslation } from 'react-i18next';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Heart,
+  Clock,
+  Receipt,
+  Translate,
+  ShareNetwork,
+  Info,
+  CaretRight,
+} from 'phosphor-react-native';
+import type { IconProps } from 'phosphor-react-native';
 import { supabase } from '../../src/lib/supabase';
 import { setLanguage, type AppLanguage } from '../../src/i18n/index';
 import { theme } from '../../src/theme';
@@ -37,25 +46,24 @@ function getDateLabel(): string {
 }
 
 type CardProps = {
-  iconName: keyof typeof Ionicons.glyphMap;
+  icon: React.ReactNode;
   iconBg: string;
-  iconColor: string;
   title: string;
   subtitle: string;
   onPress: () => void;
 };
 
-function MenuCard({ iconName, iconBg, iconColor, title, subtitle, onPress }: CardProps) {
+function MenuCard({ icon, iconBg, title, subtitle, onPress }: CardProps) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
       <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
-        <Ionicons name={iconName} size={24} color={iconColor} />
+        {icon}
       </View>
       <View style={styles.cardText}>
         <Text style={styles.cardTitle}>{title}</Text>
         <Text style={styles.cardSub}>{subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      <CaretRight size={18} color={colors.muted} />
     </TouchableOpacity>
   );
 }
@@ -107,25 +115,22 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <MenuCard
-          iconName="heart-outline"
+          icon={<Heart size={24} color={colors.tintYellowIcon} />}
           iconBg={colors.tintYellow}
-          iconColor={colors.tintYellowIcon}
           title={t('profile.savedClinics')}
           subtitle={t('profile.savedClinicsSub')}
           onPress={() => router.push('/favorites')}
         />
         <MenuCard
-          iconName="time-outline"
+          icon={<Clock size={24} color={colors.tintBlueIcon} />}
           iconBg={colors.tintBlue}
-          iconColor={colors.tintBlueIcon}
           title={t('profile.visitHistory')}
           subtitle={t('profile.visitHistorySub')}
           onPress={() => router.push('/visits')}
         />
         <MenuCard
-          iconName="receipt-outline"
+          icon={<Receipt size={24} color={colors.tintPeachIcon} />}
           iconBg={colors.tintPeach}
-          iconColor={colors.tintPeachIcon}
           title={t('profile.expenses')}
           subtitle={t('profile.expensesSub')}
           onPress={() => router.push('/bills')}
@@ -135,7 +140,7 @@ export default function ProfileScreen() {
       <View style={[styles.section, { marginTop: spacing.md }]}>
         <View style={styles.card}>
           <View style={[styles.iconBox, { backgroundColor: colors.tintLilac }]}>
-            <Ionicons name="language-outline" size={24} color={colors.tintLilacIcon} />
+            <Translate size={24} color={colors.tintLilacIcon} />
           </View>
           <Text style={[styles.cardTitle, { flex: 1 }]}>{t('profile.language')}</Text>
           <View style={styles.langChips}>
@@ -156,17 +161,15 @@ export default function ProfileScreen() {
           </View>
         </View>
         <MenuCard
-          iconName="share-social-outline"
+          icon={<ShareNetwork size={24} color={colors.tintBlueIcon} />}
           iconBg={colors.tintBlue}
-          iconColor={colors.tintBlueIcon}
           title={t('profile.shareApp')}
           subtitle={t('profile.shareAppSub')}
           onPress={handleShareApp}
         />
         <MenuCard
-          iconName="information-circle-outline"
+          icon={<Info size={24} color={colors.tintMintIcon} />}
           iconBg={colors.tintMint}
-          iconColor={colors.tintMintIcon}
           title={t('profile.about')}
           subtitle={t('profile.aboutSub')}
           onPress={() => router.push('/about')}
@@ -189,7 +192,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
-  content: { paddingBottom: 56 },
+  content: { paddingBottom: 120 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg },
 
   header: {
@@ -200,8 +203,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   avatar: {
-    width: 64,
-    height: 64,
+    width: 64, height: 64,
     borderRadius: radius.pill,
     backgroundColor: colors.primary,
     justifyContent: 'center',
@@ -210,9 +212,9 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontFamily: font.bold, color: '#fff', fontSize: 22 },
   headerInfo: { flex: 1 },
-  greeting: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, marginBottom: 2 },
+  greeting: { fontFamily: font.regular, fontSize: 13, color: colors.muted, marginBottom: 2 },
   name: { fontFamily: font.bold, fontSize: 22, color: colors.text, marginBottom: 2 },
-  dateLabel: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted },
+  dateLabel: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
 
   section: { paddingHorizontal: spacing.lg, gap: spacing.md },
 
@@ -225,8 +227,7 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   iconBox: {
-    width: 52,
-    height: 52,
+    width: 52, height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
@@ -234,7 +235,7 @@ const styles = StyleSheet.create({
   },
   cardText: { flex: 1 },
   cardTitle: { fontFamily: font.semibold, fontSize: 16, color: colors.text, marginBottom: 2 },
-  cardSub: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted },
+  cardSub: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
 
   signOutBtn: {
     marginHorizontal: spacing.lg,
@@ -258,6 +259,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   langChipActive: { borderColor: colors.primary, backgroundColor: colors.tintBlue },
-  langChipText: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted },
+  langChipText: { fontFamily: font.semibold, fontSize: 13, color: colors.muted },
   langChipTextActive: { color: colors.primary },
 });

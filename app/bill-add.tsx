@@ -15,7 +15,7 @@ import { Text } from '../src/components/Text';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
+import { Image as ImageIcon, Camera, XCircle, CalendarBlank } from 'phosphor-react-native';
 import { useBills } from '../src/lib/useBills';
 import { uploadBillPhoto } from '../src/lib/uploadPhoto';
 import { theme } from '../src/theme';
@@ -136,7 +136,7 @@ export default function BillAddScreen() {
 
         <Text style={styles.label}>{t('billAdd.date')}</Text>
         <TouchableOpacity style={styles.dateBtn} onPress={() => setShowPicker(true)}>
-          <Ionicons name="calendar-outline" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+          <CalendarBlank size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={styles.dateBtnText}>{formatDisplay(date)}</Text>
         </TouchableOpacity>
         {showPicker && (
@@ -164,17 +164,17 @@ export default function BillAddScreen() {
           <View style={styles.photoPreviewWrap}>
             <Image source={{ uri: photoUri }} style={styles.photoPreview} />
             <TouchableOpacity style={styles.removePhoto} onPress={() => setPhotoUri(null)}>
-              <Ionicons name="close-circle" size={24} color={colors.danger} />
+              <XCircle size={24} color={colors.danger} />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.photoButtons}>
             <TouchableOpacity style={styles.photoBtn} onPress={pickFromLibrary}>
-              <Ionicons name="image-outline" size={20} color={colors.primary} style={{ marginRight: 6 }} />
+              <ImageIcon size={20} color={colors.primary} style={{ marginRight: 6 }} />
               <Text style={styles.photoBtnText}>{t('billAdd.photoLibrary')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.photoBtn} onPress={takePhoto}>
-              <Ionicons name="camera-outline" size={20} color={colors.primary} style={{ marginRight: 6 }} />
+              <Camera size={20} color={colors.primary} style={{ marginRight: 6 }} />
               <Text style={styles.photoBtnText}>{t('billAdd.photoCamera')}</Text>
             </TouchableOpacity>
           </View>

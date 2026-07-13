@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
 import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { Ionicons } from '@expo/vector-icons';
+import { NavigationArrow } from 'phosphor-react-native';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { findAllClinicsForMap, type MapClinic } from '../../src/lib/clinicSearch';
 import { getDb } from '../../src/lib/database';
@@ -140,7 +140,7 @@ export default function MapScreen() {
         onPress={goToMyLocation}
         activeOpacity={0.85}
       >
-        <Ionicons name="navigate" size={22} color="#fff" />
+        <NavigationArrow weight="fill" size={22} color="#fff" />
       </TouchableOpacity>
     </View>
   );
