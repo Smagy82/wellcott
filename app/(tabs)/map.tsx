@@ -1,5 +1,6 @@
 import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../../src/components/Text';
+import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -110,6 +111,7 @@ export default function MapScreen() {
     : US_REGION;
 
   return (
+    <ScreenTransition>
     <View style={styles.container}>
       <MapView
         ref={mapRef}
@@ -143,6 +145,7 @@ export default function MapScreen() {
         <NavigationArrow weight="fill" size={22} color="#fff" />
       </TouchableOpacity>
     </View>
+    </ScreenTransition>
   );
 }
 

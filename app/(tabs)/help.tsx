@@ -1,5 +1,6 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../../src/components/Text';
+import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CurrencyDollar, CaretRight } from 'phosphor-react-native';
@@ -63,6 +64,7 @@ export default function HelpScreen() {
   const router = useRouter();
 
   return (
+    <ScreenTransition>
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t('help.title')}</Text>
@@ -92,6 +94,7 @@ export default function HelpScreen() {
 
       <Text style={styles.disclaimer}>{t('help.disclaimer')}</Text>
     </ScrollView>
+    </ScreenTransition>
   );
 }
 

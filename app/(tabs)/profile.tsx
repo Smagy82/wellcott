@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { Text } from '../../src/components/Text';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -101,6 +102,7 @@ export default function ProfileScreen() {
   }
 
   return (
+    <ScreenTransition>
     <ScrollView
       style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
@@ -190,6 +192,7 @@ export default function ProfileScreen() {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+    </ScreenTransition>
   );
 }
 

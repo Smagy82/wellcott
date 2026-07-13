@@ -46,6 +46,7 @@ import {
   toggleSaved,
   subscribe as subscribeSaved,
 } from '../../src/store/savedClinics';
+import { ScreenTransition } from '../../src/components/ScreenTransition';
 
 const { colors, radius, font, shadow, spacing } = theme;
 
@@ -515,6 +516,7 @@ export default function ClinicsScreen() {
   );
 
   return (
+    <ScreenTransition>
     <View style={styles.flex}>
       <RNAnimated.FlatList
         data={filtered}
@@ -564,6 +566,7 @@ export default function ClinicsScreen() {
         <Toast state={toast} />
       </View>
     </View>
+    </ScreenTransition>
   );
 }
 
