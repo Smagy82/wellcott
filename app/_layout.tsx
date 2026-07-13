@@ -14,14 +14,9 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { Text } from 'react-native';
 import { useAuth } from '../src/lib/useAuth';
 import { initLanguage } from '../src/i18n';
 import { theme } from '../src/theme';
-
-// Apply Poppins globally to all RN Text nodes
-if (!Text.defaultProps) (Text as any).defaultProps = {};
-(Text as any).defaultProps.style = { fontFamily: theme.font.regular };
 
 export {
   ErrorBoundary,

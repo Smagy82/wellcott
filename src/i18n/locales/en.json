@@ -48,7 +48,8 @@
     "cantAffordCareSub": "Ask their patient financial services, or get help finding assistance.",
     "disclaimer": "Prices and services vary — always call ahead. Information is for reference only.",
     "shareFooter": "Found on Wellcott — find affordable clinics: https://wellcott.app",
-    "estimatorLink": "Estimate my discount →"
+    "estimatorTitle": "Will I get a discount?",
+    "estimatorSubtitle": "Estimate your fee in 30 seconds"
   },
   "help": {
     "title": "Financial help",

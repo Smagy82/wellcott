@@ -48,7 +48,8 @@
     "cantAffordCareSub": "Pregunte por sus servicios financieros para pacientes, o reciba ayuda para encontrar asistencia.",
     "disclaimer": "Los precios y servicios varían — llame siempre antes. La información es solo de referencia.",
     "shareFooter": "",
-    "estimatorLink": ""
+    "estimatorTitle": "",
+    "estimatorSubtitle": ""
   },
   "help": {
     "title": "Ayuda financiera",

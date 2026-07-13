@@ -126,15 +126,23 @@ export default function ClinicDetailScreen() {
           {clinic.slidingScale && (
             <Text style={styles.badgeNote}>{t('clinicDetail.slidingScaleInfo')}</Text>
           )}
-          {clinic.slidingScale && (
-            <TouchableOpacity
-              style={styles.estimatorLink}
-              onPress={() => router.push(`/sliding-scale?state=${clinic.state}`)}
-            >
-              <Text style={styles.estimatorLinkText}>{t('clinicDetail.estimatorLink')}</Text>
-            </TouchableOpacity>
-          )}
         </View>
+      )}
+
+      {/* Estimator CTA */}
+      {clinic.slidingScale && (
+        <TouchableOpacity
+          style={styles.estimatorCard}
+          activeOpacity={0.8}
+          onPress={() => router.push(`/sliding-scale?state=${clinic.state}`)}
+        >
+          <Ionicons name="calculator-outline" size={22} color={colors.tintPeachIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.ctaTitle}>{t('clinicDetail.estimatorTitle')}</Text>
+            <Text style={styles.ctaSub}>{t('clinicDetail.estimatorSubtitle')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.tintPeachIcon} />
+        </TouchableOpacity>
       )}
 
       {/* Info section */}
@@ -229,8 +237,20 @@ const styles = StyleSheet.create({
   badgeBlue: { backgroundColor: colors.tintBlue },
   badgeText: { fontFamily: font.semibold, fontSize: 12 },
   badgeNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 18 },
-  estimatorLink: { marginTop: 8, alignSelf: 'flex-start' },
-  estimatorLinkText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary },
+
+  estimatorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintPeach,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  ctaTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintPeachIcon, marginBottom: 2 },
+  ctaSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 
   section: {
     backgroundColor: colors.card,
