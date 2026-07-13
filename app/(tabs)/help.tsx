@@ -1,5 +1,5 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Text } from '../../src/components/Text';
+import { AppText } from '../../src/components/AppText';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -34,18 +34,18 @@ function OrgCard({ org }: { org: FinancialHelpOrg }) {
   return (
     <View style={styles.card}>
       <View style={styles.cardTop}>
-        <Text style={styles.orgName}>{org.name}</Text>
+        <AppText variant="sectionHead" style={styles.orgName}>{org.name}</AppText>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{t(catKey)}</Text>
+          <AppText variant="chip" style={styles.badgeText}>{t(catKey)}</AppText>
         </View>
       </View>
-      <Text style={styles.whatItDoes}>{org.whatItDoes}</Text>
-      <Text style={styles.whoQualifies}>
-        <Text style={styles.whoLabel}>{t('help.whoLabel')}</Text>
+      <AppText variant="secondary" style={styles.whatItDoes}>{org.whatItDoes}</AppText>
+      <AppText variant="caption" style={styles.whoQualifies}>
+        <AppText variant="caption" style={styles.whoLabel}>{t('help.whoLabel')}</AppText>
         {org.whoQualifies}
-      </Text>
+      </AppText>
       <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(org)} activeOpacity={0.82}>
-        <Text style={styles.actionBtnText}>{actionLabel()}</Text>
+        <AppText variant="button" style={styles.actionBtnText}>{actionLabel()}</AppText>
       </TouchableOpacity>
     </View>
   );
@@ -54,8 +54,8 @@ function OrgCard({ org }: { org: FinancialHelpOrg }) {
 function SectionHeader({ title, note }: { title: string; note?: string }) {
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {note ? <Text style={styles.sectionNote}>{note}</Text> : null}
+      <AppText variant="cardTitle" style={styles.sectionTitle}>{title}</AppText>
+      {note ? <AppText variant="caption" style={styles.sectionNote}>{note}</AppText> : null}
     </View>
   );
 }
@@ -68,19 +68,20 @@ export default function HelpScreen() {
   return (
     <ScreenTransition>
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.headerTitle}>{t('help.title')}</Text>
-        <Text style={styles.headerSub}>{t('help.subtitle')}</Text>
+      {/* Header — matches Clinics tab pattern: bg #F0FDFA, dark title */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <AppText variant="largeTitle" style={styles.headerTitle}>{t('help.title')}</AppText>
+        <AppText variant="secondary" style={styles.headerSub}>{t('help.subtitle')}</AppText>
       </View>
 
-      {/* Costs entry */}
+      {/* Costs entry card */}
       <TouchableOpacity style={styles.costsEntry} onPress={() => router.push('/costs')} activeOpacity={0.75}>
         <View style={styles.costsIconBox}>
           <CurrencyDollar weight="fill" size={22} color={colors.tintBlueIcon} />
         </View>
         <View style={styles.costsText}>
-          <Text style={styles.costsTitle}>{t('costs.helpEntryTitle')}</Text>
-          <Text style={styles.costsSub}>{t('costs.helpEntrySub')}</Text>
+          <AppText variant="cardTitle" style={styles.costsTitle}>{t('costs.helpEntryTitle')}</AppText>
+          <AppText variant="caption" style={styles.costsSub}>{t('costs.helpEntrySub')}</AppText>
         </View>
         <CaretRight size={18} color={colors.muted} />
       </TouchableOpacity>
@@ -94,7 +95,7 @@ export default function HelpScreen() {
       />
       {withInsurance.map((org) => <OrgCard key={org.id} org={org} />)}
 
-      <Text style={styles.disclaimer}>{t('help.disclaimer')}</Text>
+      <AppText variant="caption" style={styles.disclaimer}>{t('help.disclaimer')}</AppText>
     </ScrollView>
     </ScreenTransition>
   );
@@ -104,17 +105,17 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
   content: { paddingBottom: 120 },
 
+  // Matches Clinics tab: bg #F0FDFA, dark title, no teal banner
   header: {
-    backgroundColor: colors.primary,
     paddingBottom: 20,
     paddingHorizontal: spacing.lg,
   },
-  headerTitle: { fontFamily: font.bold, color: '#fff', fontSize: 22 },
-  headerSub: { fontFamily: font.regular, color: 'rgba(255,255,255,0.85)', fontSize: 14, marginTop: 4 },
+  headerTitle: {},
+  headerSub: { marginTop: 4 },
 
   sectionHeader: { paddingHorizontal: spacing.lg, paddingTop: 20, paddingBottom: 6 },
-  sectionTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text },
-  sectionNote: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginTop: 3, lineHeight: 16 },
+  sectionTitle: {},
+  sectionNote: { marginTop: 3, lineHeight: 16 },
 
   card: {
     backgroundColor: colors.card,
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
-  orgName: { fontFamily: font.semibold, flex: 1, fontSize: 15, color: colors.text, marginRight: 8 },
+  orgName: { flex: 1, marginRight: 8 },
   badge: {
     backgroundColor: colors.tagGreenBg,
     borderRadius: 6,
@@ -133,10 +134,10 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     flexShrink: 0,
   },
-  badgeText: { fontFamily: font.bold, fontSize: 11, color: colors.tagGreenText },
-  whatItDoes: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 19, marginBottom: 6 },
-  whoQualifies: { fontFamily: font.regular, fontSize: 12, color: colors.muted, lineHeight: 17, marginBottom: 12 },
-  whoLabel: { fontFamily: font.semibold, color: colors.muted },
+  badgeText: { color: colors.tagGreenText },
+  whatItDoes: { color: colors.text, lineHeight: 19, marginBottom: 6 },
+  whoQualifies: { lineHeight: 17, marginBottom: 12 },
+  whoLabel: { fontFamily: font.semibold },
 
   actionBtn: {
     alignSelf: 'flex-start',
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 16,
   },
-  actionBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 13 },
+  actionBtnText: { color: '#fff' },
 
   costsEntry: {
     flexDirection: 'row',
@@ -167,13 +168,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   costsText: { flex: 1 },
-  costsTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 2 },
-  costsSub:   { fontFamily: font.regular,  fontSize: 12, color: colors.muted },
+  costsTitle: { marginBottom: 2 },
+  costsSub: {},
 
   disclaimer: {
-    fontFamily: font.regular,
-    fontSize: 11,
-    color: colors.muted,
     textAlign: 'center',
     marginHorizontal: 24,
     marginTop: 12,

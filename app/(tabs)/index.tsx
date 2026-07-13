@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { AppText } from '../../src/components/AppText';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,9 +42,9 @@ import { theme } from '../../src/theme';
 import { PrescriptionSavingsBanner } from '../../src/components/PrescriptionSavingsBanner';
 import {
   init as initSaved,
-  getSavedIds,
-  toggleSaved,
-  subscribe as subscribeSaved,
+  isSaved,
+  toggleSavedSync,
+  subscribeAny as subscribeSavedAny,
 } from '../../src/store/savedClinics';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
 
@@ -115,14 +115,12 @@ function HeartButton({
   const handlePress = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     scale.value = withSequence(
-      withSpring(0.3, { mass: 0.4, damping: 8, stiffness: 300 }),
-      withSpring(1.35, { mass: 0.4, damping: 8, stiffness: 300 }),
-      withSpring(0.9, { mass: 0.4, damping: 10, stiffness: 200 }),
-      withSpring(1, { mass: 0.6, damping: 12, stiffness: 180 }),
+      withSpring(1.3, { damping: 9, stiffness: 260 }),
+      withSpring(1),
     );
     ringScale.value = withSequence(
       withTiming(0.4, { duration: 0 }),
-      withSpring(2, { mass: 0.6, damping: 10, stiffness: 150 }),
+      withTiming(2, { duration: 500 }),
     );
     ringOpacity.value = withSequence(
       withTiming(1, { duration: 60 }),
@@ -149,26 +147,31 @@ function HeartButton({
 // Layout: left flex content + right fixed 44px column (heart spacer + distance).
 // Heart button is rendered as an ABSOLUTE SIBLING of the card Pressable so
 // touches on it never reach the card's navigation handler.
+// React.memo + per-card useSyncExternalStore: only the toggled card re-renders.
 
-function ClinicCard({
+const ClinicCard = memo(function ClinicCard({
   item,
-  saved,
   onShare,
   isShareGuarded,
   onToast,
-  onToggleSave,
 }: {
   item: ClinicWithDistance;
-  saved: boolean;
   onShare: (item: ClinicWithDistance) => void;
   isShareGuarded: () => boolean;
   onToast: (text: string, icon: 'phone' | 'directions') => void;
-  onToggleSave: () => void;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const cardScale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
+
+  // Per-card save state — only THIS card re-renders when its save status changes
+  const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id));
+
+  const handleToggleSave = () => {
+    const address = `${item.address}, ${item.city}, ${item.state} ${item.zip}`;
+    toggleSavedSync(item.id, { name: item.name, address });
+  };
 
   const handlePressIn = () => { cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 }); };
   const handlePressOut = () => { cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 }); };
@@ -253,11 +256,11 @@ function ClinicCard({
 
       {/* ── Heart — absolute sibling, aligned to cardRight column top ── */}
       <View style={styles.heartAnchor} pointerEvents="box-none">
-        <HeartButton saved={saved} onToggle={onToggleSave} />
+        <HeartButton saved={saved} onToggle={handleToggleSave} />
       </View>
     </View>
   );
-}
+});
 
 // ── Radius chips ──────────────────────────────────────────────────────────────
 
@@ -313,14 +316,10 @@ export default function ClinicsScreen() {
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(() => getSavedIds());
   const [toast, setToast] = useState<ToastState>({ visible: false, text: '', icon: 'phone' });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    initSaved().catch(() => {});
-    return subscribeSaved(setSavedIds);
-  }, []);
+  useEffect(() => { initSaved().catch(() => {}); }, []);
 
   const { clinics, status, retry } = useNearbyClinics(radiusMi);
   const scrollY = useRef(new RNAnimated.Value(0)).current;
@@ -374,16 +373,11 @@ export default function ClinicsScreen() {
     setQuery(s.city); setShowSuggestions(false); setCitySuggestions([]); Keyboard.dismiss();
   };
 
-  const handleToggleSave = (item: ClinicWithDistance) => {
-    const address = `${item.address}, ${item.city}, ${item.state} ${item.zip}`;
-    toggleSaved(item.id, { name: item.name, address }).catch(() => {});
-  };
-
-  const showToast = (text: string, icon: 'phone' | 'directions') => {
+  const showToast = useCallback((text: string, icon: 'phone' | 'directions') => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ visible: true, text, icon });
     toastTimer.current = setTimeout(() => setToast((s) => ({ ...s, visible: false })), 1900);
-  };
+  }, []);
 
   const filtered = useMemo(() => {
     if (query.trim()) return textResults;
@@ -422,8 +416,6 @@ export default function ClinicsScreen() {
             renderItem={({ item }) => (
               <ClinicCard
                 item={item}
-                saved={savedIds.has(item.id)}
-                onToggleSave={() => handleToggleSave(item)}
                 onShare={handleClinicShare}
                 isShareGuarded={isShareGuarded}
                 onToast={showToast}
@@ -525,8 +517,6 @@ export default function ClinicsScreen() {
         renderItem={({ item }) => (
           <ClinicCard
             item={item}
-            saved={savedIds.has(item.id)}
-            onToggleSave={() => handleToggleSave(item)}
             onShare={handleClinicShare}
             isShareGuarded={isShareGuarded}
             onToast={showToast}

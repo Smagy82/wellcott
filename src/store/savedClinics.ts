@@ -11,14 +11,17 @@ export type SavedClinic = {
 
 type Store = Record<string, SavedClinic>;
 type Listener = (ids: Set<string>) => void;
+type VoidListener = () => void;
 
 let cache: Store | null = null;
 const listeners = new Set<Listener>();
+const voidListeners = new Set<VoidListener>();
 
 function notify(): void {
   if (cache === null) return;
   const ids = new Set(Object.keys(cache));
   listeners.forEach((cb) => cb(ids));
+  voidListeners.forEach((cb) => cb());
 }
 
 async function load(): Promise<Store> {
@@ -82,4 +85,37 @@ export function subscribe(cb: Listener): () => void {
   listeners.add(cb);
   if (cache !== null) cb(new Set(Object.keys(cache)));
   return () => { listeners.delete(cb); };
+}
+
+// Void-listener subscribe for useSyncExternalStore per-card hooks
+export function subscribeAny(cb: VoidListener): () => void {
+  voidListeners.add(cb);
+  return () => { voidListeners.delete(cb); };
+}
+
+// Optimistic toggle: updates cache synchronously, writes to storage fire-and-forget.
+// Safe to call without await — UI snaps instantly.
+export function toggleSavedSync(
+  id: string,
+  meta?: { name?: string; address?: string | null },
+): void {
+  if (cache === null) {
+    // Store not loaded yet — fall back to async path
+    toggleSaved(id, meta).catch(() => {});
+    return;
+  }
+  const store = { ...cache };
+  if (id in store) {
+    delete store[id];
+  } else {
+    store[id] = {
+      id,
+      name: meta?.name ?? '',
+      address: meta?.address ?? null,
+      savedAt: new Date().toISOString(),
+    };
+  }
+  cache = store;
+  notify();
+  AsyncStorage.setItem(KEY, JSON.stringify(store)).catch(() => {});
 }

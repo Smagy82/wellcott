@@ -75,6 +75,7 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
+  const regionRef = useRef(US_REGION);
 
   const [allClinics, setAllClinics] = useState<MapClinic[]>([]);
 
@@ -99,12 +100,13 @@ export default function MapScreen() {
       const pos = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
+      const { latitudeDelta, longitudeDelta } = regionRef.current;
       mapRef.current.animateToRegion(
         {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
+          latitudeDelta,
+          longitudeDelta,
         },
         500,
       );
@@ -113,17 +115,19 @@ export default function MapScreen() {
     }
   };
 
-  const zoomBy = async (delta: number) => {
+  // Zoom by halving/doubling deltas — works with Apple Maps (PROVIDER_DEFAULT)
+  const zoomBy = (factor: number) => {
     if (!mapRef.current) return;
-    try {
-      const camera = await mapRef.current.getCamera();
-      mapRef.current.animateCamera(
-        { zoom: (camera.zoom ?? 10) + delta },
-        { duration: 300 },
-      );
-    } catch {
-      // camera API unavailable — silently ignore
-    }
+    const r = regionRef.current;
+    const clamp = (v: number) => Math.max(0.002, Math.min(60, v));
+    mapRef.current.animateToRegion(
+      {
+        ...r,
+        latitudeDelta: clamp(r.latitudeDelta * factor),
+        longitudeDelta: clamp(r.longitudeDelta * factor),
+      },
+      250,
+    );
   };
 
   if (status === 'loading') {
@@ -186,6 +190,7 @@ export default function MapScreen() {
         clusterTextColor="#ffffff"
         radius={50}
         animationEnabled={false}
+        onRegionChangeComplete={(r) => { regionRef.current = r; }}
       >
         {allClinics.map((c) => (
           <Marker
@@ -202,13 +207,13 @@ export default function MapScreen() {
 
       {/* Vertical map control stack */}
       <View style={[styles.ctrlStack, { bottom: stackBottom }]}>
-        <MapControlButton onPress={() => zoomBy(1)}>
+        <MapControlButton onPress={() => zoomBy(0.5)}>
           <Plus size={18} color="#134E4A" />
         </MapControlButton>
 
         <View style={styles.ctrlDivider} />
 
-        <MapControlButton onPress={() => zoomBy(-1)}>
+        <MapControlButton onPress={() => zoomBy(2)}>
           <Minus size={18} color="#134E4A" />
         </MapControlButton>
 

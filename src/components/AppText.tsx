@@ -39,7 +39,7 @@ type AppTextProps = RNTextProps & {
 export function AppText({ variant = 'body', style, ...props }: AppTextProps) {
   return (
     <RNText
-      maxFontSizeMultiplier={1.2}
+      maxFontSizeMultiplier={1.1}
       style={[VARIANT_STYLES[variant], style]}
       {...props}
     />
