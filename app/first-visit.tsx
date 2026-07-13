@@ -4,17 +4,21 @@ import { ScreenHeader } from '../src/components/ScreenHeader';
 import * as Haptics from 'expo-haptics';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { WarningCircle, Calculator, CalendarBlank, Copy, Check, Phone, CaretRight } from 'phosphor-react-native';
+import { WarningCircle, Calculator, CalendarBlank, Copy, Check, CheckFat, Phone, CaretRight } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { theme } from '../src/theme';
-import { useVisitPrep, PREP_ITEM_IDS } from '../src/lib/useVisitPrep';
+import { useVisitPrep } from '../src/lib/useVisitPrep';
 import { useAuth } from '../src/lib/useAuth';
 import { getDb } from '../src/lib/database';
 import { getClinicById } from '../src/lib/clinicSearch';
 import type { Clinic } from '../src/types/clinic';
 
 const { colors, font, radius, spacing, shadow } = theme;
+
+const GROUP_DISCOUNT = ['id', 'proofOfIncome', 'proofOfAddress'] as const;
+const GROUP_VISIT    = ['medications', 'allergies', 'payment'] as const;
+const TOTAL_ITEMS    = GROUP_DISCOUNT.length + GROUP_VISIT.length;
 
 export default function FirstVisitScreen() {
   const { t } = useTranslation();
@@ -26,6 +30,7 @@ export default function FirstVisitScreen() {
 
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [copied, setCopied] = useState(false);
+  const total = TOTAL_ITEMS;
 
   useEffect(() => {
     if (!clinicIdStr) return;
@@ -42,7 +47,8 @@ export default function FirstVisitScreen() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const total = PREP_ITEM_IDS.length;
+  const discountChecked = GROUP_DISCOUNT.filter(id => !!items[id]).length;
+  const visitChecked    = GROUP_VISIT.filter(id => !!items[id]).length;
 
   return (
     <>
@@ -69,31 +75,68 @@ export default function FirstVisitScreen() {
           </View>
         </View>
 
-        <View style={styles.card}>
-          {PREP_ITEM_IDS.map((id, i) => {
-            const checked = !!items[id];
-            return (
-              <TouchableOpacity
-                key={id}
-                style={[
-                  styles.checkRow,
-                  i < PREP_ITEM_IDS.length - 1 && styles.checkRowBorder,
-                ]}
-                activeOpacity={0.7}
-                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggle(id); }}
-              >
-                <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
-                  {checked && <Check size={14} weight="bold" color="#fff" />}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.checkTitle, checked && styles.checkTitleDone]}>
-                    {t(`firstVisit.item_${id}_title`)}
-                  </Text>
-                  <Text style={styles.checkSub}>{t(`firstVisit.item_${id}_sub`)}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+        {/* Section 1: documents needed for the sliding-scale discount */}
+        <View>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionLabel}>{t('firstVisit.group_discount')}</Text>
+            <Text style={styles.sectionCounter}>{discountChecked} / {GROUP_DISCOUNT.length}</Text>
+          </View>
+          <View style={styles.sectionCard}>
+            {GROUP_DISCOUNT.map((id, i) => {
+              const checked = !!items[id];
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[styles.checkRow, i < GROUP_DISCOUNT.length - 1 && styles.checkRowDivider]}
+                  activeOpacity={0.7}
+                  hitSlop={10}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggle(id); }}
+                >
+                  <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
+                    {checked && <CheckFat size={13} weight="fill" color="#fff" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.checkTitle, checked && styles.checkTitleDone]}>
+                      {t(`firstVisit.item_${id}_title`)}
+                    </Text>
+                    <Text style={styles.checkSub}>{t(`firstVisit.item_${id}_sub`)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Section 2: appointment essentials — marginTop: 2 yields 14px total gap from section 1 */}
+        <View style={{ marginTop: 2 }}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionLabel}>{t('firstVisit.group_visit')}</Text>
+            <Text style={styles.sectionCounter}>{visitChecked} / {GROUP_VISIT.length}</Text>
+          </View>
+          <View style={styles.sectionCard}>
+            {GROUP_VISIT.map((id, i) => {
+              const checked = !!items[id];
+              return (
+                <TouchableOpacity
+                  key={id}
+                  style={[styles.checkRow, i < GROUP_VISIT.length - 1 && styles.checkRowDivider]}
+                  activeOpacity={0.7}
+                  hitSlop={10}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggle(id); }}
+                >
+                  <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
+                    {checked && <CheckFat size={13} weight="fill" color="#fff" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.checkTitle, checked && styles.checkTitleDone]}>
+                      {t(`firstVisit.item_${id}_title`)}
+                    </Text>
+                    <Text style={styles.checkSub}>{t(`firstVisit.item_${id}_sub`)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.warningCard}>
@@ -217,22 +260,52 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
   },
 
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadow,
+  // Section header sits on the background, above the card
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 8,
   },
-  cardTitle: { fontFamily: font.bold, fontSize: 15, color: colors.text, marginBottom: 10 },
+  sectionLabel: {
+    fontFamily: font.bold,
+    fontSize: 12,
+    color: colors.tintBlueIcon,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  sectionCounter: {
+    fontFamily: font.semibold,
+    fontSize: 12,
+    color: colors.iconIdle,
+  },
 
-  checkRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10 },
-  checkRowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  // Per-section card
+  sectionCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    shadowColor: colors.text,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 12,
+  },
+  checkRowDivider: {
+    borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   checkBox: {
     width: 24, height: 24, borderRadius: 8,
-    borderWidth: 1.5, borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: colors.checkboxBorder,
     backgroundColor: colors.bg,
     alignItems: 'center', justifyContent: 'center',
     marginRight: 12, marginTop: 2, flexShrink: 0,
@@ -242,14 +315,28 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   checkTitle: {
-    fontFamily: font.semibold,
-    fontSize: 14,
+    fontFamily: font.bold,
+    fontSize: 15,
     color: colors.text,
-    lineHeight: 20,
+    lineHeight: 21,
     marginBottom: 2,
   },
-  checkTitleDone: { color: colors.textMuted, textDecorationLine: 'line-through' },
-  checkSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  checkTitleDone: { color: colors.iconIdle, textDecorationLine: 'line-through' },
+  checkSub: {
+    fontFamily: font.regular,
+    fontSize: 12.5,
+    color: colors.muted,
+    lineHeight: 18,
+  },
+
+  // Generic card (script section)
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadow,
+  },
+  cardTitle: { fontFamily: font.bold, fontSize: 15, color: colors.text, marginBottom: 10 },
 
   warningCard: {
     backgroundColor: colors.warningBg,

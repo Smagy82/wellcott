@@ -23,6 +23,7 @@ export const theme = {
     textMuted:     '#64748B',
     textLight:     '#8CA3A0',
     border:        'rgba(19,78,74,0.08)',
+    checkboxBorder:'rgba(19,78,74,0.15)',
     surfaceAlt:    '#E6FAF7',
     dangerBg:      '#FEF2F2',
     promoBg:       '#F0FDFA',
