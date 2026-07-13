@@ -2,11 +2,11 @@ import {
   ActivityIndicator,
   FlatList,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { Text } from '../src/components/Text';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';

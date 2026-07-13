@@ -2,12 +2,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useState } from 'react';
+import { Text } from '../src/components/Text';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../src/lib/supabase';
 import { theme } from '../src/theme';
