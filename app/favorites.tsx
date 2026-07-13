@@ -1,17 +1,21 @@
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Text } from '../src/components/Text';
-import { useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart } from 'phosphor-react-native';
-import { useFavorites } from '../src/lib/useFavorites';
-import type { Favorite } from '../src/lib/useFavorites';
+import {
+  init as initSaved,
+  getSaved,
+  toggleSaved,
+  subscribe as subscribeSaved,
+  type SavedClinic,
+} from '../src/store/savedClinics';
 import { theme } from '../src/theme';
 
 const { colors, radius, font, shadow } = theme;
@@ -19,15 +23,14 @@ const { colors, radius, font, shadow } = theme;
 export default function FavoritesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { favorites, loading, toggleFavorite, reload } = useFavorites();
+  const [clinics, setClinics] = useState<SavedClinic[]>([]);
 
-  useFocusEffect(useCallback(() => { reload(); }, [reload]));
+  useEffect(() => {
+    initSaved().then(() => getSaved().then(setClinics)).catch(() => {});
+    return subscribeSaved(() => { getSaved().then(setClinics).catch(() => {}); });
+  }, []);
 
-  if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;
-  }
-
-  if (favorites.length === 0) {
+  if (clinics.length === 0) {
     return (
       <View style={styles.center}>
         <Heart size={52} color={colors.muted} />
@@ -37,37 +40,30 @@ export default function FavoritesScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: Favorite }) => (
+  const renderItem = ({ item }: { item: SavedClinic }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => router.push(`/clinic/${encodeURIComponent(item.clinic_id)}`)}
+      onPress={() => router.push(`/clinic/${encodeURIComponent(item.id)}`)}
       activeOpacity={0.75}
     >
       <View style={styles.cardText}>
-        <Text style={styles.cardName}>{item.clinic_name}</Text>
-        {item.clinic_address ? (
-          <Text style={styles.cardAddress}>{item.clinic_address}</Text>
+        <Text style={styles.cardName}>{item.name}</Text>
+        {item.address ? (
+          <Text style={styles.cardAddress}>{item.address}</Text>
         ) : null}
       </View>
       <TouchableOpacity
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        onPress={async () => {
-          await toggleFavorite({
-            clinic_id: item.clinic_id,
-            clinic_name: item.clinic_name,
-            clinic_address: item.clinic_address,
-          });
-          reload();
-        }}
+        onPress={() => toggleSaved(item.id).catch(() => {})}
       >
-        <Heart weight="fill" size={22} color={colors.danger} />
+        <Heart weight="fill" size={22} color={colors.primary} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
   return (
     <FlatList
-      data={favorites}
+      data={clinics}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       contentContainerStyle={styles.list}
@@ -85,7 +81,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   emptyTitle: { fontFamily: font.bold, fontSize: 17, color: colors.text, marginTop: 14, marginBottom: 6 },
-  emptySub: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 19 },
+  emptySub: { fontFamily: font.regular, fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },
 
   list: { padding: 16, gap: 10 },
   card: {
@@ -98,5 +94,5 @@ const styles = StyleSheet.create({
   },
   cardText: { flex: 1, marginRight: 12 },
   cardName: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 3 },
-  cardAddress: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, lineHeight: 18 },
+  cardAddress: { fontFamily: font.regular, fontSize: 13, color: colors.muted, lineHeight: 18 },
 });

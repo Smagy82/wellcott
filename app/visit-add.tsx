@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text } from '../src/components/Text';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Check, CalendarBlank } from 'phosphor-react-native';
 import { useVisits } from '../src/lib/useVisits';
-import { useFavorites } from '../src/lib/useFavorites';
+import { getSaved, subscribe as subscribeSaved, type SavedClinic } from '../src/store/savedClinics';
 import { theme } from '../src/theme';
 
 const { colors, radius, font, shadow } = theme;
@@ -33,7 +33,9 @@ export default function VisitAddScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { addVisit } = useVisits();
-  const { favorites } = useFavorites();
+  const [favorites, setFavorites] = useState<SavedClinic[]>([]);
+
+  useEffect(() => { getSaved().then(setFavorites).catch(() => {}); return subscribeSaved(() => { getSaved().then(setFavorites).catch(() => {}); }); }, []);
 
   const [clinicSource, setClinicSource] = useState<ClinicSource>('none');
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
@@ -94,15 +96,15 @@ export default function VisitAddScreen() {
           ) : (
             <View style={styles.savedList}>
               {favorites.map((fav) => {
-                const selected = selectedClinicId === fav.clinic_id;
+                const selected = selectedClinicId === fav.id;
                 return (
                   <TouchableOpacity
                     key={fav.id}
                     style={[styles.favRow, selected && styles.favRowSelected]}
-                    onPress={() => { setSelectedClinicId(fav.clinic_id); setSelectedClinicName(fav.clinic_name); }}
+                    onPress={() => { setSelectedClinicId(fav.id); setSelectedClinicName(fav.name); }}
                   >
                     <Text style={[styles.favName, selected && styles.favNameSelected]} numberOfLines={1}>
-                      {fav.clinic_name}
+                      {fav.name}
                     </Text>
                     {selected && <Check size={18} color={colors.primary} />}
                   </TouchableOpacity>

@@ -14,7 +14,12 @@ import { Heart, ShareNetwork, CaretRight, Calculator, FileText, List } from 'pho
 import { getDb } from '../../src/lib/database';
 import { getClinicById } from '../../src/lib/clinicSearch';
 import type { Clinic } from '../../src/types/clinic';
-import { useFavorites } from '../../src/lib/useFavorites';
+import {
+  init as initSaved,
+  isSaved,
+  toggleSaved,
+  subscribe as subscribeSaved,
+} from '../../src/store/savedClinics';
 import { shareClinic } from '../../src/lib/shareClinic';
 import { theme } from '../../src/theme';
 import { PrescriptionSavingsCard } from '../../src/components/PrescriptionSavingsCard';
@@ -27,11 +32,12 @@ export default function ClinicDetailScreen() {
   const router = useRouter();
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(true);
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     (async () => {
       try {
+        await initSaved();
         const db = await getDb();
         const result = await getClinicById(db, decodeURIComponent(id ?? ''));
         setClinic(result);
@@ -39,6 +45,7 @@ export default function ClinicDetailScreen() {
         setLoading(false);
       }
     })();
+    return subscribeSaved(() => forceUpdate((n) => n + 1));
   }, [id]);
 
   if (loading) {
@@ -70,7 +77,7 @@ export default function ClinicDetailScreen() {
 
   const handleShare = () => shareClinic(clinic, t);
 
-  const fav = isFavorite(clinic.id);
+  const fav = isSaved(clinic.id);
 
   return (
     <>
@@ -87,12 +94,8 @@ export default function ClinicDetailScreen() {
           <TouchableOpacity
             style={styles.heartBtn}
             onPress={() => {
-              console.log('HEART pressed:', clinic.id, clinic.name);
-              toggleFavorite({
-                clinic_id: clinic.id,
-                clinic_name: clinic.name,
-                clinic_address: `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`,
-              });
+              const address = `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`;
+              toggleSaved(clinic.id, { name: clinic.name, address }).catch(() => {});
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >

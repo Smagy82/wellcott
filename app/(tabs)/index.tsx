@@ -40,6 +40,12 @@ import { getDb } from '../../src/lib/database';
 import type { ClinicWithDistance } from '../../src/types/clinic';
 import { theme } from '../../src/theme';
 import { PrescriptionSavingsBanner } from '../../src/components/PrescriptionSavingsBanner';
+import {
+  init as initSaved,
+  getSavedIds,
+  toggleSaved,
+  subscribe as subscribeSaved,
+} from '../../src/store/savedClinics';
 
 const { colors, radius, font, shadow, spacing } = theme;
 
@@ -86,11 +92,15 @@ function Toast({ state }: { state: ToastState }) {
 }
 
 // ── Heart button ──────────────────────────────────────────────────────────────
+// Rendered as a SIBLING above the card Pressable (not nested), so touches
+// never bubble to the card's navigation handler.
 
 function HeartButton({
+  clinicId,
   saved,
   onToggle,
 }: {
+  clinicId: string;
   saved: boolean;
   onToggle: () => void;
 }) {
@@ -124,37 +134,41 @@ function HeartButton({
   };
 
   return (
-    <View style={styles.heartWrap}>
+    <Pressable
+      style={styles.heartBtn}
+      onPress={handlePress}
+      hitSlop={8}
+    >
       <Animated.View style={[styles.heartRing, ringStyle]} />
-      <Pressable onPress={handlePress} style={styles.heartBtn} hitSlop={8}>
-        <Animated.View style={heartStyle}>
-          <Heart
-            weight={saved ? 'fill' : 'regular'}
-            size={20}
-            color={saved ? colors.primary : colors.heartIdle}
-          />
-        </Animated.View>
-      </Pressable>
-    </View>
+      <Animated.View style={heartStyle}>
+        <Heart
+          weight={saved ? 'fill' : 'regular'}
+          size={20}
+          color={saved ? colors.primary : colors.heartIdle}
+        />
+      </Animated.View>
+    </Pressable>
   );
 }
 
 // ── Clinic Card ───────────────────────────────────────────────────────────────
+// The card wraps both a tappable Pressable and the absolutely-positioned
+// HeartButton sibling so touches on the heart NEVER reach the card handler.
 
 function ClinicCard({
   item,
   saved,
-  onToggleSave,
   onShare,
   isShareGuarded,
   onToast,
+  onToggleSave,
 }: {
   item: ClinicWithDistance;
   saved: boolean;
-  onToggleSave: (id: string) => void;
   onShare: (item: ClinicWithDistance) => void;
   isShareGuarded: () => boolean;
   onToast: (text: string, icon: 'phone' | 'directions') => void;
+  onToggleSave: () => void;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -184,69 +198,76 @@ function ClinicCard({
   const showDistance = Number.isFinite(item.distanceMiles);
 
   return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={() => { if (isShareGuarded()) return; router.push(`/clinic/${encodeURIComponent(item.id)}`); }}
-    >
-      <Animated.View style={[styles.card, cardStyle]}>
-        <HeartButton saved={saved} onToggle={() => onToggleSave(item.id)} />
+    <View style={styles.cardWrap}>
+      {/* Tappable area — navigation only */}
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={() => { if (isShareGuarded()) return; router.push(`/clinic/${encodeURIComponent(item.id)}`); }}
+      >
+        <Animated.View style={[styles.card, cardStyle]}>
+          {/* Name — right-padding leaves room for heart */}
+          <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
 
-        <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
+          <View style={styles.addressRow}>
+            <MapPin size={13} weight="fill" color={colors.primary} />
+            <Text style={styles.address} numberOfLines={1}>
+              {item.address}, {item.city}, {item.state} {item.zip}
+            </Text>
+            {showDistance && (
+              <Text style={styles.distance}>{item.distanceMiles.toFixed(1)} mi</Text>
+            )}
+          </View>
 
-        <View style={styles.addressRow}>
-          <MapPin size={13} weight="fill" color={colors.primary} />
-          <Text style={styles.address} numberOfLines={1}>
-            {item.address}, {item.city}, {item.state} {item.zip}
-          </Text>
-          {showDistance && (
-            <Text style={styles.distance}>{item.distanceMiles.toFixed(1)} mi</Text>
-          )}
-        </View>
+          <View style={styles.badges}>
+            {item.acceptsUninsured && (
+              <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
+                <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
+              </View>
+            )}
+            {item.slidingScale && (
+              <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
+                <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
+              </View>
+            )}
+          </View>
 
-        <View style={styles.badges}>
-          {item.acceptsUninsured && (
-            <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
-              <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
-            </View>
-          )}
-          {item.slidingScale && (
-            <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
-              <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          {item.phone ? (
+          <View style={styles.actions}>
+            {item.phone ? (
+              <TouchableOpacity
+                style={styles.btnCall}
+                onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
+                activeOpacity={0.82}
+              >
+                <Phone weight="fill" size={14} color="#fff" />
+                <Text style={styles.btnCallText}>{t('common.call')}</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
-              style={styles.btnCall}
-              onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
+              style={styles.btnDir}
+              onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
               activeOpacity={0.82}
             >
-              <Phone weight="fill" size={14} color="#fff" />
-              <Text style={styles.btnCallText}>{t('common.call')}</Text>
+              <NavigationArrow size={14} color={colors.primaryDark} />
+              <Text style={styles.btnDirText}>{t('common.directions')}</Text>
             </TouchableOpacity>
-          ) : null}
-          <TouchableOpacity
-            style={styles.btnDir}
-            onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
-            activeOpacity={0.82}
-          >
-            <NavigationArrow size={14} color={colors.primaryDark} />
-            <Text style={styles.btnDirText}>{t('common.directions')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.btnShare}
-            onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
-            accessibilityLabel={t('share.buttonA11y')}
-            activeOpacity={0.82}
-          >
-            <ShareNetwork size={17} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </Pressable>
+            <TouchableOpacity
+              style={styles.btnShare}
+              onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
+              accessibilityLabel={t('share.buttonA11y')}
+              activeOpacity={0.82}
+            >
+              <ShareNetwork size={17} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </Pressable>
+
+      {/* Heart — absolute sibling, NOT nested inside card Pressable */}
+      <View style={styles.heartAnchor} pointerEvents="box-none">
+        <HeartButton clinicId={item.id} saved={saved} onToggle={onToggleSave} />
+      </View>
+    </View>
   );
 }
 
@@ -310,12 +331,17 @@ export default function ClinicsScreen() {
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => getSavedIds());
   const [toast, setToast] = useState<ToastState>({ visible: false, text: '', icon: 'phone' });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { clinics, status, retry } = useNearbyClinics(radiusMi);
+  // Bootstrap saved store + subscribe for live updates
+  useEffect(() => {
+    initSaved().catch(() => {});
+    return subscribeSaved(setSavedIds);
+  }, []);
 
+  const { clinics, status, retry } = useNearbyClinics(radiusMi);
   const scrollY = useRef(new RNAnimated.Value(0)).current;
 
   const glassOpacity = scrollY.interpolate({
@@ -365,12 +391,9 @@ export default function ClinicsScreen() {
     setQuery(s.city); setShowSuggestions(false); setCitySuggestions([]); Keyboard.dismiss();
   };
 
-  const handleToggleSave = (id: string) => {
-    setSavedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+  const handleToggleSave = (item: ClinicWithDistance) => {
+    const address = `${item.address}, ${item.city}, ${item.state} ${item.zip}`;
+    toggleSaved(item.id, { name: item.name, address }).catch(() => {});
   };
 
   const showToast = (text: string, icon: 'phone' | 'directions') => {
@@ -397,7 +420,7 @@ export default function ClinicsScreen() {
       <View style={styles.flex}>
         <View style={[styles.listTop, { paddingTop: insets.top + 12 }]}>
           <TextInput
-            style={styles.searchInput}
+            style={styles.searchInputStandalone}
             value={query}
             onChangeText={handleQueryChange}
             placeholder={t('clinicList.searchPlaceholderCity')}
@@ -413,7 +436,7 @@ export default function ClinicsScreen() {
               <ClinicCard
                 item={item}
                 saved={savedIds.has(item.id)}
-                onToggleSave={handleToggleSave}
+                onToggleSave={() => handleToggleSave(item)}
                 onShare={handleClinicShare}
                 isShareGuarded={isShareGuarded}
                 onToast={showToast}
@@ -460,7 +483,6 @@ export default function ClinicsScreen() {
   const ListHeader = (
     <View style={{ paddingTop: insets.top + HEADER_LARGE_H + 8 }}>
       <View style={styles.listTop}>
-        {/* Search bar */}
         <View style={styles.searchWrap}>
           <MagnifyingGlass size={16} color={colors.muted} style={{ marginRight: 8 }} />
           <TextInput
@@ -476,7 +498,6 @@ export default function ClinicsScreen() {
         </View>
         <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
 
-        {/* Radius chips */}
         <View style={styles.chips}>
           {RADII.map((r) => (
             <RadiusChip
@@ -500,7 +521,6 @@ export default function ClinicsScreen() {
 
   return (
     <View style={styles.flex}>
-      {/* Scrollable list */}
       <RNAnimated.FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -508,7 +528,7 @@ export default function ClinicsScreen() {
           <ClinicCard
             item={item}
             saved={savedIds.has(item.id)}
-            onToggleSave={handleToggleSave}
+            onToggleSave={() => handleToggleSave(item)}
             onShare={handleClinicShare}
             isShareGuarded={isShareGuarded}
             onToast={showToast}
@@ -531,7 +551,7 @@ export default function ClinicsScreen() {
         scrollEventThrottle={16}
       />
 
-      {/* Collapsing large header (behind list, above status bar) */}
+      {/* Collapsing large header */}
       <RNAnimated.View
         style={[styles.largeHeader, { paddingTop: insets.top + 12, opacity: largeTitleOpacity }]}
         pointerEvents="none"
@@ -542,7 +562,7 @@ export default function ClinicsScreen() {
         )}
       </RNAnimated.View>
 
-      {/* Glass bar (fades in on scroll) */}
+      {/* Glass collapsed header */}
       <RNAnimated.View
         style={[styles.glassBar, { paddingTop: insets.top, opacity: glassOpacity }]}
         pointerEvents="none"
@@ -552,7 +572,6 @@ export default function ClinicsScreen() {
         <Text style={styles.glassTitle}>{t('tabs.clinics')}</Text>
       </RNAnimated.View>
 
-      {/* Toast */}
       <View style={[styles.toastAnchor, { bottom: BOTTOM_INSET + 8 }]} pointerEvents="none">
         <Toast state={toast} />
       </View>
@@ -573,89 +592,55 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
 
-  // Large collapsing header
   largeHeader: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
+    position: 'absolute', top: 0, left: 0, right: 0,
     height: HEADER_LARGE_H + 80,
     paddingHorizontal: spacing.lg,
-    justifyContent: 'flex-start',
     backgroundColor: colors.bg,
     zIndex: 1,
   },
-  largeTitle: {
-    fontFamily: font.bold,
-    fontSize: 32,
-    color: colors.text,
-    letterSpacing: -0.6,
-  },
-  largeSub: {
-    fontFamily: font.regular,
-    fontSize: 14,
-    color: colors.muted,
-    marginTop: 3,
-  },
+  largeTitle: { fontFamily: font.bold, fontSize: 32, color: colors.text, letterSpacing: -0.6 },
+  largeSub: { fontFamily: font.regular, fontSize: 14, color: colors.muted, marginTop: 3 },
 
-  // Glass collapsed header
   glassBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: 92,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: 12,
-    zIndex: 2,
-    overflow: 'hidden',
+    position: 'absolute', top: 0, left: 0, right: 0, height: 92,
+    alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12,
+    zIndex: 2, overflow: 'hidden',
   },
   glassHairline: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(19,78,74,0.08)',
   },
-  glassTitle: {
-    fontFamily: font.bold,
-    fontSize: 16,
-    color: colors.text,
-  },
+  glassTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text },
 
   listTop: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 12,
-    marginBottom: 10,
-    ...shadow,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.card, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 12, marginBottom: 10, ...shadow,
   },
   searchInput: {
-    flex: 1,
-    fontFamily: font.regular,
-    fontSize: 14,
-    color: colors.text,
-    paddingVertical: 10,
+    flex: 1, fontFamily: font.regular, fontSize: 14,
+    color: colors.text, paddingVertical: 10,
+  },
+  searchInputStandalone: {
+    fontFamily: font.regular, backgroundColor: colors.card,
+    borderRadius: radius.md, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14,
+    color: colors.text, marginBottom: 10, ...shadow,
   },
 
   chips: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   chip: {
-    borderRadius: radius.pill,
-    paddingVertical: 7,
-    paddingHorizontal: 18,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: 'rgba(19,78,74,0.12)',
-    ...shadow,
+    borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 18,
+    backgroundColor: colors.card, borderWidth: 1.5,
+    borderColor: 'rgba(19,78,74,0.12)', ...shadow,
   },
   chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-    shadowColor: 'rgba(8,145,178,0.28)',
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 4,
+    backgroundColor: colors.primary, borderColor: colors.primary,
+    shadowColor: 'rgba(8,145,178,0.28)', shadowOpacity: 1, shadowRadius: 8, elevation: 4,
   },
   chipText: { fontFamily: font.bold, fontSize: 13, color: colors.primaryDark },
   chipTextActive: { color: '#fff' },
@@ -663,20 +648,15 @@ const styles = StyleSheet.create({
   listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginBottom: 6, marginLeft: 2 },
   list: { paddingHorizontal: spacing.lg },
 
-  // Card
+  // Card wrapper — positions heart as absolute sibling
+  cardWrap: { marginBottom: 10 },
+
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: 14,
-    marginBottom: 10,
-    ...shadow,
+    backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, ...shadow,
   },
   clinicName: {
-    fontFamily: font.bold,
-    fontSize: 16,
-    color: colors.text,
-    paddingRight: 44,
-    marginBottom: 6,
+    fontFamily: font.bold, fontSize: 16, color: colors.text,
+    paddingRight: 44, marginBottom: 6,
   },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
   address: { fontFamily: font.regular, fontSize: 13, color: colors.muted, flex: 1 },
@@ -684,84 +664,61 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontFamily: font.bold, fontSize: 11 },
-
   actions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btnCall: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: colors.primary,
-    borderRadius: radius.sm,
+    backgroundColor: colors.primary, borderRadius: radius.sm,
     paddingVertical: 7, paddingHorizontal: 16,
-    shadowColor: 'rgba(8,145,178,0.28)',
-    shadowOpacity: 1, shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    shadowColor: 'rgba(8,145,178,0.28)', shadowOpacity: 1, shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 }, elevation: 4,
   },
   btnCallText: { fontFamily: font.bold, color: '#fff', fontSize: 13 },
   btnDir: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: colors.bg,
-    borderRadius: radius.sm,
+    backgroundColor: colors.bg, borderRadius: radius.sm,
     paddingVertical: 7, paddingHorizontal: 14,
   },
   btnDirText: { fontFamily: font.bold, color: colors.primaryDark, fontSize: 13 },
   btnShare: {
-    backgroundColor: colors.bg,
-    borderRadius: radius.sm,
-    paddingVertical: 7,
-    width: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.bg, borderRadius: radius.sm,
+    paddingVertical: 7, width: 38, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Heart
-  heartWrap: {
-    position: 'absolute',
-    top: 12, right: 12,
-    width: 38, height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // Heart button — absolute above card (zIndex via rendering order as sibling)
+  heartAnchor: {
+    position: 'absolute', top: 12, right: 12,
+    width: 44, height: 44,
+    alignItems: 'center', justifyContent: 'center',
   },
   heartBtn: {
-    width: 38, height: 38,
-    borderRadius: 19,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: colors.bg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   heartRing: {
     position: 'absolute',
-    width: 38, height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
-    borderColor: colors.primary,
+    width: 38, height: 38, borderRadius: 19,
+    borderWidth: 2, borderColor: colors.primary,
   },
 
-  // Suggestions
   suggestions: {
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    marginBottom: 8,
-    overflow: 'hidden',
-    ...shadow,
+    backgroundColor: colors.card, borderRadius: radius.md, marginBottom: 8,
+    overflow: 'hidden', ...shadow,
   },
   suggestion: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 14, paddingVertical: 11,
   },
   suggestionBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
   },
   suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
 
-  // Toast
   toastAnchor: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   toast: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
-    backgroundColor: 'rgba(19,78,74,0.94)',
-    borderRadius: radius.pill,
-    paddingVertical: 9, paddingHorizontal: 18,
-    alignSelf: 'center',
+    backgroundColor: 'rgba(19,78,74,0.94)', borderRadius: radius.pill,
+    paddingVertical: 9, paddingHorizontal: 18, alignSelf: 'center',
   },
   toastText: { fontFamily: font.semibold, fontSize: 13, color: '#fff' },
 });
