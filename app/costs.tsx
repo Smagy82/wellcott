@@ -1,6 +1,7 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
@@ -39,6 +40,7 @@ const COST_ITEMS: CostItem[] = [
 
 export default function CostsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <>
@@ -50,6 +52,18 @@ export default function CostsScreen() {
           <Text style={styles.screenTitle}>{t('costs.title')}</Text>
           <Text style={styles.subtitle}>{t('costs.subtitle')}</Text>
         </View>
+
+        {/* Estimator entry */}
+        <TouchableOpacity style={styles.estimatorCard} onPress={() => router.push('/sliding-scale')}>
+          <View style={styles.estimatorIconBox}>
+            <Ionicons name="calculator-outline" size={22} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.estimatorTitle}>{t('costs.estimatorEntry')}</Text>
+            <Text style={styles.estimatorSub}>{t('costs.estimatorEntrySub')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+        </TouchableOpacity>
 
         {/* Cost cards */}
         {COST_ITEMS.map((item) => (
@@ -152,4 +166,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     marginTop: 4,
   },
+
+  estimatorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  estimatorIconBox: {
+    width: 44, height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  estimatorTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintBlueIcon, marginBottom: 2 },
+  estimatorSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 });

@@ -47,7 +47,8 @@
     "cantAffordCare": "Can't afford care?",
     "cantAffordCareSub": "Ask their patient financial services, or get help finding assistance.",
     "disclaimer": "Prices and services vary — always call ahead. Information is for reference only.",
-    "shareFooter": "Found on Wellcott — find affordable clinics: https://wellcott.app"
+    "shareFooter": "Found on Wellcott — find affordable clinics: https://wellcott.app",
+    "estimatorLink": "Estimate my discount →"
   },
   "help": {
     "title": "Financial help",
@@ -152,6 +153,36 @@
     "cat_procedure": "procedure",
     "cat_other": "other"
   },
+  "slidingScale": {
+    "navTitle": "Sliding Scale Estimator",
+    "householdSize": "Household size",
+    "annualIncome": "Annual household income",
+    "incomeYear": "Year",
+    "incomeMonth": "Month",
+    "incomePlaceholder": "0",
+    "statePicker": "State",
+    "statePickerPlaceholder": "Select your state",
+    "statePickerSearch": "Search states…",
+    "statePickerDone": "Done",
+    "resultPct": "Your income is ~{{pct}}% of the Federal Poverty Guideline",
+    "resultBadgeFull": "Full Discount (0–100% FPG)",
+    "resultBadgeTier1": "Tier 1 (101–125% FPG)",
+    "resultBadgeTier2": "Tier 2 (126–150% FPG)",
+    "resultBadgeTier3": "Tier 3 (151–175% FPG)",
+    "resultBadgeTier4": "Tier 4 (176–200% FPG)",
+    "resultBadgeNone": "Above 200% FPG",
+    "resultClassLine": "At most health centers you'd fall in the {{range}} pay class.",
+    "scaleMin": "0%",
+    "scaleMid": "100% FPG",
+    "scaleMax": "200%+",
+    "noDiscountNote": "No sliding-scale discount likely — but a health center still cannot deny you care because of inability to pay.",
+    "noDiscountLink": "Compare self-pay costs →",
+    "disclaimerEstimate": "Estimate only. Each clinic sets its own fee schedule — call to confirm.",
+    "disclaimerIncome": "Bring proof of income (pay stub or tax return). Without it, you'll likely be charged the full rate.",
+    "disclaimerIncomeLink": "See checklist: what to bring →",
+    "disclaimerAssets": "Only income and household size count. Savings, a car, or owning a home do not.",
+    "footer": "Based on {{year}} HHS Poverty Guidelines."
+  },
   "costs": {
     "navTitle": "What things cost",
     "title": "What care usually costs without insurance",
@@ -169,7 +200,9 @@
     "whyBody": "An ER visit without insurance averages about $2,715 — more than 10× a primary care visit. A community clinic can handle most non-emergencies for a fraction of that.",
     "disclaimer": "Prices vary by region and provider and change over time. This is general information, not a quote or medical advice. Ranges based on 2025–2026 self-pay data. Call the clinic to confirm your cost.",
     "helpEntryTitle": "What things cost",
-    "helpEntrySub": "National price ranges for self-pay patients"
+    "helpEntrySub": "National price ranges for self-pay patients",
+    "estimatorEntry": "Will I get a discount?",
+    "estimatorEntrySub": "Estimate your pay class at sliding-scale clinics"
   },
   "about": {
     "emergencyTitle": "Not for emergencies",

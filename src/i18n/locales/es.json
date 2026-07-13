@@ -47,7 +47,8 @@
     "cantAffordCare": "¿No puede pagar la atención?",
     "cantAffordCareSub": "Pregunte por sus servicios financieros para pacientes, o reciba ayuda para encontrar asistencia.",
     "disclaimer": "Los precios y servicios varían — llame siempre antes. La información es solo de referencia.",
-    "shareFooter": ""
+    "shareFooter": "",
+    "estimatorLink": ""
   },
   "help": {
     "title": "Ayuda financiera",
@@ -152,6 +153,36 @@
     "cat_procedure": "procedimiento",
     "cat_other": "otro"
   },
+  "slidingScale": {
+    "navTitle": "",
+    "householdSize": "",
+    "annualIncome": "",
+    "incomeYear": "",
+    "incomeMonth": "",
+    "incomePlaceholder": "0",
+    "statePicker": "",
+    "statePickerPlaceholder": "",
+    "statePickerSearch": "",
+    "statePickerDone": "",
+    "resultPct": "",
+    "resultBadgeFull": "",
+    "resultBadgeTier1": "",
+    "resultBadgeTier2": "",
+    "resultBadgeTier3": "",
+    "resultBadgeTier4": "",
+    "resultBadgeNone": "",
+    "resultClassLine": "",
+    "scaleMin": "",
+    "scaleMid": "",
+    "scaleMax": "",
+    "noDiscountNote": "",
+    "noDiscountLink": "",
+    "disclaimerEstimate": "",
+    "disclaimerIncome": "",
+    "disclaimerIncomeLink": "",
+    "disclaimerAssets": "",
+    "footer": ""
+  },
   "costs": {
     "navTitle": "Cuánto cuesta la atención",
     "title": "Cuánto suele costar la atención sin seguro",
@@ -169,7 +200,9 @@
     "whyBody": "Una visita a urgencias sin seguro cuesta en promedio $2,715 — más de 10 veces una visita de atención primaria. Una clínica comunitaria puede atender la mayoría de las situaciones no urgentes por mucho menos.",
     "disclaimer": "Los precios varían según la región y el proveedor, y cambian con el tiempo. Esta es información general, no una cotización ni asesoramiento médico. Rangos basados en datos de pago directo 2025–2026. Llame a la clínica para confirmar su costo.",
     "helpEntryTitle": "Cuánto cuesta la atención",
-    "helpEntrySub": "Rangos de precios nacionales para pacientes de pago directo"
+    "helpEntrySub": "Rangos de precios nacionales para pacientes de pago directo",
+    "estimatorEntry": "",
+    "estimatorEntrySub": ""
   },
   "about": {
     "emergencyTitle": "No es para emergencias",

@@ -126,6 +126,14 @@ export default function ClinicDetailScreen() {
           {clinic.slidingScale && (
             <Text style={styles.badgeNote}>{t('clinicDetail.slidingScaleInfo')}</Text>
           )}
+          {clinic.slidingScale && (
+            <TouchableOpacity
+              style={styles.estimatorLink}
+              onPress={() => router.push(`/sliding-scale?state=${clinic.state}`)}
+            >
+              <Text style={styles.estimatorLinkText}>{t('clinicDetail.estimatorLink')}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -221,6 +229,8 @@ const styles = StyleSheet.create({
   badgeBlue: { backgroundColor: colors.tintBlue },
   badgeText: { fontFamily: font.semibold, fontSize: 12 },
   badgeNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  estimatorLink: { marginTop: 8, alignSelf: 'flex-start' },
+  estimatorLinkText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary },
 
   section: {
     backgroundColor: colors.card,

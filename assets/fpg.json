@@ -1,0 +1,19 @@
+{
+  "year": 2026,
+  "effectiveDate": "2026-01-13",
+  "source": "U.S. Department of Health and Human Services (HHS ASPE), Federal Register 91 FR 1797",
+  "sourceUrl": "https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+  "regions": {
+    "contiguous": { "base": 15960, "increment": 5680 },
+    "AK": { "base": 19950, "increment": 7100 },
+    "HI": { "base": 18360, "increment": 6530 }
+  },
+  "payClasses": [
+    { "id": "full",  "minPct": 0,   "maxPct": 100 },
+    { "id": "tier1", "minPct": 101, "maxPct": 125 },
+    { "id": "tier2", "minPct": 126, "maxPct": 150 },
+    { "id": "tier3", "minPct": 151, "maxPct": 175 },
+    { "id": "tier4", "minPct": 176, "maxPct": 200 },
+    { "id": "none",  "minPct": 201, "maxPct": null }
+  ]
+}
