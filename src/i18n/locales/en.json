@@ -205,13 +205,13 @@
     "navTitle": "Good Faith Estimate",
     "hero": {
       "title": "Get your price in writing",
-      "subtitle": "Federal law requires providers to give you a written cost estimate before your visit — and to honor it."
+      "subtitle": "Before you go, you can ask any clinic for a written estimate of what your visit will cost. Federal law says they have to give it to you."
     },
     "what": {
       "title": "What is a Good Faith Estimate?",
       "b1": "A written estimate of your expected charges before a scheduled service.",
       "b2": "Required by the No Surprises Act (effective January 1, 2022) for uninsured and self-pay patients.",
-      "b3": "Covers the main service and any related items — lab work, anesthesia, or facility fees the provider expects to bill.",
+      "b3": "It lists the main service plus related items the provider expects to bill — lab work, anesthesia, or facility fees.",
       "b4": "Must include the provider's name, NPI number, and the expected charge for each item.",
       "b5": "Free to request. No obligation to schedule."
     },

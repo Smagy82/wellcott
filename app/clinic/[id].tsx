@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Text } from '../../src/components/Text';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { getDb } from '../../src/lib/database';
@@ -73,7 +73,9 @@ export default function ClinicDetailScreen() {
   const fav = isFavorite(clinic.id);
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+    <>
+      <Stack.Screen options={{ title: clinic.name }} />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
       {/* Header */}
       <View style={styles.header}>
@@ -210,6 +212,7 @@ export default function ClinicDetailScreen() {
 
       <Text style={styles.disclaimer}>{t('clinicDetail.disclaimer')}</Text>
     </ScrollView>
+    </>
   );
 }
 
