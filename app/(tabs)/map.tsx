@@ -8,7 +8,7 @@ import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView from 'react-native-map-clustering';
-import { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
+import { Marker, PROVIDER_DEFAULT, type Region } from 'react-native-maps';
 import { NavigationArrow, Plus, Minus } from 'phosphor-react-native';
 import Animated, {
   useSharedValue,
@@ -22,21 +22,27 @@ import { theme } from '../../src/theme';
 
 const { colors, radius, font } = theme;
 
-// Mirror tab-bar positioning constants from _layout.tsx
 const TAB_BAR_H = 58;
-const TAB_BAR_BOTTOM_EXTRA = 10; // space below the bar itself
+const TAB_BAR_BOTTOM_EXTRA = 10;
 
-const US_REGION = {
+const US_REGION: Region = {
   latitude: 39.8,
   longitude: -98.6,
   latitudeDelta: 30,
   longitudeDelta: 40,
 };
 
+// Fixed city-level delta for "go to my location"
+const CITY_DELTA = 0.05;
+const DELTA_MIN  = 0.002;
+const DELTA_MAX  = 60;
+
 const SPRING_IN  = { mass: 0.6, damping: 10, stiffness: 200 } as const;
 const SPRING_OUT = { mass: 1,   damping: 14, stiffness: 180 } as const;
 
 // ── Map control button ───────────────────────────────────────────────────────
+// Pressable is the outermost element so the map never steals the touch.
+// Animated.View wraps only the icon for visual scale feedback.
 
 function MapControlButton({
   onPress,
@@ -49,20 +55,18 @@ function MapControlButton({
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   return (
-    <Animated.View style={animStyle}>
-      <Pressable
-        style={styles.ctrlBtn}
-        hitSlop={6}
-        onPressIn={() => { scale.value = withSpring(0.9, SPRING_IN); }}
-        onPressOut={() => { scale.value = withSpring(1, SPRING_OUT); }}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onPress();
-        }}
-      >
-        {children}
-      </Pressable>
-    </Animated.View>
+    <Pressable
+      style={styles.ctrlBtn}
+      hitSlop={6}
+      onPressIn={() => { scale.value = withSpring(0.9, SPRING_IN); }}
+      onPressOut={() => { scale.value = withSpring(1, SPRING_OUT); }}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+    >
+      <Animated.View style={animStyle}>{children}</Animated.View>
+    </Pressable>
   );
 }
 
@@ -75,9 +79,23 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
-  const regionRef = useRef(US_REGION);
+  // Tracks the map's current region so zoom works from wherever the user is
+  const regionRef = useRef<Region>(US_REGION);
 
   const [allClinics, setAllClinics] = useState<MapClinic[]>([]);
+
+  // Sync regionRef to the first clinic location once data arrives
+  useEffect(() => {
+    if (nearbyClinics.length > 0) {
+      const c = nearbyClinics[0];
+      regionRef.current = {
+        latitude: c.latitude,
+        longitude: c.longitude,
+        latitudeDelta: 0.3,
+        longitudeDelta: 0.3,
+      };
+    }
+  }, [nearbyClinics]);
 
   useEffect(() => {
     if (status !== 'ready') return;
@@ -94,36 +112,37 @@ export default function MapScreen() {
     retry();
   };
 
+  // Always flies to city-level zoom (0.05°). Requests permission first.
   const goToMyLocation = async () => {
-    if (!mapRef.current) return;
+    const { status: perm } = await Location.requestForegroundPermissionsAsync();
+    if (perm !== 'granted') return;
     try {
-      const pos = await Location.getCurrentPositionAsync({
+      const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      const { latitudeDelta, longitudeDelta } = regionRef.current;
-      mapRef.current.animateToRegion(
+      mapRef.current?.animateToRegion(
         {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          latitudeDelta,
-          longitudeDelta,
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+          latitudeDelta: CITY_DELTA,
+          longitudeDelta: CITY_DELTA,
         },
-        500,
+        350,
       );
     } catch {
       // geolocation unavailable — silently ignore
     }
   };
 
-  // Zoom by halving/doubling deltas — works with Apple Maps (PROVIDER_DEFAULT)
+  // Zoom in (factor < 1) / out (factor > 1) by scaling deltas
   const zoomBy = (factor: number) => {
     if (!mapRef.current) return;
     const r = regionRef.current;
-    const clamp = (v: number) => Math.max(0.002, Math.min(60, v));
+    const clamp = (v: number) => Math.max(DELTA_MIN, Math.min(DELTA_MAX, v));
     mapRef.current.animateToRegion(
       {
         ...r,
-        latitudeDelta: clamp(r.latitudeDelta * factor),
+        latitudeDelta:  clamp(r.latitudeDelta  * factor),
         longitudeDelta: clamp(r.longitudeDelta * factor),
       },
       250,
@@ -163,18 +182,10 @@ export default function MapScreen() {
   }
 
   const first = nearbyClinics[0];
-  const initialRegion = first
-    ? {
-        latitude: first.latitude,
-        longitude: first.longitude,
-        latitudeDelta: 0.3,
-        longitudeDelta: 0.3,
-      }
+  const initialRegion: Region = first
+    ? { latitude: first.latitude, longitude: first.longitude, latitudeDelta: 0.3, longitudeDelta: 0.3 }
     : US_REGION;
 
-  // Position stack just above the floating tab bar
-  // Tab bar: bottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA
-  // Stack bottom = tab bar bottom + TAB_BAR_H + 12
   const stackBottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA + TAB_BAR_H + 12;
 
   return (
@@ -205,7 +216,7 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* Vertical map control stack */}
+      {/* Control stack — zIndex above map, no overflow:hidden so touch isn't clipped */}
       <View style={[styles.ctrlStack, { bottom: stackBottom }]}>
         <MapControlButton onPress={() => zoomBy(0.5)}>
           <Plus size={18} color="#134E4A" />
@@ -232,11 +243,13 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
 
-  // Vertical capsule control
+  // zIndex: 10 ensures the stack receives touches above the map layer.
+  // No overflow:hidden — avoids iOS touch clipping on rounded containers.
   ctrlStack: {
     position: 'absolute',
     right: 14,
     width: 44,
+    zIndex: 10,
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.92)',
     borderWidth: 1,
@@ -247,7 +260,6 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
-    overflow: 'hidden',
   },
   ctrlBtn: {
     width: 44,
