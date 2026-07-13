@@ -45,6 +45,8 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
       Обновление: Cloudflare → проект wellcott → New deployment → перетащить папку SITE wellcott.
 - [ ] Медкатегория = строгий ревью. Чётко показать: это СПРАВОЧНИК, не медсоветы/диагнозы.
 - [ ] Вычитать испанский (es.json) носителем языка — медтермины критичны для аудитории.
+- [ ] Вычитать ~45 новых ключей slidingScale.* в es.json (пустые стабы).
+      Медтекст — машинный перевод ЗАПРЕЩЁН.
 
 ### 4. UX-мелочи (причесать перед релизом)
 - [ ] Офлайн-состояния и обработка ошибок сети
@@ -128,6 +130,24 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 ## РЕАЛИЗОВАНО (зафиксировано 10.07.2026)
 
 История — чтобы не дублировать в TODO и не переспрашивать что уже сделано.
+
+### Sliding Scale Estimator (12.07.2026)
+- [x] Экран app/sliding-scale.tsx — офлайн-калькулятор % FPG и pay class.
+      Входы: карточка в costs.tsx + CTA-карточка (tintPeach) в clinic/[id].tsx.
+- [x] assets/fpg.json — 2026 HHS Poverty Guidelines (Federal Register 91 FR 1797,
+      эффективны с 13.01.2026). 3 региона: contiguous / AK / HI. Формат base+increment.
+      ⚠️ ОБНОВЛЯТЬ РАЗ В ГОД — HHS публикует новые FPG в середине января.
+      Правка: 6 чисел + year + effectiveDate.
+- [x] src/lib/fpg.ts — getFpg / getFpgPercent / getPayClass, чистые функции, без сети.
+- [x] Блок "How does the discount work?" — объясняет, что программа называется
+      Sliding Fee Discount Program (SFDP) и существует потому, что клиника получает
+      грант HRSA Health Center Program (Section 330).
+- [x] Блок "How to get the discount" — 4 шага + предупреждение про proof of income.
+- [x] src/components/Text.tsx — переписан как НАСТОЯЩАЯ обёртка (был фейковый re-export).
+      Прямые импорты Text из react-native вычищены из 15 файлов.
+- [x] Фикс src/lib/supabase.ts: detectSessionInApp → detectSessionInUrl (была опечатка,
+      параметр молча игнорировался; влияет на deep link при подтверждении email).
+- [x] app/_layout.tsx: удалён хак Text.defaultProps (deprecated в React 18+, не работал).
 
 ### Данные и поиск
 - [x] База клиник clinics-v3.db (10 429 FQHC) — офлайн, зашита в бандл
