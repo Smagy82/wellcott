@@ -54,6 +54,8 @@ npx expo start --tunnel --clear
 
 - `setLanguage('es'|'en')` из `src/i18n/index.ts` — сохраняет в AsyncStorage `app_language`.
 - `initLanguage()` вызывается в `_layout.tsx` до рендера (ждать `langReady`).
+- В i18next обязательны `fallbackLng: 'en'` + `returnEmptyString: false` — иначе пустой
+  стаб в es.json рендерится пустой строкой вместо английского текста.
 
 ## clinicSearch.ts — API (важно не перепутать)
 
