@@ -23,6 +23,7 @@ i18n
     },
     lng: systemLanguage(),
     fallbackLng: 'en',
+    returnEmptyString: false,
     interpolation: { escapeValue: false },
   });
 
