@@ -22,6 +22,8 @@ export default function AuthScreen() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkEmail, setCheckEmail] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
 
   const handleSubmit = async () => {
     setError(null);
@@ -34,6 +36,8 @@ export default function AuthScreen() {
           options: { data: { full_name: fullName.trim() } },
         });
         if (e) throw e;
+        setSentEmail(email.trim());
+        setCheckEmail(true);
       } else {
         const { error: e } = await supabase.auth.signInWithPassword({
           email: email.trim(),
@@ -52,6 +56,35 @@ export default function AuthScreen() {
     setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
     setError(null);
   };
+
+  if (checkEmail) {
+    return (
+      <KeyboardAvoidingView
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.card}>
+          <Text style={styles.logo}>{t('auth.appName')}</Text>
+          <Text style={styles.title}>{t('auth.checkEmailTitle')}</Text>
+          <Text style={styles.checkBody}>
+            {t('auth.checkEmailBody', { email: sentEmail })}
+          </Text>
+          <Text style={styles.checkSpam}>{t('auth.checkEmailSpam')}</Text>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => {
+              setCheckEmail(false);
+              setMode('signin');
+              setPassword('');
+              setError(null);
+            }}
+          >
+            <Text style={styles.btnText}>{t('auth.backToSignIn')}</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -154,6 +187,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   errorText: { fontFamily: font.regular, fontSize: 13, color: colors.danger, marginBottom: 10 },
+  checkBody: { fontFamily: font.regular, fontSize: 15, color: colors.text, lineHeight: 22, marginBottom: 12 },
+  checkSpam: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 24 },
   btn: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
