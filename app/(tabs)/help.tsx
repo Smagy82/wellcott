@@ -3,6 +3,7 @@ import { Text } from '../../src/components/Text';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CurrencyDollar, CaretRight } from 'phosphor-react-native';
 import helpData from '../../assets/financial-help.json';
 import type { FinancialHelpOrg } from '../../src/types/financialHelp';
@@ -62,11 +63,12 @@ function SectionHeader({ title, note }: { title: string; note?: string }) {
 export default function HelpScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
     <ScreenTransition>
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Text style={styles.headerTitle}>{t('help.title')}</Text>
         <Text style={styles.headerSub}>{t('help.subtitle')}</Text>
       </View>
@@ -74,7 +76,7 @@ export default function HelpScreen() {
       {/* Costs entry */}
       <TouchableOpacity style={styles.costsEntry} onPress={() => router.push('/costs')} activeOpacity={0.75}>
         <View style={styles.costsIconBox}>
-          <CurrencyDollar weight="fill" size={22} color={colors.tintYellowIcon} />
+          <CurrencyDollar weight="fill" size={22} color={colors.tintBlueIcon} />
         </View>
         <View style={styles.costsText}>
           <Text style={styles.costsTitle}>{t('costs.helpEntryTitle')}</Text>
@@ -104,7 +106,6 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: colors.primary,
-    paddingTop: spacing.xl,
     paddingBottom: 20,
     paddingHorizontal: spacing.lg,
   },
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   costsIconBox: {
     width: 40, height: 40,
     borderRadius: 10,
-    backgroundColor: colors.tintYellow,
+    backgroundColor: colors.tintBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
