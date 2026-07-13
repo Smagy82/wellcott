@@ -3,7 +3,7 @@ import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Warning, List, CaretRight } from 'phosphor-react-native';
+import { Warning, ListChecks, CaretRight } from 'phosphor-react-native';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
@@ -40,7 +40,7 @@ export default function AboutScreen() {
           activeOpacity={0.8}
           onPress={() => router.push('/first-visit')}
         >
-          <List size={22} color={colors.tintBlueIcon} />
+          <ListChecks size={22} color={colors.tintBlueIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.prepTitle}>{t('firstVisit.aboutEntry_title')}</Text>
             <Text style={styles.prepSub}>{t('firstVisit.aboutEntry_sub')}</Text>
@@ -90,12 +90,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerBg,
     borderRadius: radius.lg,
     borderWidth: 1.5,
-    borderColor: colors.danger,
+    borderColor: colors.dangerBorder,
     padding: spacing.lg,
   },
   emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  emergencyTitle: { fontFamily: font.bold, fontSize: 15, color: colors.danger },
-  emergencyBody: { fontFamily: font.regular, fontSize: 14, color: colors.danger, lineHeight: 21 },
+  emergencyTitle: { fontFamily: font.bold, fontSize: 15, color: colors.dangerText },
+  emergencyBody: { fontFamily: font.regular, fontSize: 14, color: colors.dangerText, lineHeight: 21 },
 
   card: {
     backgroundColor: colors.card,
@@ -152,6 +152,5 @@ const styles = StyleSheet.create({
     fontFamily: font.semibold,
     fontSize: 14,
     color: colors.primary,
-    textDecorationLine: 'underline',
   },
 });

@@ -9,6 +9,7 @@ import {
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useRouter, useFocusEffect } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash, Receipt, Plus } from 'phosphor-react-native';
@@ -68,7 +69,7 @@ function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
         <Text style={styles.date}>{formatDate(item.bill_date)}</Text>
         {item.note ? <Text style={styles.note} numberOfLines={2}>{item.note}</Text> : null}
       </View>
-      <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.deleteBtn}>
+      <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onDelete(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.deleteBtn}>
         <Trash size={20} color={colors.muted} />
       </TouchableOpacity>
     </View>
@@ -108,8 +109,8 @@ export default function BillsScreen() {
           </View>
         }
       />
-      <TouchableOpacity style={styles.fab} onPress={() => router.push('/bill-add')} activeOpacity={0.85}>
-        <Plus size={28} color="#fff" />
+      <TouchableOpacity style={styles.fab} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/bill-add'); }} activeOpacity={0.85}>
+        <Plus size={28} color="#fff" weight="bold" />
       </TouchableOpacity>
     </View>
   );

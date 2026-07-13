@@ -7,6 +7,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
+import { ScalePressable } from '../src/components/ScalePressable';
+import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart } from 'phosphor-react-native';
@@ -42,24 +44,26 @@ export default function FavoritesScreen() {
   }
 
   const renderItem = ({ item }: { item: SavedClinic }) => (
-    <TouchableOpacity
+    <ScalePressable
+      scale={0.98}
       style={styles.card}
       onPress={() => router.push(`/clinic/${encodeURIComponent(item.id)}`)}
-      activeOpacity={0.75}
     >
-      <View style={styles.cardText}>
-        <Text style={styles.cardName}>{item.name}</Text>
-        {item.address ? (
-          <Text style={styles.cardAddress}>{item.address}</Text>
-        ) : null}
+      <View style={styles.cardInner}>
+        <View style={styles.cardText}>
+          <Text style={styles.cardName}>{item.name}</Text>
+          {item.address ? (
+            <Text style={styles.cardAddress}>{item.address}</Text>
+          ) : null}
+        </View>
+        <TouchableOpacity
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggleSaved(item.id).catch(() => {}); }}
+        >
+          <Heart weight="fill" size={22} color={colors.primary} />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        onPress={() => toggleSaved(item.id).catch(() => {})}
-      >
-        <Heart weight="fill" size={22} color={colors.primary} />
-      </TouchableOpacity>
-    </TouchableOpacity>
+    </ScalePressable>
   );
 
   return (
@@ -90,10 +94,12 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: 16,
+    ...shadow,
+  },
+  cardInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadow,
+    padding: 16,
   },
   cardText: { flex: 1, marginRight: 12 },
   cardName: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 3 },

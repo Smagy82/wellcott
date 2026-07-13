@@ -1,9 +1,10 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
+import * as Haptics from 'expo-haptics';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { CheckSquare, Square, WarningCircle, Calculator, CalendarBlank, Copy, Check, Phone, CaretRight } from 'phosphor-react-native';
+import { WarningCircle, Calculator, CalendarBlank, Copy, Check, Phone, CaretRight } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import * as Clipboard from 'expo-clipboard';
 import { theme } from '../src/theme';
@@ -79,11 +80,11 @@ export default function FirstVisitScreen() {
                   i < PREP_ITEM_IDS.length - 1 && styles.checkRowBorder,
                 ]}
                 activeOpacity={0.7}
-                onPress={() => toggle(id)}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggle(id); }}
               >
-                {checked
-                  ? <CheckSquare size={24} color={colors.primary} style={styles.checkIcon} />
-                  : <Square size={24} color={colors.textLight} style={styles.checkIcon} />}
+                <View style={[styles.checkBox, checked && styles.checkBoxChecked]}>
+                  {checked && <Check size={14} weight="bold" color="#fff" />}
+                </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.checkTitle, checked && styles.checkTitleDone]}>
                     {t(`firstVisit.item_${id}_title`)}
@@ -96,7 +97,7 @@ export default function FirstVisitScreen() {
         </View>
 
         <View style={styles.warningCard}>
-          <WarningCircle size={20} color={colors.tintPeachIcon} style={styles.warningIcon} />
+          <WarningCircle size={20} color={colors.warningIcon} style={styles.warningIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.warningTitle}>{t('firstVisit.incomeWarning_title')}</Text>
             <Text style={styles.warningBody}>{t('firstVisit.incomeWarning_body')}</Text>
@@ -229,7 +230,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
-  checkIcon: { marginRight: 12, marginTop: 2 },
+  checkBox: {
+    width: 24, height: 24, borderRadius: 8,
+    borderWidth: 1.5, borderColor: colors.border,
+    backgroundColor: colors.bg,
+    alignItems: 'center', justifyContent: 'center',
+    marginRight: 12, marginTop: 2, flexShrink: 0,
+  },
+  checkBoxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   checkTitle: {
     fontFamily: font.semibold,
     fontSize: 14,
@@ -241,8 +252,8 @@ const styles = StyleSheet.create({
   checkSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
 
   warningCard: {
-    backgroundColor: colors.tintPeach,
-    borderRadius: radius.lg,
+    backgroundColor: colors.warningBg,
+    borderRadius: 16,
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -251,7 +262,7 @@ const styles = StyleSheet.create({
   warningTitle: {
     fontFamily: font.semibold,
     fontSize: 14,
-    color: colors.tintPeachIcon,
+    color: colors.warningText,
     marginBottom: 4,
   },
   warningBody: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 20 },

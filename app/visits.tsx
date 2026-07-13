@@ -9,6 +9,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useCallback } from 'react';
+import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { Trash, Clock, Plus } from 'phosphor-react-native';
 import { useVisits } from '../src/lib/useVisits';
@@ -50,7 +51,7 @@ export default function VisitsScreen() {
         </View>
         <TouchableOpacity
           style={styles.deleteBtn}
-          onPress={() => deleteVisit(item.id)}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); deleteVisit(item.id); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Trash size={20} color={colors.muted} />
@@ -75,8 +76,8 @@ export default function VisitsScreen() {
           </View>
         }
       />
-      <TouchableOpacity style={styles.fab} onPress={() => router.push('/visit-add')} activeOpacity={0.85}>
-        <Plus size={28} color="#fff" />
+      <TouchableOpacity style={styles.fab} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/visit-add'); }} activeOpacity={0.85}>
+        <Plus size={28} color="#fff" weight="bold" />
       </TouchableOpacity>
     </View>
   );

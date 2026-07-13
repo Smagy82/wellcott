@@ -105,7 +105,7 @@ export default function GoodFaithEstimateScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.fqhcCtaText}>{t('gfe.fqhc.cta')}</Text>
-            <CaretRight size={14} color={colors.tintPeachIcon} />
+            <CaretRight size={14} color={colors.warningText} />
           </TouchableOpacity>
         </View>
 
@@ -321,20 +321,18 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // FQHC card (tintPeach)
+  // FQHC card (warning)
   fqhcCard: {
-    backgroundColor: colors.tintPeach,
-    borderRadius: radius.lg,
+    backgroundColor: colors.warningBg,
+    borderRadius: 16,
     padding: spacing.lg,
     gap: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.tintPeachIcon,
     ...shadow,
   },
   fqhcTitle: {
     fontFamily: font.bold,
     fontSize: 14,
-    color: colors.tintPeachIcon,
+    color: colors.warningText,
   },
   fqhcBody: {
     fontFamily: font.regular,
@@ -352,7 +350,7 @@ const styles = StyleSheet.create({
   fqhcCtaText: {
     fontFamily: font.semibold,
     fontSize: 13,
-    color: colors.tintPeachIcon,
+    color: colors.warningText,
   },
 
   // Dispute links

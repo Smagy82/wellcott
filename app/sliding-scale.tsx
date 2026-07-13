@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { CaretDown, CaretUp, WarningCircle } from 'phosphor-react-native';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
+import * as Haptics from 'expo-haptics';
 import { getFpgPercent, getPayClass, FPG_YEAR } from '../src/lib/fpg';
 import { theme } from '../src/theme';
 
@@ -183,7 +184,7 @@ export default function SlidingScaleScreen() {
           <View style={styles.stepper}>
             <TouchableOpacity
               style={[styles.stepBtn, householdSize <= 1 && styles.stepBtnDisabled]}
-              onPress={() => setHouseholdSize(h => Math.max(1, h - 1))}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHouseholdSize(h => Math.max(1, h - 1)); }}
               disabled={householdSize <= 1}
             >
               <Text style={styles.stepBtnText}>−</Text>
@@ -191,7 +192,7 @@ export default function SlidingScaleScreen() {
             <Text style={styles.stepValue}>{householdSize}</Text>
             <TouchableOpacity
               style={[styles.stepBtn, householdSize >= 12 && styles.stepBtnDisabled]}
-              onPress={() => setHouseholdSize(h => Math.min(12, h + 1))}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setHouseholdSize(h => Math.min(12, h + 1)); }}
               disabled={householdSize >= 12}
             >
               <Text style={styles.stepBtnText}>+</Text>
@@ -315,7 +316,7 @@ export default function SlidingScaleScreen() {
           <View style={styles.warningRow}>
             <WarningCircle
               size={18}
-              color={colors.tintYellowIcon}
+              color={colors.warningIcon}
               style={{ marginRight: 8, marginTop: 1 }}
             />
             <View style={{ flex: 1 }}>
@@ -427,34 +428,34 @@ const styles = StyleSheet.create({
   },
   rowDivider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: spacing.sm },
 
-  // Household stepper
+  // Household stepper — round 44×44, infoBg/#0F766E
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   stepBtn: {
-    width: 40, height: 40, borderRadius: radius.sm,
-    backgroundColor: colors.tintBlue,
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: colors.infoBg,
     alignItems: 'center', justifyContent: 'center',
   },
   stepBtnDisabled: { opacity: 0.35 },
-  stepBtnText: { fontFamily: font.bold, fontSize: 22, color: colors.tintBlueIcon, lineHeight: 26 },
+  stepBtnText: { fontFamily: font.bold, fontSize: 22, color: colors.infoText, lineHeight: 26 },
   stepValue: { fontFamily: font.bold, fontSize: 28, color: colors.text, minWidth: 36, textAlign: 'center' },
 
-  // Income row
+  // Income row — white bg, border infoBg (focus: primary)
   incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   incomeInputWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.tintBlue,
-    borderRadius: radius.sm,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: colors.tintBlueIcon,
+    borderColor: colors.infoBg,
     paddingHorizontal: 10,
     paddingVertical: 2,
     gap: 6,
   },
   incomeInputWrapFocused: {
     borderColor: colors.primary,
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   dollar: { fontFamily: font.semibold, fontSize: 18, color: colors.textMuted },
   incomeInput: {
@@ -464,16 +465,17 @@ const styles = StyleSheet.create({
     color: colors.text,
     paddingVertical: 8,
   },
+  // Year/Month pill chips
   modePill: {
     flexDirection: 'row',
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.pill,
     padding: 2,
   },
-  modeBtn: { borderRadius: radius.pill, paddingVertical: 5, paddingHorizontal: 12 },
-  modeBtnActive: { backgroundColor: colors.card, ...shadow },
-  modeBtnText: { fontFamily: font.medium, fontSize: 12, color: colors.textMuted },
-  modeBtnTextActive: { color: colors.primary },
+  modeBtn: { borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 16 },
+  modeBtnActive: { backgroundColor: colors.primary },
+  modeBtnText: { fontFamily: font.semibold, fontSize: 13, color: colors.textMuted },
+  modeBtnTextActive: { color: '#fff' },
 
   // State picker trigger
   stateTrigger: {
@@ -532,7 +534,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
 
-  linkText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary, marginTop: 4 },
+  linkText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary, marginTop: 4, textDecorationLine: 'none' },
 
   // How to get card
   howToGetCard: {
@@ -556,15 +558,15 @@ const styles = StyleSheet.create({
 
   warningRow: {
     flexDirection: 'row',
-    backgroundColor: colors.tintYellow,
-    borderRadius: radius.md,
+    backgroundColor: colors.warningBg,
+    borderRadius: 16,
     padding: 12,
     marginTop: 2,
   },
   warningText: {
     fontFamily: font.regular,
     fontSize: 13,
-    color: colors.text,
+    color: colors.warningText,
     lineHeight: 19,
     marginBottom: 4,
   },
