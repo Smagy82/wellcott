@@ -48,3 +48,9 @@ yarn-error.*
 *.dc.html
 ios-frame.jsx
 support.js
+
+# scratch / drafts
+*копия*
+*.dc.html
+ios-frame.jsx
+support.js
