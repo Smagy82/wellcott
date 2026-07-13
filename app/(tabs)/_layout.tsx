@@ -14,7 +14,7 @@ import Animated, {
 import {
   FirstAidKit,
   MapTrifold,
-  Lifebuoy,
+  Wallet,
   UserCircle,
 } from 'phosphor-react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -33,7 +33,7 @@ const PRESS_SPRING = { mass: 0.6, damping: 10, stiffness: 200 } as const;
 const TABS = [
   { name: 'index',   labelKey: 'tabs.clinics', Icon: FirstAidKit },
   { name: 'map',     labelKey: 'tabs.map',     Icon: MapTrifold  },
-  { name: 'help',    labelKey: 'tabs.help',    Icon: Lifebuoy    },
+  { name: 'help',    labelKey: 'tabs.help',    Icon: Wallet      },
   { name: 'profile', labelKey: 'tabs.profile', Icon: UserCircle  },
 ] as const;
 
@@ -77,7 +77,11 @@ function TabButton({
           size={23}
           color={active ? colors.primary : colors.iconIdle}
         />
-        <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
+        <Text
+          style={[styles.tabLabel, active && styles.tabLabelActive]}
+          numberOfLines={1}
+          allowFontScaling={false}
+        >
           {t(entry.labelKey)}
         </Text>
       </Animated.View>
