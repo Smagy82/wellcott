@@ -3,6 +3,7 @@
     "retry": "Reintentar",
     "call": "Llamar",
     "directions": "Cómo llegar",
+    "transit": "",
     "back": "← Atrás",
     "done": "Listo",
     "pleaseWait": "Espere…",
@@ -69,7 +70,11 @@
     "cat_free_clinics": "Clínicas gratuitas",
     "cat_government": "Gobierno",
     "cat_copay_disease_specific": "Subsidios de copago",
-    "cat_medical_debt": "Deuda médica"
+    "cat_medical_debt": "Deuda médica",
+    "section211Title": "",
+    "section211Body": "",
+    "section211Call": "",
+    "section211Site": ""
   },
   "profile": {
     "greetingMorning": "Buenos días",

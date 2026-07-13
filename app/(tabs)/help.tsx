@@ -95,6 +95,20 @@ export default function HelpScreen() {
       />
       {withInsurance.map((org) => <OrgCard key={org.id} org={org} />)}
 
+      {/* 211 — transportation to appointment */}
+      <SectionHeader title={t('help.section211Title')} />
+      <View style={styles.card}>
+        <AppText variant="secondary" style={styles.body211}>{t('help.section211Body')}</AppText>
+        <View style={styles.actions211}>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => Linking.openURL('tel:211')}>
+            <AppText variant="button" style={styles.actionBtnText}>{t('help.section211Call')}</AppText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtnOutline211} onPress={() => Linking.openURL('https://www.211.org')}>
+            <AppText variant="button" style={styles.actionBtnOutlineText211}>{t('help.section211Site')}</AppText>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <AppText variant="caption" style={styles.disclaimer}>{t('help.disclaimer')}</AppText>
     </ScrollView>
     </ScreenTransition>
@@ -177,4 +191,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
     lineHeight: 16,
   },
+
+  body211: { color: colors.text, lineHeight: 19, marginBottom: 12 },
+  actions211: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  actionBtnOutline211: {
+    alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+  },
+  actionBtnOutlineText211: { color: colors.primary },
 });

@@ -9,6 +9,9 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 
 ## ЧЕКЛИСТ ДО ПУБЛИКАЦИИ (по порядку)
 
+> **🔴 Три блокера прямо сейчас** (без них в сторы невозможно):
+> **App icon** (1024×1024 PNG, без прозрачности) · **Splash screen** · **EAS Build** (детали в п.1 и п.5 ниже)
+
 ### 1. Брендинг — иконка + splash
 - [ ] Финальный логотип-иконка (простой, плоский, читается в мелком размере).
       AI-генерации выходят перегруженными → варианты: упростить промпт /
@@ -45,6 +48,7 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
       Обновление: Cloudflare → проект wellcott → New deployment → перетащить папку SITE wellcott.
 - [ ] Медкатегория = строгий ревью. Чётко показать: это СПРАВОЧНИК, не медсоветы/диагнозы.
 - [ ] Вычитать испанский (es.json) носителем языка — медтермины критичны для аудитории.
+- [ ] Вычитать ~33 ключей firstVisit.* в es.json (пустые стабы). Машинный перевод ЗАПРЕЩЁН.
 - [ ] Вычитать ~45 новых ключей slidingScale.* в es.json (пустые стабы).
       Медтекст — машинный перевод ЗАПРЕЩЁН.
 
@@ -133,13 +137,18 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 
 ### First Visit Prep (13.07.2026)
 - [x] Новый экран app/first-visit.tsx — интерактивная подготовка к первому визиту (офлайн, без логина).
-      6-пунктный чек-лист (AsyncStorage, toggle/reset), прогресс-бар, блок про proof of income (tintPeach),
-      CTA на sliding-scale калькулятор, скрипт звонка (Copy + Call если clinicId передан),
-      опциональный клинический заголовок (clinicId param), кнопка «Добавить в историю» (только залогиненные).
-- [x] Вход из about.tsx: карточка (tintBlue, навигация на /first-visit без clinicId).
-- [x] CTA в clinic/[id].tsx: карточка (tintBlue) — всегда видима, после GFE CTA.
+      6-пунктный AsyncStorage-чеклист (toggle/reset/progress), разбитый на **две секции**:
+        — «To get the discount»: Photo ID · Proof of income · Proof of address
+        — «For the appointment»: Medications list · Allergies · Payment method
+      Прогресс N of 6, income warning card, CTA на sliding-scale, скрипт звонка (Copy + Call если clinicId),
+      кнопка «Add to visit history» (только залогиненные), Reset.
+      Дизайн: секции-карточки (паттерн 8a) — заголовок секции на фоне экрана + живой счётчик N/3.
+- [x] Точки входа: about.tsx (без clinicId, общий режим) и clinic/[id].tsx (с clinicId).
 - [x] Статичный чек-лист удалён из about.tsx; about.bring* ключи удалены из en.json / es.json.
 - [x] src/lib/useVisitPrep.ts — хук AsyncStorage с toggle/reset/progress, ключ visitPrep:{clinicId|general}.
+- [x] Цвета переведены на токены src/theme.ts; добавлен colors.checkboxBorder ('rgba(19,78,74,0.15)').
+      rgba(19,78,74,0.07) → colors.border (без нового токена); остальные 7 литералов → существующие токены.
+⚠️ Открытый долг: ~33 пустых ES-стаба в firstVisit.* — перевод вручную, машинный ЗАПРЕЩЁН.
 
 ### Good Faith Estimate guide (12.07.2026)
 - [x] Экран app/good-faith-estimate.tsx — офлайн-справка по праву на письменную смету расходов

@@ -3,6 +3,7 @@
     "retry": "Retry",
     "call": "Call",
     "directions": "Directions",
+    "transit": "Transit",
     "back": "← Back",
     "done": "Done",
     "pleaseWait": "Please wait…",
@@ -69,7 +70,11 @@
     "cat_free_clinics": "Free clinics",
     "cat_government": "Government",
     "cat_copay_disease_specific": "Copay grants",
-    "cat_medical_debt": "Medical debt"
+    "cat_medical_debt": "Medical debt",
+    "section211Title": "Getting to your appointment",
+    "section211Body": "211 is a public helpline that connects you to local programs — including rides to medical appointments. No cost to call.",
+    "section211Call": "Call 211",
+    "section211Site": "211.org"
   },
   "profile": {
     "greetingMorning": "Good morning",

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -10,7 +11,7 @@ import {
 import { Text } from '../../src/components/Text';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Heart, ShareNetwork, CaretRight, Calculator, FileText, List } from 'phosphor-react-native';
+import { Heart, ShareNetwork, CaretRight, Calculator, FileText, List, Bus } from 'phosphor-react-native';
 import { getDb } from '../../src/lib/database';
 import { getClinicById } from '../../src/lib/clinicSearch';
 import type { Clinic } from '../../src/types/clinic';
@@ -73,6 +74,13 @@ export default function ClinicDetailScreen() {
   const handleDirections = () => {
     const q = encodeURIComponent(`${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`);
     Linking.openURL(`https://maps.google.com/?q=${q}`);
+  };
+
+  const handleTransit = () => {
+    const url = Platform.OS === 'ios'
+      ? `https://maps.apple.com/?daddr=${clinic.latitude},${clinic.longitude}&dirflg=r`
+      : `https://www.google.com/maps/dir/?api=1&destination=${clinic.latitude},${clinic.longitude}&travelmode=transit`;
+    Linking.openURL(url);
   };
 
   const handleShare = () => shareClinic(clinic, t);
@@ -219,6 +227,14 @@ export default function ClinicDetailScreen() {
         <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={handleDirections}>
           <Text style={styles.btnOutlineText}>{t('common.directions')}</Text>
         </TouchableOpacity>
+        {clinic.latitude && clinic.longitude ? (
+          <TouchableOpacity style={[styles.btn, styles.btnTransit]} onPress={handleTransit}>
+            <View style={styles.btnTransitContent}>
+              <Bus size={14} color={colors.tintSkyIcon} />
+              <Text style={styles.btnTransitText}>{t('common.transit')}</Text>
+            </View>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity style={[styles.btn, styles.btnShare]} onPress={handleShare}>
           <ShareNetwork size={18} color={colors.primary} />
         </TouchableOpacity>
@@ -365,6 +381,9 @@ const styles = StyleSheet.create({
   btnFillText: { fontFamily: font.bold, color: '#fff', fontSize: 15 },
   btnOutline: { borderWidth: 1.5, borderColor: colors.primary },
   btnOutlineText: { fontFamily: font.bold, color: colors.primary, fontSize: 15 },
+  btnTransit: { flex: 1, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', backgroundColor: colors.tintSky },
+  btnTransitContent: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  btnTransitText: { fontFamily: font.bold, color: colors.tintSkyIcon, fontSize: 15 },
   btnShare: { borderWidth: 1.5, borderColor: colors.primary, flex: 0, width: 48, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
 
   backBtn: { marginTop: 12 },
