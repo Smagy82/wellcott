@@ -53,8 +53,9 @@ const SHARE_GHOST_GUARD_MS = 1000;
 const RADII = [10, 25, 50] as const;
 type RadiusValue = typeof RADII[number];
 
-const HEADER_LARGE_H = 92;
-const COLLAPSE_AT = 44;
+// Glass header fades in after this many px of scroll
+const GLASS_START = 54;
+const GLASS_END   = 74;
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
@@ -92,15 +93,11 @@ function Toast({ state }: { state: ToastState }) {
 }
 
 // ── Heart button ──────────────────────────────────────────────────────────────
-// Rendered as a SIBLING above the card Pressable (not nested), so touches
-// never bubble to the card's navigation handler.
 
 function HeartButton({
-  clinicId,
   saved,
   onToggle,
 }: {
-  clinicId: string;
   saved: boolean;
   onToggle: () => void;
 }) {
@@ -134,11 +131,7 @@ function HeartButton({
   };
 
   return (
-    <Pressable
-      style={styles.heartBtn}
-      onPress={handlePress}
-      hitSlop={8}
-    >
+    <Pressable style={styles.heartBtn} onPress={handlePress} hitSlop={8}>
       <Animated.View style={[styles.heartRing, ringStyle]} />
       <Animated.View style={heartStyle}>
         <Heart
@@ -152,8 +145,9 @@ function HeartButton({
 }
 
 // ── Clinic Card ───────────────────────────────────────────────────────────────
-// The card wraps both a tappable Pressable and the absolutely-positioned
-// HeartButton sibling so touches on the heart NEVER reach the card handler.
+// Layout: left flex content + right fixed 44px column (heart spacer + distance).
+// Heart button is rendered as an ABSOLUTE SIBLING of the card Pressable so
+// touches on it never reach the card's navigation handler.
 
 function ClinicCard({
   item,
@@ -175,12 +169,8 @@ function ClinicCard({
   const cardScale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
-  const handlePressIn = () => {
-    cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 });
-  };
-  const handlePressOut = () => {
-    cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 });
-  };
+  const handlePressIn = () => { cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 }); };
+  const handlePressOut = () => { cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 }); };
 
   const handleCall = () => {
     if (item.phone) {
@@ -199,73 +189,70 @@ function ClinicCard({
 
   return (
     <View style={styles.cardWrap}>
-      {/* Tappable area — navigation only */}
+      {/* ── Tappable card ── */}
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={() => { if (isShareGuarded()) return; router.push(`/clinic/${encodeURIComponent(item.id)}`); }}
       >
         <Animated.View style={[styles.card, cardStyle]}>
-          {/* Name — right-padding leaves room for heart */}
-          <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
+          <View style={styles.cardRow}>
+            {/* Left: name, address, badges, actions */}
+            <View style={styles.cardContent}>
+              <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
 
-          <View style={styles.addressRow}>
-            <MapPin size={13} weight="fill" color={colors.primary} />
-            <Text style={styles.address} numberOfLines={1}>
-              {item.address}, {item.city}, {item.state} {item.zip}
-            </Text>
-            {showDistance && (
-              <Text style={styles.distance}>{item.distanceMiles.toFixed(1)} mi</Text>
-            )}
-          </View>
-
-          <View style={styles.badges}>
-            {item.acceptsUninsured && (
-              <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
-                <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
+              <View style={styles.addressRow}>
+                <MapPin size={13} weight="fill" color={colors.primary} />
+                <Text style={styles.address} numberOfLines={1} ellipsizeMode="tail">
+                  {item.address}, {item.city}, {item.state} {item.zip}
+                </Text>
               </View>
-            )}
-            {item.slidingScale && (
-              <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
-                <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
-              </View>
-            )}
-          </View>
 
-          <View style={styles.actions}>
-            {item.phone ? (
-              <TouchableOpacity
-                style={styles.btnCall}
-                onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
-                activeOpacity={0.82}
-              >
-                <Phone weight="fill" size={14} color="#fff" />
-                <Text style={styles.btnCallText}>{t('common.call')}</Text>
-              </TouchableOpacity>
-            ) : null}
-            <TouchableOpacity
-              style={styles.btnDir}
-              onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
-              activeOpacity={0.82}
-            >
-              <NavigationArrow size={14} color={colors.primaryDark} />
-              <Text style={styles.btnDirText}>{t('common.directions')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.btnShare}
-              onPress={(e) => { e.stopPropagation?.(); onShare(item); }}
-              accessibilityLabel={t('share.buttonA11y')}
-              activeOpacity={0.82}
-            >
-              <ShareNetwork size={17} color={colors.primary} />
-            </TouchableOpacity>
+              <View style={styles.badges}>
+                {item.acceptsUninsured && (
+                  <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
+                    <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
+                  </View>
+                )}
+                {item.slidingScale && (
+                  <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
+                    <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.actions}>
+                {item.phone ? (
+                  <TouchableOpacity style={styles.btnCall} onPress={(e) => { e.stopPropagation?.(); handleCall(); }} activeOpacity={0.82}>
+                    <Phone weight="fill" size={14} color="#fff" />
+                    <Text style={styles.btnCallText}>{t('common.call')}</Text>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity style={styles.btnDir} onPress={(e) => { e.stopPropagation?.(); handleDirections(); }} activeOpacity={0.82}>
+                  <NavigationArrow size={14} color={colors.primaryDark} />
+                  <Text style={styles.btnDirText}>{t('common.directions')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnShare} onPress={(e) => { e.stopPropagation?.(); onShare(item); }} accessibilityLabel={t('share.buttonA11y')} activeOpacity={0.82}>
+                  <ShareNetwork size={17} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Right column: 44px — spacer for heart + distance below */}
+            <View style={styles.cardRight}>
+              {/* 38×38 spacer — the actual heart Pressable is a sibling */}
+              <View style={styles.heartSpacer} />
+              {showDistance && (
+                <Text style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</Text>
+              )}
+            </View>
           </View>
         </Animated.View>
       </Pressable>
 
-      {/* Heart — absolute sibling, NOT nested inside card Pressable */}
+      {/* ── Heart — absolute sibling, aligned to cardRight column top ── */}
       <View style={styles.heartAnchor} pointerEvents="box-none">
-        <HeartButton clinicId={item.id} saved={saved} onToggle={onToggleSave} />
+        <HeartButton saved={saved} onToggle={onToggleSave} />
       </View>
     </View>
   );
@@ -295,13 +282,7 @@ function RadiusChip({ r, active, onPress }: { r: RadiusValue; active: boolean; o
 
 // ── Suggestion list ───────────────────────────────────────────────────────────
 
-function SuggestionList({
-  suggestions,
-  onSelect,
-}: {
-  suggestions: CitySuggestion[];
-  onSelect: (s: CitySuggestion) => void;
-}) {
+function SuggestionList({ suggestions, onSelect }: { suggestions: CitySuggestion[]; onSelect: (s: CitySuggestion) => void }) {
   if (suggestions.length === 0) return null;
   return (
     <View style={styles.suggestions}>
@@ -335,7 +316,6 @@ export default function ClinicsScreen() {
   const [toast, setToast] = useState<ToastState>({ visible: false, text: '', icon: 'phone' });
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Bootstrap saved store + subscribe for live updates
   useEffect(() => {
     initSaved().catch(() => {});
     return subscribeSaved(setSavedIds);
@@ -344,13 +324,15 @@ export default function ClinicsScreen() {
   const { clinics, status, retry } = useNearbyClinics(radiusMi);
   const scrollY = useRef(new RNAnimated.Value(0)).current;
 
+  // Glass bar: fully transparent at top, solid blur after GLASS_START px scroll
   const glassOpacity = scrollY.interpolate({
-    inputRange: [COLLAPSE_AT, COLLAPSE_AT + 20],
+    inputRange: [GLASS_START, GLASS_END],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
+  // Large title inside scroll fades out as glass fades in
   const largeTitleOpacity = scrollY.interpolate({
-    inputRange: [0, COLLAPSE_AT],
+    inputRange: [0, GLASS_START],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
@@ -414,6 +396,9 @@ export default function ClinicsScreen() {
 
   const BOTTOM_INSET = Math.max(insets.bottom, 16) + 10 + 58 + 12;
 
+  // Collapsed glass header height = safe area + 44pt content
+  const GLASS_H = insets.top + 44;
+
   if (status === 'no-permission') {
     const hasQuery = query.trim().length > 0;
     return (
@@ -432,6 +417,7 @@ export default function ClinicsScreen() {
           <FlatList
             data={textResults}
             keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <ClinicCard
                 item={item}
@@ -480,8 +466,17 @@ export default function ClinicsScreen() {
 
   const isSearching = query.trim().length > 0;
 
+  // Large title + search field live INSIDE the scroll — no floating header overlap
   const ListHeader = (
-    <View style={{ paddingTop: insets.top + HEADER_LARGE_H + 8 }}>
+    <View style={{ paddingTop: insets.top + 12 }}>
+      {/* Large title (fades out as glass bar fades in) */}
+      <RNAnimated.View style={[styles.largeTitleWrap, { opacity: largeTitleOpacity }]} pointerEvents="none">
+        <Text style={styles.largeTitle}>{t('tabs.clinics')}</Text>
+        {clinics.length > 0 && (
+          <Text style={styles.largeSub}>{filtered.length} clinics near you</Text>
+        )}
+      </RNAnimated.View>
+
       <View style={styles.listTop}>
         <View style={styles.searchWrap}>
           <MagnifyingGlass size={16} color={colors.muted} style={{ marginRight: 8 }} />
@@ -524,6 +519,7 @@ export default function ClinicsScreen() {
       <RNAnimated.FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <ClinicCard
             item={item}
@@ -551,25 +547,17 @@ export default function ClinicsScreen() {
         scrollEventThrottle={16}
       />
 
-      {/* Collapsing large header */}
+      {/* Glass collapsed header — transparent at top, blurs in on scroll.
+          pointerEvents="none" always so search field remains tappable. */}
       <RNAnimated.View
-        style={[styles.largeHeader, { paddingTop: insets.top + 12, opacity: largeTitleOpacity }]}
+        style={[styles.glassBar, { height: GLASS_H, opacity: glassOpacity }]}
         pointerEvents="none"
       >
-        <Text style={styles.largeTitle}>{t('tabs.clinics')}</Text>
-        {clinics.length > 0 && (
-          <Text style={styles.largeSub}>{filtered.length} clinics near you</Text>
-        )}
-      </RNAnimated.View>
-
-      {/* Glass collapsed header */}
-      <RNAnimated.View
-        style={[styles.glassBar, { paddingTop: insets.top, opacity: glassOpacity }]}
-        pointerEvents="none"
-      >
-        <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
+        {/* Only BlurView + semi-transparent tint — no gradients or shadows */}
+        <BlurView intensity={56} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(240,253,250,0.86)' }]} />
         <View style={styles.glassHairline} />
-        <Text style={styles.glassTitle}>{t('tabs.clinics')}</Text>
+        <Text style={[styles.glassTitle, { marginTop: insets.top + 10 }]}>{t('tabs.clinics')}</Text>
       </RNAnimated.View>
 
       <View style={[styles.toastAnchor, { bottom: BOTTOM_INSET + 8 }]} pointerEvents="none">
@@ -592,27 +580,29 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
 
-  largeHeader: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    height: HEADER_LARGE_H + 80,
+  // Large title — lives inside the scroll, fades out on scroll
+  largeTitleWrap: {
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.bg,
-    zIndex: 1,
+    paddingBottom: 10,
   },
   largeTitle: { fontFamily: font.bold, fontSize: 32, color: colors.text, letterSpacing: -0.6 },
   largeSub: { fontFamily: font.regular, fontSize: 14, color: colors.muted, marginTop: 3 },
 
+  // Glass bar — absolutely positioned, transparent → blurred on scroll
   glassBar: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 92,
-    alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 12,
-    zIndex: 2, overflow: 'hidden',
+    position: 'absolute', top: 0, left: 0, right: 0,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
+    zIndex: 10,
   },
   glassHairline: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(19,78,74,0.08)',
   },
-  glassTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text },
+  glassTitle: { fontFamily: font.bold, fontSize: 17, color: colors.text },
 
   listTop: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   searchWrap: {
@@ -648,19 +638,23 @@ const styles = StyleSheet.create({
   listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginBottom: 6, marginLeft: 2 },
   list: { paddingHorizontal: spacing.lg },
 
-  // Card wrapper — positions heart as absolute sibling
+  // ── Card ──────────────────────────────────────────────────────────────────
   cardWrap: { marginBottom: 10 },
+  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, ...shadow },
 
-  card: {
-    backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, ...shadow,
-  },
-  clinicName: {
-    fontFamily: font.bold, fontSize: 16, color: colors.text,
-    paddingRight: 44, marginBottom: 6,
-  },
+  // Horizontal row: content + 44px right column
+  cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  cardContent: { flex: 1, paddingRight: 8 },
+
+  clinicName: { fontFamily: font.bold, fontSize: 16, color: colors.text, marginBottom: 6 },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
   address: { fontFamily: font.regular, fontSize: 13, color: colors.muted, flex: 1 },
-  distance: { fontFamily: font.bold, fontSize: 13, color: colors.primary, flexShrink: 0 },
+
+  // Right column: 44px wide, heart spacer + distance
+  cardRight: { width: 44, alignItems: 'center', gap: 4 },
+  heartSpacer: { width: 38, height: 38 },
+  distanceCol: { fontFamily: font.bold, fontSize: 12, color: colors.primary, textAlign: 'center' },
+
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontFamily: font.bold, fontSize: 11 },
@@ -684,20 +678,26 @@ const styles = StyleSheet.create({
     paddingVertical: 7, width: 38, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Heart button — absolute above card (zIndex via rendering order as sibling)
+  // Heart — absolute sibling aligned to top-right of card, over cardRight column
   heartAnchor: {
-    position: 'absolute', top: 12, right: 12,
-    width: 44, height: 44,
-    alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    // card padding is 14, right column is 44px wide, so anchor sits at card's right edge
+    top: 14,
+    right: 14,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 3,
   },
   heartBtn: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: colors.bg,
     alignItems: 'center', justifyContent: 'center',
   },
   heartRing: {
     position: 'absolute',
-    width: 38, height: 38, borderRadius: 19,
+    width: 34, height: 34, borderRadius: 17,
     borderWidth: 2, borderColor: colors.primary,
   },
 
@@ -709,9 +709,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: 14, paddingVertical: 11,
   },
-  suggestionBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
-  },
+  suggestionBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
 
   toastAnchor: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
