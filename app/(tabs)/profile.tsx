@@ -9,7 +9,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
-import { Text } from '../../src/components/Text';
+import { AppText } from '../../src/components/AppText';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -61,8 +61,8 @@ function MenuCard({ icon, iconBg, title, subtitle, onPress }: CardProps) {
         {icon}
       </View>
       <View style={styles.cardText}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.cardSub}>{subtitle}</Text>
+        <AppText variant="cardTitle" style={styles.cardTitle}>{title}</AppText>
+        <AppText variant="secondary" style={styles.cardSub}>{subtitle}</AppText>
       </View>
       <CaretRight size={18} color={colors.muted} />
     </TouchableOpacity>
@@ -110,12 +110,12 @@ export default function ProfileScreen() {
       {/* Header — below status bar via paddingTop */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
+          <AppText variant="heading" style={styles.avatarText}>{getInitials(fullName)}</AppText>
         </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.greeting}>{getGreeting(t)}</Text>
-          <Text style={styles.name}>{fullName}</Text>
-          <Text style={styles.dateLabel}>{getDateLabel()}</Text>
+          <AppText variant="secondary" style={styles.greeting}>{getGreeting(t)}</AppText>
+          <AppText variant="heading" style={styles.name}>{fullName}</AppText>
+          <AppText variant="secondary" style={styles.dateLabel}>{getDateLabel()}</AppText>
         </View>
       </View>
 
@@ -135,8 +135,8 @@ export default function ProfileScreen() {
           onPress={() => router.push('/visits')}
         />
         <MenuCard
-          icon={<Receipt size={24} color={colors.tintSkyIcon} />}
-          iconBg={colors.tintSky}
+          icon={<Receipt size={24} color={colors.tintBlueIcon} />}
+          iconBg={colors.tintBlue}
           title={t('profile.expenses')}
           subtitle={t('profile.expensesSub')}
           onPress={() => router.push('/bills')}
@@ -148,7 +148,7 @@ export default function ProfileScreen() {
           <View style={[styles.iconBox, { backgroundColor: colors.warningBg }]}>
             <Translate size={24} color={colors.warningText} />
           </View>
-          <Text style={[styles.cardTitle, { flex: 1 }]}>{t('profile.language')}</Text>
+          <AppText variant="cardTitle" style={[styles.cardTitle, { flex: 1 }]}>{t('profile.language')}</AppText>
           <View style={styles.langChips}>
             {(['en', 'es'] as AppLanguage[]).map((lang) => {
               const active = i18n.language === lang;
@@ -158,9 +158,9 @@ export default function ProfileScreen() {
                   style={[styles.langChip, active && styles.langChipActive]}
                   onPress={() => setLanguage(lang)}
                 >
-                  <Text style={[styles.langChipText, active && styles.langChipTextActive]}>
+                  <AppText variant="button" style={[styles.langChipText, active && styles.langChipTextActive]}>
                     {lang.toUpperCase()}
-                  </Text>
+                  </AppText>
                 </TouchableOpacity>
               );
             })}
@@ -187,9 +187,9 @@ export default function ProfileScreen() {
         onPress={handleSignOut}
         disabled={signingOut}
       >
-        <Text style={styles.signOutText}>
+        <AppText variant="sectionHead" style={styles.signOutText}>
           {signingOut ? t('profile.signingOut') : t('profile.signOut')}
-        </Text>
+        </AppText>
       </TouchableOpacity>
     </ScrollView>
     </ScreenTransition>
@@ -215,11 +215,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: spacing.lg,
   },
-  avatarText: { fontFamily: font.bold, color: '#fff', fontSize: 22 },
+  avatarText: { color: '#fff' },
   headerInfo: { flex: 1 },
-  greeting: { fontFamily: font.regular, fontSize: 13, color: colors.muted, marginBottom: 2 },
-  name: { fontFamily: font.bold, fontSize: 22, color: colors.text, marginBottom: 2 },
-  dateLabel: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+  greeting: { marginBottom: 2 },
+  name: { marginBottom: 2 },
+  dateLabel: {},
 
   section: { paddingHorizontal: spacing.lg, gap: spacing.md },
 
@@ -239,8 +239,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   cardText: { flex: 1 },
-  cardTitle: { fontFamily: font.semibold, fontSize: 16, color: colors.text, marginBottom: 2 },
-  cardSub: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+  cardTitle: { marginBottom: 2 },
+  cardSub: {},
 
   signOutBtn: {
     marginHorizontal: spacing.lg,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerBg,
   },
   signOutBtnDisabled: { opacity: 0.5 },
-  signOutText: { fontFamily: font.medium, color: colors.dangerText, fontSize: 15 },
+  signOutText: { color: colors.dangerText },
 
   langChips: { flexDirection: 'row', gap: 6 },
   langChip: {
@@ -265,6 +265,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   langChipActive: { borderColor: colors.primary, backgroundColor: colors.tintBlue },
-  langChipText: { fontFamily: font.semibold, fontSize: 13, color: colors.muted },
+  langChipText: { color: colors.muted },
   langChipTextActive: { color: colors.primary },
 });

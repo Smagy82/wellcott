@@ -1,6 +1,6 @@
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import { useEffect } from 'react';
-import { Text } from '../../src/components/Text';
+import { AppText } from '../../src/components/AppText';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { BlurView } from 'expo-blur';
@@ -77,13 +77,14 @@ function TabButton({
           size={23}
           color={active ? colors.primary : colors.iconIdle}
         />
-        <Text
+        <AppText
+          variant="tabLabel"
           style={[styles.tabLabel, active && styles.tabLabelActive]}
           numberOfLines={1}
           allowFontScaling={false}
         >
           {t(entry.labelKey)}
-        </Text>
+        </AppText>
       </Animated.View>
     </Pressable>
   );
@@ -199,9 +200,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tabLabel: {
-    fontFamily: font.semibold,
-    fontSize: 10,
-    color: colors.iconIdle,
     letterSpacing: 0.1,
   },
   tabLabelActive: {

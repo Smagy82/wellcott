@@ -1,5 +1,5 @@
 import { ActivityIndicator, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Text } from '../../src/components/Text';
+import { AppText } from '../../src/components/AppText';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -130,7 +130,7 @@ export default function MapScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.statusText}>{t('map.findingClinics')}</Text>
+        <AppText variant="body" style={styles.statusText}>{t('map.findingClinics')}</AppText>
       </View>
     );
   }
@@ -138,10 +138,10 @@ export default function MapScreen() {
   if (status === 'no-permission') {
     return (
       <View style={styles.center}>
-        <Text style={styles.permTitle}>{t('common.locationOff')}</Text>
-        <Text style={styles.statusText}>{t('map.locationOffSub')}</Text>
+        <AppText style={styles.permTitle}>{t('common.locationOff')}</AppText>
+        <AppText variant="body" style={styles.statusText}>{t('map.locationOffSub')}</AppText>
         <TouchableOpacity style={styles.primaryBtn} onPress={requestLocation}>
-          <Text style={styles.primaryBtnText}>{t('common.enableLocation')}</Text>
+          <AppText variant="button" style={styles.primaryBtnText}>{t('common.enableLocation')}</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -150,9 +150,9 @@ export default function MapScreen() {
   if (status === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.permTitle}>{t('common.somethingWentWrong')}</Text>
+        <AppText style={styles.permTitle}>{t('common.somethingWentWrong')}</AppText>
         <TouchableOpacity style={styles.primaryBtn} onPress={retry}>
-          <Text style={styles.primaryBtnText}>{t('common.retry')}</Text>
+          <AppText variant="button" style={styles.primaryBtnText}>{t('common.retry')}</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   permTitle: { fontFamily: font.bold, fontSize: 18, color: colors.text, marginBottom: 6 },
-  statusText: { fontFamily: font.regular, fontSize: 14, color: colors.textMuted, textAlign: 'center', marginBottom: 18 },
+  statusText: { color: colors.textMuted, textAlign: 'center', marginBottom: 18 },
   primaryBtn: {
     backgroundColor: colors.primary,
     borderRadius: radius.pill,
@@ -272,5 +272,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     marginTop: 4,
   },
-  primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
+  primaryBtnText: { color: '#fff' },
 });

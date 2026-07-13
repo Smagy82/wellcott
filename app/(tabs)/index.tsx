@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Text } from '../../src/components/Text';
+import { AppText } from '../../src/components/AppText';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -88,7 +88,7 @@ function Toast({ state }: { state: ToastState }) {
       {state.icon === 'phone'
         ? <Phone weight="fill" size={14} color={colors.bannerAccent} />
         : <NavigationArrow weight="fill" size={14} color={colors.bannerAccent} />}
-      <Text style={styles.toastText}>{state.text}</Text>
+      <AppText variant="button" style={styles.toastText}>{state.text}</AppText>
     </Animated.View>
   );
 }
@@ -200,24 +200,24 @@ function ClinicCard({
           <View style={styles.cardRow}>
             {/* Left: name, address, badges, actions */}
             <View style={styles.cardContent}>
-              <Text style={styles.clinicName} numberOfLines={2}>{item.name}</Text>
+              <AppText variant="cardTitle" style={styles.clinicName} numberOfLines={2}>{item.name}</AppText>
 
               <View style={styles.addressRow}>
                 <MapPin size={13} weight="fill" color={colors.primary} />
-                <Text style={styles.address} numberOfLines={1} ellipsizeMode="tail">
+                <AppText variant="secondary" style={styles.address} numberOfLines={1} ellipsizeMode="tail">
                   {item.address}, {item.city}, {item.state} {item.zip}
-                </Text>
+                </AppText>
               </View>
 
               <View style={styles.badges}>
                 {item.acceptsUninsured && (
                   <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
-                    <Text style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</Text>
+                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.acceptsUninsured')}</AppText>
                   </View>
                 )}
                 {item.slidingScale && (
                   <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
-                    <Text style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</Text>
+                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</AppText>
                   </View>
                 )}
               </View>
@@ -226,12 +226,12 @@ function ClinicCard({
                 {item.phone ? (
                   <TouchableOpacity style={styles.btnCall} onPress={(e) => { e.stopPropagation?.(); handleCall(); }} activeOpacity={0.82}>
                     <Phone weight="fill" size={14} color="#fff" />
-                    <Text style={styles.btnCallText}>{t('common.call')}</Text>
+                    <AppText variant="button" style={styles.btnCallText}>{t('common.call')}</AppText>
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity style={styles.btnDir} onPress={(e) => { e.stopPropagation?.(); handleDirections(); }} activeOpacity={0.82}>
                   <NavigationArrow size={14} color={colors.primaryDark} />
-                  <Text style={styles.btnDirText}>{t('common.directions')}</Text>
+                  <AppText variant="button" style={styles.btnDirText}>{t('common.directions')}</AppText>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btnShare} onPress={(e) => { e.stopPropagation?.(); onShare(item); }} accessibilityLabel={t('share.buttonA11y')} activeOpacity={0.82}>
                   <ShareNetwork size={17} color={colors.primary} />
@@ -244,7 +244,7 @@ function ClinicCard({
               {/* 38×38 spacer — the actual heart Pressable is a sibling */}
               <View style={styles.heartSpacer} />
               {showDistance && (
-                <Text style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</Text>
+                <AppText variant="caption" style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</AppText>
               )}
             </View>
           </View>
@@ -275,7 +275,7 @@ function RadiusChip({ r, active, onPress }: { r: RadiusValue; active: boolean; o
   return (
     <Pressable onPress={handlePress}>
       <Animated.View style={[styles.chip, active && styles.chipActive, chipStyle]}>
-        <Text style={[styles.chipText, active && styles.chipTextActive]}>{r} mi</Text>
+        <AppText variant="button" style={[styles.chipText, active && styles.chipTextActive]}>{r} mi</AppText>
       </Animated.View>
     </Pressable>
   );
@@ -295,7 +295,7 @@ function SuggestionList({ suggestions, onSelect }: { suggestions: CitySuggestion
           activeOpacity={0.7}
         >
           <MapPin size={14} color={colors.primary} />
-          <Text style={styles.suggestionText}>{s.city}, {s.state}</Text>
+          <AppText variant="body" style={styles.suggestionText}>{s.city}, {s.state}</AppText>
         </TouchableOpacity>
       ))}
     </View>
@@ -430,14 +430,14 @@ export default function ClinicsScreen() {
               />
             )}
             contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
-            ListEmptyComponent={<Text style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</Text>}
+            ListEmptyComponent={<AppText variant="body" style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</AppText>}
           />
         ) : (
           <View style={styles.center}>
-            <Text style={styles.permTitle}>{t('common.locationOff')}</Text>
-            <Text style={styles.statusText}>{t('clinicList.locationOffSub')}</Text>
+            <AppText style={styles.permTitle}>{t('common.locationOff')}</AppText>
+            <AppText variant="body" style={styles.statusText}>{t('clinicList.locationOffSub')}</AppText>
             <TouchableOpacity style={styles.primaryBtn} onPress={requestLocation}>
-              <Text style={styles.primaryBtnText}>{t('common.enableLocation')}</Text>
+              <AppText variant="button" style={styles.primaryBtnText}>{t('common.enableLocation')}</AppText>
             </TouchableOpacity>
           </View>
         )}
@@ -449,7 +449,7 @@ export default function ClinicsScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.statusText}>{t('map.findingClinics')}</Text>
+        <AppText variant="body" style={styles.statusText}>{t('map.findingClinics')}</AppText>
       </View>
     );
   }
@@ -457,9 +457,9 @@ export default function ClinicsScreen() {
   if (status === 'error') {
     return (
       <View style={styles.center}>
-        <Text style={styles.permTitle}>{t('common.somethingWentWrong')}</Text>
+        <AppText style={styles.permTitle}>{t('common.somethingWentWrong')}</AppText>
         <TouchableOpacity style={styles.primaryBtn} onPress={retry}>
-          <Text style={styles.primaryBtnText}>{t('common.retry')}</Text>
+          <AppText variant="button" style={styles.primaryBtnText}>{t('common.retry')}</AppText>
         </TouchableOpacity>
       </View>
     );
@@ -472,9 +472,9 @@ export default function ClinicsScreen() {
     <View style={{ paddingTop: insets.top + 12 }}>
       {/* Large title (fades out as glass bar fades in) */}
       <RNAnimated.View style={[styles.largeTitleWrap, { opacity: largeTitleOpacity }]} pointerEvents="none">
-        <Text style={styles.largeTitle}>{t('tabs.clinics')}</Text>
+        <AppText variant="largeTitle" style={styles.largeTitle}>{t('tabs.clinics')}</AppText>
         {clinics.length > 0 && (
-          <Text style={styles.largeSub}>{filtered.length} clinics near you</Text>
+          <AppText style={styles.largeSub}>{filtered.length} clinics near you</AppText>
         )}
       </RNAnimated.View>
 
@@ -506,9 +506,9 @@ export default function ClinicsScreen() {
         </View>
 
         {!isSearching && (
-          <Text style={styles.listHeader}>
+          <AppText variant="caption" style={styles.listHeader}>
             {t('clinicList.clinicsNearby', { count: filtered.length, radius: radiusMi })}
-          </Text>
+          </AppText>
         )}
         <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
       </View>
@@ -536,11 +536,11 @@ export default function ClinicsScreen() {
         ListHeaderComponent={ListHeader}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          <Text style={styles.statusText}>
+          <AppText variant="body" style={styles.statusText}>
             {isSearching
               ? t('clinicList.noResultsForQuery', { query })
               : t('clinicList.noClinicsInRadius', { radius: radiusMi })}
-          </Text>
+          </AppText>
         }
         onScroll={RNAnimated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -559,7 +559,7 @@ export default function ClinicsScreen() {
         <BlurView intensity={56} tint="light" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(240,253,250,0.86)' }]} />
         <View style={styles.glassHairline} />
-        <Text style={[styles.glassTitle, { marginTop: insets.top + 10 }]}>{t('tabs.clinics')}</Text>
+        <AppText variant="screenTitle" style={[styles.glassTitle, { marginTop: insets.top + 10 }]}>{t('tabs.clinics')}</AppText>
       </RNAnimated.View>
 
       <View style={[styles.toastAnchor, { bottom: BOTTOM_INSET + 8 }]} pointerEvents="none">
@@ -581,14 +581,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderRadius: radius.pill,
     paddingVertical: 11, paddingHorizontal: 28, marginTop: 4,
   },
-  primaryBtnText: { fontFamily: font.semibold, color: '#fff', fontSize: 14 },
+  primaryBtnText: { color: '#fff' },
 
   // Large title — lives inside the scroll, fades out on scroll
   largeTitleWrap: {
     paddingHorizontal: spacing.lg,
     paddingBottom: 10,
   },
-  largeTitle: { fontFamily: font.bold, fontSize: 32, color: colors.text, letterSpacing: -0.6 },
+  largeTitle: {},
   largeSub: { fontFamily: font.regular, fontSize: 14, color: colors.muted, marginTop: 3 },
 
   // Glass bar — absolutely positioned, transparent → blurred on scroll
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(19,78,74,0.08)',
   },
-  glassTitle: { fontFamily: font.bold, fontSize: 17, color: colors.text },
+  glassTitle: {},
 
   listTop: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   searchWrap: {
@@ -635,10 +635,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, borderColor: colors.primary,
     shadowColor: 'rgba(8,145,178,0.28)', shadowOpacity: 1, shadowRadius: 8, elevation: 4,
   },
-  chipText: { fontFamily: font.bold, fontSize: 13, color: colors.primaryDark },
+  chipText: { color: colors.primaryDark },
   chipTextActive: { color: '#fff' },
 
-  listHeader: { fontFamily: font.regular, fontSize: 12, color: colors.muted, marginBottom: 6, marginLeft: 2 },
+  listHeader: { marginBottom: 6, marginLeft: 2 },
   list: { paddingHorizontal: spacing.lg },
 
   // ── Card ──────────────────────────────────────────────────────────────────
@@ -649,18 +649,18 @@ const styles = StyleSheet.create({
   cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
   cardContent: { flex: 1, paddingRight: 8 },
 
-  clinicName: { fontFamily: font.bold, fontSize: 16, color: colors.text, marginBottom: 6 },
+  clinicName: { marginBottom: 6 },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
-  address: { fontFamily: font.regular, fontSize: 13, color: colors.muted, flex: 1 },
+  address: { flex: 1 },
 
   // Right column: 44px wide, heart spacer + distance
   cardRight: { width: 44, alignItems: 'center', gap: 4 },
   heartSpacer: { width: 38, height: 38 },
-  distanceCol: { fontFamily: font.bold, fontSize: 12, color: colors.primary, textAlign: 'center' },
+  distanceCol: { fontFamily: font.bold, color: colors.primary, textAlign: 'center' },
 
   badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 10 },
   badge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontFamily: font.bold, fontSize: 11 },
+  badgeText: {},
   actions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btnCall: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -669,13 +669,13 @@ const styles = StyleSheet.create({
     shadowColor: 'rgba(8,145,178,0.28)', shadowOpacity: 1, shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 }, elevation: 4,
   },
-  btnCallText: { fontFamily: font.bold, color: '#fff', fontSize: 13 },
+  btnCallText: { color: '#fff' },
   btnDir: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.bg, borderRadius: radius.sm,
     paddingVertical: 7, paddingHorizontal: 14,
   },
-  btnDirText: { fontFamily: font.bold, color: colors.primaryDark, fontSize: 13 },
+  btnDirText: { color: colors.primaryDark },
   btnShare: {
     backgroundColor: colors.bg, borderRadius: radius.sm,
     paddingVertical: 7, width: 38, alignItems: 'center', justifyContent: 'center',
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 11,
   },
   suggestionBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
+  suggestionText: { color: colors.text },
 
   toastAnchor: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   toast: {
@@ -721,5 +721,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(19,78,74,0.94)', borderRadius: radius.pill,
     paddingVertical: 9, paddingHorizontal: 18, alignSelf: 'center',
   },
-  toastText: { fontFamily: font.semibold, fontSize: 13, color: '#fff' },
+  toastText: { color: '#fff' },
 });
