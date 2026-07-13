@@ -42,3 +42,9 @@ yarn-error.*
 /android
 *.db-shm
 *.db-wal
+
+# scratch / drafts
+*копия*
+*.dc.html
+ios-frame.jsx
+support.js
