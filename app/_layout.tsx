@@ -32,8 +32,8 @@ const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: theme.colors.bg,
-    card: theme.colors.bg,
+    background: theme.colors.card,
+    card: theme.colors.card,
     text: theme.colors.text,
     primary: theme.colors.primary,
   },
@@ -66,7 +66,7 @@ export default function RootLayout() {
 }
 
 const headerStyle = {
-  headerStyle: { backgroundColor: theme.colors.bg },
+  headerStyle: { backgroundColor: theme.colors.card },
   headerTintColor: theme.colors.primary,
   headerTitleStyle: {
     fontFamily: theme.font.semibold,

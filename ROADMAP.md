@@ -37,7 +37,7 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 ### 3. Обязательное для ревью сторов
 - [x] **Подтверждение email настроено** (SMTP Resend, фирменный шаблон — см. п.2).
 - [x] **Экран «About / О приложении»** реализован (about.tsx): экстренный дисклеймер 911,
-      чек-лист «что взять на визит», дисклеймеры справочника, affiliate SingleCare.
+      дисклеймеры справочника, affiliate SingleCare, вход в first-visit.tsx.
 - [x] **Privacy Policy** — задеплоена на https://wellcott.app/privacy (обязательный URL для сторов ГОТОВ)
       Хостинг: Cloudflare (проект 'wellcott', тип Worker со статик-ассетами, аккаунт
       Lopatyn.music@gmail.com). Custom domains: wellcott.app + www.wellcott.app, SSL active.
@@ -130,6 +130,16 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 ## РЕАЛИЗОВАНО (зафиксировано 10.07.2026)
 
 История — чтобы не дублировать в TODO и не переспрашивать что уже сделано.
+
+### First Visit Prep (13.07.2026)
+- [x] Новый экран app/first-visit.tsx — интерактивная подготовка к первому визиту (офлайн, без логина).
+      6-пунктный чек-лист (AsyncStorage, toggle/reset), прогресс-бар, блок про proof of income (tintPeach),
+      CTA на sliding-scale калькулятор, скрипт звонка (Copy + Call если clinicId передан),
+      опциональный клинический заголовок (clinicId param), кнопка «Добавить в историю» (только залогиненные).
+- [x] Вход из about.tsx: карточка (tintBlue, навигация на /first-visit без clinicId).
+- [x] CTA в clinic/[id].tsx: карточка (tintBlue) — всегда видима, после GFE CTA.
+- [x] Статичный чек-лист удалён из about.tsx; about.bring* ключи удалены из en.json / es.json.
+- [x] src/lib/useVisitPrep.ts — хук AsyncStorage с toggle/reset/progress, ключ visitPrep:{clinicId|general}.
 
 ### Good Faith Estimate guide (12.07.2026)
 - [x] Экран app/good-faith-estimate.tsx — офлайн-справка по праву на письменную смету расходов

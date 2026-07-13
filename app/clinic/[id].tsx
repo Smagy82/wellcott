@@ -161,6 +161,20 @@ export default function ClinicDetailScreen() {
         <Ionicons name="chevron-forward" size={18} color={colors.tintMintIcon} />
       </TouchableOpacity>
 
+      {/* First visit prep CTA */}
+      <TouchableOpacity
+        style={styles.prepCard}
+        activeOpacity={0.8}
+        onPress={() => router.push(`/first-visit?clinicId=${encodeURIComponent(id ?? '')}`)}
+      >
+        <Ionicons name="list-outline" size={22} color={colors.tintBlueIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.prepCtaTitle}>{t('firstVisit.ctaTitle')}</Text>
+          <Text style={styles.prepCtaSub}>{t('firstVisit.ctaSub')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+      </TouchableOpacity>
+
       {/* Info section */}
       <View style={styles.section}>
         <InfoRow label={t('clinicDetail.labelAddress')}>
@@ -283,6 +297,20 @@ const styles = StyleSheet.create({
   gfeCtaTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintMintIcon, marginBottom: 2 },
   gfeCtaSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 
+  prepCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  prepCtaTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintBlueIcon, marginBottom: 2 },
+  prepCtaSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
+
   section: {
     backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
@@ -295,7 +323,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5EAF0',
+    borderBottomColor: colors.border,
   },
   rowLabel: {
     fontFamily: font.semibold,

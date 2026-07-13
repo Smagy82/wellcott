@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   langChips: { flexDirection: 'row', gap: 6 },
   langChip: {
     borderWidth: 1.5,
-    borderColor: '#D0D8E0',
+    borderColor: colors.border,
     borderRadius: radius.pill,
     paddingVertical: 5,
     paddingHorizontal: 14,

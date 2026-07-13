@@ -1,17 +1,17 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
 
-const CHECKLIST_KEYS = ['bringId', 'bringIncome', 'bringAddress', 'bringMeds'] as const;
 const DISCLAIMER_KEYS = ['disclaimer1', 'disclaimer2', 'disclaimer3', 'disclaimer4'] as const;
 
 export default function AboutScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <>
@@ -33,22 +33,19 @@ export default function AboutScreen() {
           <Text style={styles.body}>{t('about.appDescription')}</Text>
         </View>
 
-        {/* Checklist */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t('about.bringTitle')}</Text>
-          {CHECKLIST_KEYS.map((key) => (
-            <View key={key} style={styles.checkRow}>
-              <Ionicons
-                name="checkmark-circle"
-                size={18}
-                color={colors.primary}
-                style={styles.checkIcon}
-              />
-              <Text style={styles.checkText}>{t(`about.${key}`)}</Text>
-            </View>
-          ))}
-          <Text style={styles.checkNote}>{t('about.bringNote')}</Text>
-        </View>
+        {/* First visit prep entry */}
+        <TouchableOpacity
+          style={styles.prepCard}
+          activeOpacity={0.8}
+          onPress={() => router.push('/first-visit')}
+        >
+          <Ionicons name="list-outline" size={22} color={colors.tintBlueIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.prepTitle}>{t('firstVisit.aboutEntry_title')}</Text>
+            <Text style={styles.prepSub}>{t('firstVisit.aboutEntry_sub')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
+        </TouchableOpacity>
 
         {/* Disclaimers */}
         <View style={styles.card}>
@@ -89,7 +86,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: 12, paddingBottom: 48 },
 
   emergencyCard: {
-    backgroundColor: '#FFF3F3',
+    backgroundColor: colors.dangerBg,
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderColor: colors.danger,
@@ -97,7 +94,7 @@ const styles = StyleSheet.create({
   },
   emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
   emergencyTitle: { fontFamily: font.bold, fontSize: 15, color: colors.danger },
-  emergencyBody: { fontFamily: font.regular, fontSize: 14, color: '#B03030', lineHeight: 21 },
+  emergencyBody: { fontFamily: font.regular, fontSize: 14, color: colors.danger, lineHeight: 21 },
 
   card: {
     backgroundColor: colors.card,
@@ -118,27 +115,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  checkRow: {
+  prepCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 10,
+    alignItems: 'center',
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: 12,
+    ...shadow,
   },
-  checkIcon: { marginRight: 10, marginTop: 1 },
-  checkText: {
-    flex: 1,
-    fontFamily: font.regular,
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 21,
-  },
-  checkNote: {
-    fontFamily: font.regular,
-    fontSize: 13,
-    color: colors.textMuted,
-    lineHeight: 20,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
+  prepTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintBlueIcon, marginBottom: 2 },
+  prepSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 
   disclaimerRow: {
     flexDirection: 'row',

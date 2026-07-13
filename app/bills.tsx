@@ -23,7 +23,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   labs:      { bg: colors.tintBlue,  text: colors.tintBlueIcon },
   meds:      { bg: colors.tintPeach, text: colors.tintPeachIcon },
   procedure: { bg: colors.tintLilac, text: colors.tintLilacIcon },
-  other:     { bg: '#F0F0F4',        text: colors.textMuted },
+  other:     { bg: colors.surfaceAlt, text: colors.textMuted },
 };
 
 function formatDate(d: string) {
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     gap: 12,
     ...shadow,
   },
-  photoThumb: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: '#EEE' },
-  photoPlaceholder: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: '#E8EDF2' },
+  photoThumb: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt },
+  photoPlaceholder: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt },
   cardBody: { flex: 1 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' },
   amount: { fontFamily: font.bold, fontSize: 18, color: colors.text },

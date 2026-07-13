@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#E4EAF0',
+    borderColor: colors.border,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   },
   suggestionBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4EAF0',
+    borderBottomColor: colors.border,
   },
   suggestionIcon: { marginRight: 8 },
   suggestionText: { fontFamily: font.regular, fontSize: 14, color: colors.text },
