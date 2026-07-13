@@ -93,11 +93,26 @@ const PAY_CLASS_STYLE: Record<string, { bg: string; color: string }> = {
   none:  { bg: colors.tintPeach,  color: colors.tintPeachIcon },
 };
 
+function verdictKey(id: string): string {
+  if (id === 'full') return 'slidingScale.verdict.full';
+  if (id === 'none') return 'slidingScale.verdict.none';
+  return 'slidingScale.verdict.partial';
+}
+
+function formatIncome(raw: string): string {
+  if (!raw) return '';
+  const n = parseInt(raw, 10);
+  if (isNaN(n)) return '';
+  return n.toLocaleString('en-US');
+}
+
 export default function SlidingScaleScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { state: stateParam } = useLocalSearchParams<{ state?: string }>();
 
+  const [howOpen, setHowOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [householdSize, setHouseholdSize] = useState(1);
   const [incomeStr, setIncomeStr] = useState('');
   const [incomeMode, setIncomeMode] = useState<IncomeMode>('year');
@@ -106,7 +121,7 @@ export default function SlidingScaleScreen() {
   const [stateFilter, setStateFilter] = useState('');
   const [trackW, setTrackW] = useState(0);
 
-  const incomeNum = parseFloat(incomeStr) || 0;
+  const incomeNum = incomeStr ? parseInt(incomeStr, 10) : 0;
   const annualIncome = incomeMode === 'month' ? incomeNum * 12 : incomeNum;
   const hasResult = annualIncome > 0 && selectedState !== '';
 
@@ -136,6 +151,31 @@ export default function SlidingScaleScreen() {
         keyboardShouldPersistTaps="handled"
       >
 
+        {/* ── How this works accordion ── */}
+        <View style={styles.accordion}>
+          <TouchableOpacity
+            style={styles.accordionHeader}
+            onPress={() => setHowOpen(o => !o)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.accordionTitle}>{t('slidingScale.how.title')}</Text>
+            <Ionicons
+              name={howOpen ? 'chevron-up' : 'chevron-down'}
+              size={18}
+              color={colors.tintBlueIcon}
+            />
+          </TouchableOpacity>
+          {howOpen && (
+            <View style={styles.accordionBody}>
+              {(['body1', 'body2', 'body3', 'body4', 'body5'] as const).map(k => (
+                <Text key={k} style={styles.howBody}>
+                  {t(`slidingScale.how.${k}`)}
+                </Text>
+              ))}
+            </View>
+          )}
+        </View>
+
         {/* ── Inputs ── */}
         <View style={styles.card}>
 
@@ -164,15 +204,20 @@ export default function SlidingScaleScreen() {
           {/* Income */}
           <Text style={styles.label}>{t('slidingScale.annualIncome')}</Text>
           <View style={styles.incomeRow}>
-            <Text style={styles.dollar}>$</Text>
-            <TextInput
-              style={styles.incomeInput}
-              value={incomeStr}
-              onChangeText={v => setIncomeStr(v.replace(/[^0-9.]/g, ''))}
-              keyboardType="numeric"
-              placeholder={t('slidingScale.incomePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-            />
+            <View style={[styles.incomeInputWrap, isFocused && styles.incomeInputWrapFocused]}>
+              <Text style={styles.dollar}>$</Text>
+              <TextInput
+                style={styles.incomeInput}
+                value={formatIncome(incomeStr)}
+                onChangeText={v => setIncomeStr(v.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+                placeholder={t('slidingScale.incomePlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                autoFocus
+              />
+            </View>
             <View style={styles.modePill}>
               {(['year', 'month'] as IncomeMode[]).map(m => (
                 <TouchableOpacity
@@ -233,48 +278,55 @@ export default function SlidingScaleScreen() {
               </View>
             </View>
 
-            {/* Pay class badge + description — only when not "none" */}
+            {/* Pay class badge (only for non-none tiers) */}
             {payClass.id !== 'none' && (
-              <View style={styles.classBlock}>
-                <View style={[styles.classBadge, { backgroundColor: pcs.bg }]}>
-                  <Text style={[styles.classBadgeText, { color: pcs.color }]}>
-                    {t(labelKey)}
-                  </Text>
-                </View>
-                <Text style={styles.classLine}>
-                  {t('slidingScale.resultClassLine', { range: t(labelKey) })}
+              <View style={[styles.classBadge, { backgroundColor: pcs.bg }]}>
+                <Text style={[styles.classBadgeText, { color: pcs.color }]}>
+                  {t(labelKey)}
                 </Text>
               </View>
             )}
 
-            {/* No discount block */}
-            {payClass.id === 'none' && (
-              <View style={styles.noDiscountBlock}>
-                <Ionicons name="information-circle" size={20} color={colors.tintPeachIcon} style={{ marginRight: 10, marginTop: 1 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.noDiscountText}>{t('slidingScale.noDiscountNote')}</Text>
-                  <TouchableOpacity onPress={() => router.push('/costs')}>
-                    <Text style={styles.linkText}>{t('slidingScale.noDiscountLink')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            {/* Verdict */}
+            <View style={[styles.verdictCard, { borderLeftColor: pcs.color }]}>
+              <Text style={styles.verdictText}>{t(verdictKey(payClass.id))}</Text>
+              {payClass.id === 'none' && (
+                <TouchableOpacity onPress={() => router.push('/costs')}>
+                  <Text style={styles.linkText}>{t('slidingScale.verdict.noneLink')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Disclaimer inline with results */}
+            <Text style={styles.resultDisclaimer}>{t('slidingScale.disclaimerEstimate')}</Text>
           </>
         )}
 
-        {/* ── Always-visible disclaimers ── */}
-        <View style={styles.disclaimerCard}>
-          <Text style={styles.disclaimerEmphasis}>{t('slidingScale.disclaimerEstimate')}</Text>
-          <View style={styles.disclaimerDivider} />
-          <Text style={styles.disclaimerBody}>{t('slidingScale.disclaimerIncome')}</Text>
-          <TouchableOpacity onPress={() => router.push('/about')}>
-            <Text style={styles.linkText}>{t('slidingScale.disclaimerIncomeLink')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.assetNote}>
-          <Ionicons name="information-circle-outline" size={16} color={colors.primary} style={{ marginRight: 6, marginTop: 1 }} />
-          <Text style={styles.assetText}>{t('slidingScale.disclaimerAssets')}</Text>
+        {/* ── How to get the discount (always visible) ── */}
+        <View style={styles.howToGetCard}>
+          <Text style={styles.howToGetTitle}>{t('slidingScale.howToGet.title')}</Text>
+          {([1, 2, 3, 4] as const).map(n => (
+            <View key={n} style={styles.howStepRow}>
+              <View style={styles.howStepNum}>
+                <Text style={styles.howStepNumText}>{n}</Text>
+              </View>
+              <Text style={styles.howStepText}>{t(`slidingScale.howToGet.step${n}`)}</Text>
+            </View>
+          ))}
+          <View style={styles.warningRow}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={18}
+              color={colors.tintYellowIcon}
+              style={{ marginRight: 8, marginTop: 1 }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.warningText}>{t('slidingScale.howToGet.warning')}</Text>
+              <TouchableOpacity onPress={() => router.push('/about')}>
+                <Text style={styles.linkText}>{t('slidingScale.howToGet.warningLink')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         <Text style={styles.footer}>{t('slidingScale.footer', { year: FPG_YEAR })}</Text>
@@ -326,6 +378,39 @@ const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: colors.bg },
   content: { padding: spacing.lg, gap: 12, paddingBottom: 48 },
 
+  // How accordion
+  accordion: {
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    ...shadow,
+  },
+  accordionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+  },
+  accordionTitle: {
+    fontFamily: font.semibold,
+    fontSize: 14,
+    color: colors.tintBlueIcon,
+    flex: 1,
+    lineHeight: 20,
+    marginRight: 8,
+  },
+  accordionBody: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  howBody: {
+    fontFamily: font.regular,
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 19,
+  },
+
   // Input card
   card: {
     backgroundColor: colors.card,
@@ -357,13 +442,29 @@ const styles = StyleSheet.create({
 
   // Income row
   incomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  dollar: { fontFamily: font.semibold, fontSize: 20, color: colors.textMuted },
+  incomeInputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintBlue,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.tintBlueIcon,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    gap: 6,
+  },
+  incomeInputWrapFocused: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+  },
+  dollar: { fontFamily: font.semibold, fontSize: 18, color: colors.textMuted },
   incomeInput: {
     flex: 1,
     fontFamily: font.regular,
-    fontSize: 20,
+    fontSize: 18,
     color: colors.text,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   modePill: {
     flexDirection: 'row',
@@ -409,40 +510,66 @@ const styles = StyleSheet.create({
   barLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   barLabel: { fontFamily: font.regular, fontSize: 11, color: colors.textMuted },
 
-  // Pay class
-  classBlock: { gap: 8 },
+  // Pay class badge
   classBadge: { alignSelf: 'flex-start', borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 6 },
   classBadgeText: { fontFamily: font.semibold, fontSize: 13 },
-  classLine: { fontFamily: font.regular, fontSize: 14, color: colors.text, lineHeight: 21 },
 
-  // No discount
-  noDiscountBlock: {
-    flexDirection: 'row',
-    backgroundColor: colors.tintPeach,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    borderLeftWidth: 3, borderLeftColor: colors.tintPeachIcon,
-  },
-  noDiscountText: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 19, marginBottom: 6 },
-
-  // Disclaimers
-  disclaimerCard: {
+  // Verdict card
+  verdictCard: {
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    gap: spacing.sm,
+    borderLeftWidth: 3,
+    gap: spacing.xs,
     ...shadow,
   },
-  disclaimerEmphasis: { fontFamily: font.semibold, fontSize: 13, color: colors.text },
-  disclaimerDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5EAF0' },
-  disclaimerBody: { fontFamily: font.regular, fontSize: 13, color: colors.textMuted, lineHeight: 19 },
+  verdictText: { fontFamily: font.semibold, fontSize: 15, color: colors.text, lineHeight: 22 },
+
+  resultDisclaimer: {
+    fontFamily: font.regular,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginHorizontal: 8,
+  },
+
   linkText: { fontFamily: font.semibold, fontSize: 13, color: colors.primary, marginTop: 4 },
 
-  assetNote: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    backgroundColor: colors.tintBlue, borderRadius: radius.md, padding: 12,
+  // How to get card
+  howToGetCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: 14,
+    ...shadow,
   },
-  assetText: { fontFamily: font.regular, fontSize: 13, color: colors.tintBlueIcon, flex: 1, lineHeight: 19 },
+  howToGetTitle: { fontFamily: font.bold, fontSize: 15, color: colors.text },
+  howStepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  howStepNum: {
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  howStepNumText: { fontFamily: font.bold, fontSize: 13, color: '#fff' },
+  howStepText: { fontFamily: font.regular, fontSize: 13, color: colors.text, lineHeight: 20, flex: 1 },
+
+  warningRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.tintYellow,
+    borderRadius: radius.md,
+    padding: 12,
+    marginTop: 2,
+  },
+  warningText: {
+    fontFamily: font.regular,
+    fontSize: 13,
+    color: colors.text,
+    lineHeight: 19,
+    marginBottom: 4,
+  },
 
   footer: {
     fontFamily: font.regular, fontSize: 11,

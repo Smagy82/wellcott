@@ -160,7 +160,7 @@
     "annualIncome": "",
     "incomeYear": "",
     "incomeMonth": "",
-    "incomePlaceholder": "0",
+    "incomePlaceholder": "",
     "statePicker": "",
     "statePickerPlaceholder": "",
     "statePickerSearch": "",
@@ -172,17 +172,34 @@
     "resultBadgeTier3": "",
     "resultBadgeTier4": "",
     "resultBadgeNone": "",
-    "resultClassLine": "",
     "scaleMin": "",
     "scaleMid": "",
     "scaleMax": "",
-    "noDiscountNote": "",
-    "noDiscountLink": "",
     "disclaimerEstimate": "",
-    "disclaimerIncome": "",
-    "disclaimerIncomeLink": "",
-    "disclaimerAssets": "",
-    "footer": ""
+    "footer": "",
+    "how": {
+      "title": "",
+      "body1": "",
+      "body2": "",
+      "body3": "",
+      "body4": "",
+      "body5": ""
+    },
+    "verdict": {
+      "full": "",
+      "partial": "",
+      "none": "",
+      "noneLink": ""
+    },
+    "howToGet": {
+      "title": "",
+      "step1": "",
+      "step2": "",
+      "step3": "",
+      "step4": "",
+      "warning": "",
+      "warningLink": ""
+    }
   },
   "costs": {
     "navTitle": "Cuánto cuesta la atención",
