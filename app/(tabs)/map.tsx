@@ -1,19 +1,30 @@
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../../src/components/Text';
 import { ScreenTransition } from '../../src/components/ScreenTransition';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView from 'react-native-map-clustering';
 import { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
-import { NavigationArrow } from 'phosphor-react-native';
+import { NavigationArrow, Plus, Minus } from 'phosphor-react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { findAllClinicsForMap, type MapClinic } from '../../src/lib/clinicSearch';
 import { getDb } from '../../src/lib/database';
 import { theme } from '../../src/theme';
 
-const { colors, radius, font, shadow } = theme;
+const { colors, radius, font } = theme;
+
+// Mirror tab-bar positioning constants from _layout.tsx
+const TAB_BAR_H = 58;
+const TAB_BAR_BOTTOM_EXTRA = 10; // space below the bar itself
 
 const US_REGION = {
   latitude: 39.8,
@@ -22,10 +33,46 @@ const US_REGION = {
   longitudeDelta: 40,
 };
 
+const SPRING_IN  = { mass: 0.6, damping: 10, stiffness: 200 } as const;
+const SPRING_OUT = { mass: 1,   damping: 14, stiffness: 180 } as const;
+
+// ── Map control button ───────────────────────────────────────────────────────
+
+function MapControlButton({
+  onPress,
+  children,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Animated.View style={animStyle}>
+      <Pressable
+        style={styles.ctrlBtn}
+        hitSlop={6}
+        onPressIn={() => { scale.value = withSpring(0.9, SPRING_IN); }}
+        onPressOut={() => { scale.value = withSpring(1, SPRING_OUT); }}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress();
+        }}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+// ── MapScreen ────────────────────────────────────────────────────────────────
+
 export default function MapScreen() {
   const { t } = useTranslation();
   const { clinics: nearbyClinics, status, retry } = useNearbyClinics(25);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
 
@@ -46,8 +93,6 @@ export default function MapScreen() {
     retry();
   };
 
-  // Центрировать на текущей позиции. Разрешение уже выдано (status==='ready'),
-  // повторного диалога не будет.
   const goToMyLocation = async () => {
     if (!mapRef.current) return;
     try {
@@ -64,7 +109,20 @@ export default function MapScreen() {
         500,
       );
     } catch {
-      // геолокация недоступна — молча игнорируем
+      // geolocation unavailable — silently ignore
+    }
+  };
+
+  const zoomBy = async (delta: number) => {
+    if (!mapRef.current) return;
+    try {
+      const camera = await mapRef.current.getCamera();
+      mapRef.current.animateCamera(
+        { zoom: (camera.zoom ?? 10) + delta },
+        { duration: 300 },
+      );
+    } catch {
+      // camera API unavailable — silently ignore
     }
   };
 
@@ -110,6 +168,11 @@ export default function MapScreen() {
       }
     : US_REGION;
 
+  // Position stack just above the floating tab bar
+  // Tab bar: bottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA
+  // Stack bottom = tab bar bottom + TAB_BAR_H + 12
+  const stackBottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA + TAB_BAR_H + 12;
+
   return (
     <ScreenTransition>
     <View style={styles.container}>
@@ -137,13 +200,24 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      <TouchableOpacity
-        style={styles.locateBtn}
-        onPress={goToMyLocation}
-        activeOpacity={0.85}
-      >
-        <NavigationArrow weight="fill" size={22} color="#fff" />
-      </TouchableOpacity>
+      {/* Vertical map control stack */}
+      <View style={[styles.ctrlStack, { bottom: stackBottom }]}>
+        <MapControlButton onPress={() => zoomBy(1)}>
+          <Plus size={18} color="#134E4A" />
+        </MapControlButton>
+
+        <View style={styles.ctrlDivider} />
+
+        <MapControlButton onPress={() => zoomBy(-1)}>
+          <Minus size={18} color="#134E4A" />
+        </MapControlButton>
+
+        <View style={styles.ctrlDivider} />
+
+        <MapControlButton onPress={goToMyLocation}>
+          <NavigationArrow size={18} weight="fill" color={colors.primary} />
+        </MapControlButton>
+      </View>
     </View>
     </ScreenTransition>
   );
@@ -153,17 +227,33 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
 
-  locateBtn: {
+  // Vertical capsule control
+  ctrlStack: {
     position: 'absolute',
-    bottom: 96,
-    right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
+    right: 14,
+    width: 44,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+    alignItems: 'center',
+    shadowColor: 'rgba(19,78,74,1)',
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  ctrlBtn: {
+    width: 44,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow,
+  },
+  ctrlDivider: {
+    width: 26,
+    height: 1,
+    backgroundColor: 'rgba(19,78,74,0.12)',
   },
 
   center: {
