@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart } from 'phosphor-react-native';
@@ -62,13 +63,15 @@ export default function FavoritesScreen() {
   );
 
   return (
-    <FlatList
-      data={clinics}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={styles.list}
-      style={{ backgroundColor: colors.bg }}
-    />
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScreenHeader title={t('favorites.title')} />
+      <FlatList
+        data={clinics}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+      />
+    </View>
   );
 }
 

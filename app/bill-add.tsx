@@ -12,6 +12,7 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -89,6 +90,7 @@ export default function BillAddScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScreenHeader title={t('billAdd.navTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         <Text style={styles.label}>{t('billAdd.amount')}</Text>

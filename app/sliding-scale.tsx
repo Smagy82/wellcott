@@ -8,10 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CaretDown, CaretUp, WarningCircle } from 'phosphor-react-native';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { getFpgPercent, getPayClass, FPG_YEAR } from '../src/lib/fpg';
 import { theme } from '../src/theme';
 
@@ -144,7 +145,7 @@ export default function SlidingScaleScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('slidingScale.navTitle') }} />
+      <ScreenHeader title={t('slidingScale.navTitle')} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash, Clock, Plus } from 'phosphor-react-native';
@@ -60,6 +61,7 @@ export default function VisitsScreen() {
 
   return (
     <View style={styles.root}>
+      <ScreenHeader title={t('visits.navTitle')} />
       <FlatList
         data={visits}
         keyExtractor={(item) => item.id}

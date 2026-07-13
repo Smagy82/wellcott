@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, CaretRight } from 'phosphor-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { theme } from '../src/theme';
 
 const { colors, font, radius, spacing, shadow } = theme;
@@ -22,7 +23,7 @@ export default function GoodFaithEstimateScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('gfe.navTitle') }} />
+      <ScreenHeader title={t('gfe.navTitle')} />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

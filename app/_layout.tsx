@@ -55,14 +55,7 @@ export default function RootLayout() {
 }
 
 const headerStyle = {
-  headerStyle: { backgroundColor: theme.colors.card },
-  headerTintColor: theme.colors.primary,
-  headerTitleStyle: {
-    fontFamily: theme.font.semibold,
-    color: theme.colors.text,
-    fontSize: 17,
-  },
-  headerShadowVisible: false,
+  headerShown: false,
 };
 
 function RootLayoutNav() {
@@ -86,13 +79,13 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)"      options={{ headerShown: false }} />
         <Stack.Screen name="auth"        options={{ headerShown: false }} />
         <Stack.Screen name="clinic/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="favorites"   options={{ title: 'Saved clinics' }} />
-        <Stack.Screen name="visits"      options={{ title: 'Visit history' }} />
-        <Stack.Screen name="visit-add"   options={{ title: 'Add visit', presentation: 'modal' }} />
-        <Stack.Screen name="bills"       options={{ title: 'Expenses' }} />
-        <Stack.Screen name="bill-add"    options={{ title: 'Add expense', presentation: 'modal' }} />
-        <Stack.Screen name="first-visit" options={{ title: 'First Visit Prep' }} />
-        <Stack.Screen name="modal"       options={{ presentation: 'modal' }} />
+        <Stack.Screen name="favorites"   options={{ headerShown: false }} />
+        <Stack.Screen name="visits"      options={{ headerShown: false }} />
+        <Stack.Screen name="visit-add"   options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="bills"       options={{ headerShown: false }} />
+        <Stack.Screen name="bill-add"    options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="first-visit" options={{ headerShown: false }} />
+        <Stack.Screen name="modal"       options={{ headerShown: false, presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
   );

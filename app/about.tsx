@@ -1,6 +1,7 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
-import { Stack, useRouter } from 'expo-router';
+import { ScreenHeader } from '../src/components/ScreenHeader';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Warning, List, CaretRight } from 'phosphor-react-native';
 import { theme } from '../src/theme';
@@ -15,7 +16,7 @@ export default function AboutScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('about.appTitle') }} />
+      <ScreenHeader title={t('about.appTitle')} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
         {/* Emergency block */}

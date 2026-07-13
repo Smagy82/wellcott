@@ -27,6 +27,17 @@ export const theme = {
     dangerBg:      '#FEF2F2',
     promoBg:       '#F0FDFA',
 
+    // Semantic status tokens
+    warningBg:     '#FEF3C7',
+    warningText:   '#B45309',
+    warningIcon:   '#D97706',
+    dangerBorder:  '#FECACA',
+    dangerText:    '#DC2626',
+    infoBg:        '#CCFBF1',
+    infoText:      '#0F766E',
+    successBg:     '#DCFCE7',
+    successText:   '#16A34A',
+
     // Old tint tokens mapped to new palette
     tintBlue:      '#CCFBF1',
     tintBlueIcon:  '#0F766E',
@@ -38,6 +49,8 @@ export const theme = {
     tintYellowIcon:'#D97706',
     tintLilac:     '#EDE9FE',
     tintLilacIcon: '#7C3AED',
+    tintSky:       '#E0F2FE',
+    tintSkyIcon:   '#0369A1',
   },
 
   font: {

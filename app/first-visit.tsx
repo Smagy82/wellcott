@@ -1,6 +1,7 @@
 import { Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { ScreenHeader } from '../src/components/ScreenHeader';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { CheckSquare, Square, WarningCircle, Calculator, CalendarBlank, Copy, Check, Phone, CaretRight } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
@@ -44,7 +45,7 @@ export default function FirstVisitScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('firstVisit.title') }} />
+      <ScreenHeader title={t('firstVisit.title')} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
         {clinic ? (

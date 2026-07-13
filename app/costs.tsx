@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from '../src/components/Text';
-import { Stack, useRouter } from 'expo-router';
+import { ScreenHeader } from '../src/components/ScreenHeader';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Calculator, FileText, CaretRight } from 'phosphor-react-native';
 import { theme } from '../src/theme';
@@ -45,7 +46,7 @@ export default function CostsScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('costs.navTitle') }} />
+      <ScreenHeader title={t('costs.navTitle')} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
 
         {/* Subtitle / honesty note */}

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -72,6 +73,7 @@ export default function VisitAddScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScreenHeader title={t('visitAdd.navTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         <Text style={styles.label}>{t('visitAdd.clinicOptional')}</Text>

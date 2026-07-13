@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Text } from '../../src/components/Text';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Heart,
   Clock,
@@ -19,7 +20,6 @@ import {
   Info,
   CaretRight,
 } from 'phosphor-react-native';
-import type { IconProps } from 'phosphor-react-native';
 import { supabase } from '../../src/lib/supabase';
 import { setLanguage, type AppLanguage } from '../../src/i18n/index';
 import { theme } from '../../src/theme';
@@ -71,6 +71,7 @@ function MenuCard({ icon, iconBg, title, subtitle, onPress }: CardProps) {
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [fullName, setFullName] = useState('');
   const [loadingUser, setLoadingUser] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
@@ -100,9 +101,12 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-
-      <View style={styles.header}>
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
+    >
+      {/* Header — below status bar via paddingTop */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{getInitials(fullName)}</Text>
         </View>
@@ -115,22 +119,22 @@ export default function ProfileScreen() {
 
       <View style={styles.section}>
         <MenuCard
-          icon={<Heart size={24} color={colors.tintYellowIcon} />}
-          iconBg={colors.tintYellow}
+          icon={<Heart size={24} color={colors.tintBlueIcon} />}
+          iconBg={colors.tintBlue}
           title={t('profile.savedClinics')}
           subtitle={t('profile.savedClinicsSub')}
           onPress={() => router.push('/favorites')}
         />
         <MenuCard
-          icon={<Clock size={24} color={colors.tintBlueIcon} />}
-          iconBg={colors.tintBlue}
+          icon={<Clock size={24} color={colors.tintMintIcon} />}
+          iconBg={colors.tintMint}
           title={t('profile.visitHistory')}
           subtitle={t('profile.visitHistorySub')}
           onPress={() => router.push('/visits')}
         />
         <MenuCard
-          icon={<Receipt size={24} color={colors.tintPeachIcon} />}
-          iconBg={colors.tintPeach}
+          icon={<Receipt size={24} color={colors.tintSkyIcon} />}
+          iconBg={colors.tintSky}
           title={t('profile.expenses')}
           subtitle={t('profile.expensesSub')}
           onPress={() => router.push('/bills')}
@@ -139,8 +143,8 @@ export default function ProfileScreen() {
 
       <View style={[styles.section, { marginTop: spacing.md }]}>
         <View style={styles.card}>
-          <View style={[styles.iconBox, { backgroundColor: colors.tintLilac }]}>
-            <Translate size={24} color={colors.tintLilacIcon} />
+          <View style={[styles.iconBox, { backgroundColor: colors.warningBg }]}>
+            <Translate size={24} color={colors.warningText} />
           </View>
           <Text style={[styles.cardTitle, { flex: 1 }]}>{t('profile.language')}</Text>
           <View style={styles.langChips}>
@@ -185,7 +189,6 @@ export default function ProfileScreen() {
           {signingOut ? t('profile.signingOut') : t('profile.signOut')}
         </Text>
       </TouchableOpacity>
-
     </ScrollView>
   );
 }
@@ -199,7 +202,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
   },
   avatar: {
@@ -241,13 +243,14 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginTop: spacing.xl + spacing.lg,
     borderWidth: 1.5,
-    borderColor: colors.danger,
+    borderColor: colors.dangerBorder,
     borderRadius: radius.pill,
     paddingVertical: 13,
     alignItems: 'center',
+    backgroundColor: colors.dangerBg,
   },
   signOutBtnDisabled: { opacity: 0.5 },
-  signOutText: { fontFamily: font.medium, color: colors.danger, fontSize: 15 },
+  signOutText: { fontFamily: font.medium, color: colors.dangerText, fontSize: 15 },
 
   langChips: { flexDirection: 'row', gap: 6 },
   langChip: {

@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { Text } from '../src/components/Text';
+import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -87,6 +88,7 @@ export default function BillsScreen() {
 
   return (
     <View style={styles.root}>
+      <ScreenHeader title={t('bills.navTitle')} />
       <FlatList
         data={bills}
         keyExtractor={(item) => item.id}
