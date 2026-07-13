@@ -66,6 +66,18 @@ export default function CostsScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.tintBlueIcon} />
         </TouchableOpacity>
 
+        {/* GFE entry */}
+        <TouchableOpacity style={styles.gfeCard} onPress={() => router.push('/good-faith-estimate')}>
+          <View style={styles.gfeIconBox}>
+            <Ionicons name="document-text-outline" size={22} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gfeTitle}>{t('gfe.entry.title')}</Text>
+            <Text style={styles.gfeSub}>{t('gfe.entry.subtitle')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.tintLilacIcon} />
+        </TouchableOpacity>
+
         {/* Cost cards */}
         {COST_ITEMS.map((item) => (
           <View key={item.titleKey} style={[styles.costCard, { backgroundColor: item.bg }]}>
@@ -185,4 +197,24 @@ const styles = StyleSheet.create({
   },
   estimatorTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintBlueIcon, marginBottom: 2 },
   estimatorSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
+
+  gfeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintLilac,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  gfeIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+    backgroundColor: colors.tintLilacIcon,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gfeTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintLilacIcon, marginBottom: 2 },
+  gfeSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 });

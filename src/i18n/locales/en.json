@@ -201,6 +201,78 @@
       "warningLink": "See checklist: what to bring →"
     }
   },
+  "gfe": {
+    "navTitle": "Good Faith Estimate",
+    "hero": {
+      "title": "Get your price in writing",
+      "subtitle": "Federal law requires providers to give you a written cost estimate before your visit — and to honor it."
+    },
+    "what": {
+      "title": "What is a Good Faith Estimate?",
+      "b1": "A written estimate of your expected charges before a scheduled service.",
+      "b2": "Required by the No Surprises Act (effective January 1, 2022) for uninsured and self-pay patients.",
+      "b3": "Covers the main service and any related items — lab work, anesthesia, or facility fees the provider expects to bill.",
+      "b4": "Must include the provider's name, NPI number, and the expected charge for each item.",
+      "b5": "Free to request. No obligation to schedule."
+    },
+    "how": {
+      "title": "How to get one",
+      "step1": "Ask at scheduling — say you are uninsured or paying out of pocket and want a Good Faith Estimate.",
+      "step2": "Request it in writing. The provider must give you the estimate in writing, not just a verbal quote.",
+      "step3": "Keep the document. You will need it if the actual bill is higher than estimated."
+    },
+    "timing": {
+      "title": "How quickly must they respond?",
+      "row1": {
+        "label": "Service scheduled 3 or more business days out",
+        "value": "Within 3 business days of your request"
+      },
+      "row2": {
+        "label": "Service scheduled in 1–2 business days",
+        "value": "Within 1 business day"
+      },
+      "row3": {
+        "label": "Unscheduled — requested in advance",
+        "value": "Within 3 business days"
+      },
+      "note": "These are minimum federal requirements. Some providers respond faster."
+    },
+    "script": {
+      "title": "What to say",
+      "body": "I'm paying out of pocket and I'd like a Good Faith Estimate in writing for [the service] before I schedule.",
+      "ifAsked": "If asked about insurance:",
+      "ifAskedBody": "I don't have insurance. I'm paying out of pocket and I'm entitled to a Good Faith Estimate under the No Surprises Act.",
+      "ask2": "Also ask: are there other providers involved — lab, anesthesiologist, radiologist? Request estimates from each.",
+      "copy": "Copy script",
+      "copied": "Copied!"
+    },
+    "fqhc": {
+      "title": "At sliding-scale clinics",
+      "body1": "Federally funded health centers (FQHCs) — the clinics in this app — are also required to provide Good Faith Estimates.",
+      "body2": "Their price is also based on your income. If you haven't estimated your sliding-scale discount yet, do that first — it will be more useful than a generic estimate.",
+      "cta": "Estimate my sliding-scale price →"
+    },
+    "dispute": {
+      "title": "If the bill is higher than the estimate",
+      "b1": "You have the right to dispute if the final bill exceeds your Good Faith Estimate by more than $400.",
+      "b2": "You must file within 120 days of receiving the bill.",
+      "b3": "Ask the provider first — many billing errors are resolved without formal dispute.",
+      "b4": "If the provider won't fix it, start an independent dispute resolution process.",
+      "b5": "Contact CMS for help or to file:",
+      "b5Phone": "1-800-985-3059",
+      "b5Site": "cms.gov/medical-bill-rights",
+      "b6": "You do not have to pay the disputed amount while the review is open."
+    },
+    "disclaimer": "This is general information, not legal advice. The No Surprises Act applies to most U.S. providers but has exceptions. Rules may change. Verify current requirements at cms.gov or consult a patient advocate.",
+    "entry": {
+      "title": "Get your price in writing",
+      "subtitle": "Federal law gives you the right to a written cost estimate"
+    },
+    "cta": {
+      "title": "Get your price in writing",
+      "subtitle": "Federal law requires a written estimate before your visit"
+    }
+  },
   "costs": {
     "navTitle": "What things cost",
     "title": "What care usually costs without insurance",

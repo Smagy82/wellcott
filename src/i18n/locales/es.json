@@ -201,6 +201,69 @@
       "warningLink": ""
     }
   },
+  "gfe": {
+    "navTitle": "",
+    "hero": {
+      "title": "",
+      "subtitle": ""
+    },
+    "what": {
+      "title": "",
+      "b1": "",
+      "b2": "",
+      "b3": "",
+      "b4": "",
+      "b5": ""
+    },
+    "how": {
+      "title": "",
+      "step1": "",
+      "step2": "",
+      "step3": ""
+    },
+    "timing": {
+      "title": "",
+      "row1": { "label": "", "value": "" },
+      "row2": { "label": "", "value": "" },
+      "row3": { "label": "", "value": "" },
+      "note": ""
+    },
+    "script": {
+      "title": "",
+      "body": "",
+      "ifAsked": "",
+      "ifAskedBody": "",
+      "ask2": "",
+      "copy": "",
+      "copied": ""
+    },
+    "fqhc": {
+      "title": "",
+      "body1": "",
+      "body2": "",
+      "cta": ""
+    },
+    "dispute": {
+      "title": "",
+      "b1": "",
+      "b2": "",
+      "b3": "",
+      "b4": "",
+      "b5": "",
+      "b5Phone": "",
+      "b5Site": "",
+      "b6": ""
+    },
+    "disclaimer": "",
+    "entry": {
+      "title": "",
+      "subtitle": ""
+    },
+    "cta": {
+      "title": "",
+      "subtitle": ""
+    }
+  },
   "costs": {
     "navTitle": "Cuánto cuesta la atención",
     "title": "Cuánto suele costar la atención sin seguro",

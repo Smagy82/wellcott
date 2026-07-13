@@ -131,6 +131,15 @@ Cloudflare Registrar ($14.20/год, фикс — без наценки на п�
 
 История — чтобы не дублировать в TODO и не переспрашивать что уже сделано.
 
+### Good Faith Estimate guide (12.07.2026)
+- [x] Экран app/good-faith-estimate.tsx — офлайн-справка по праву на письменную смету расходов
+      (No Surprises Act, действует с 01.01.2022). Разделы: что это, как получить, сроки ответа,
+      скрипт для ресепшена (кнопка Copy через expo-clipboard), оговорка про FQHC,
+      права при споре ($400 порог, 120 дней, 1-800-985-3059 / cms.gov/medical-bill-rights).
+- [x] Вход из costs.tsx: карточка (tintLilac, иконка document-text-outline).
+- [x] CTA в clinic/[id].tsx: карточка (tintMint) — всегда видима, рядом со sliding-scale CTA.
+- [x] expo-clipboard установлен (^8.0.8).
+
 ### Sliding Scale Estimator (12.07.2026)
 - [x] Экран app/sliding-scale.tsx — офлайн-калькулятор % FPG и pay class.
       Входы: карточка в costs.tsx + CTA-карточка (tintPeach) в clinic/[id].tsx.

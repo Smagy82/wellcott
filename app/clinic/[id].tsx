@@ -129,7 +129,7 @@ export default function ClinicDetailScreen() {
         </View>
       )}
 
-      {/* Estimator CTA */}
+      {/* Sliding-scale CTA */}
       {clinic.slidingScale && (
         <TouchableOpacity
           style={styles.estimatorCard}
@@ -144,6 +144,20 @@ export default function ClinicDetailScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.tintPeachIcon} />
         </TouchableOpacity>
       )}
+
+      {/* GFE CTA */}
+      <TouchableOpacity
+        style={styles.gfeCard}
+        activeOpacity={0.8}
+        onPress={() => router.push('/good-faith-estimate')}
+      >
+        <Ionicons name="document-text-outline" size={22} color={colors.tintMintIcon} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.gfeCtaTitle}>{t('gfe.cta.title')}</Text>
+          <Text style={styles.gfeCtaSub}>{t('gfe.cta.subtitle')}</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.tintMintIcon} />
+      </TouchableOpacity>
 
       {/* Info section */}
       <View style={styles.section}>
@@ -251,6 +265,20 @@ const styles = StyleSheet.create({
   },
   ctaTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintPeachIcon, marginBottom: 2 },
   ctaSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
+
+  gfeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.tintMint,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    gap: 12,
+    ...shadow,
+  },
+  gfeCtaTitle: { fontFamily: font.semibold, fontSize: 15, color: colors.tintMintIcon, marginBottom: 2 },
+  gfeCtaSub: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted },
 
   section: {
     backgroundColor: colors.card,

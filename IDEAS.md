@@ -90,6 +90,14 @@
 
 ---
 
+## ОТКРЫТЫЕ ВОПРОСЫ ПО GFE (из реализации 12.07.2026)
+- Текущая реализация — только для uninsured/self-pay (No Surprises Act scope). Insured-пациенты
+  получают AOB (Advanced Explanation of Benefits), другой документ — не смешивать.
+- Цифры в тексте ($400 порог, 120 дней) — из CMS, проверены 12.07.2026.
+  При обновлении закона (CMS site: cms.gov/medical-bill-rights) — обновить en.json ключи
+  gfe.dispute.b1 и gfe.dispute.b2. НЕ менять в es.json до ручной вычитки.
+- Слова "coverage"/"covered" в текстах GFE ЗАПРЕЩЕНЫ — см. общее правило.
+
 ## ОТКРЫТЫЕ ВОПРОСЫ ПО SLIDING SCALE (из обсуждения 12.07.2026)
 - Nominal charge: при ≤100% FPG клиника ВПРАВЕ брать символическую плату ($5–20).
   Поэтому НЕЛЬЗЯ обещать "бесплатно" — только "often free or a small flat fee".
