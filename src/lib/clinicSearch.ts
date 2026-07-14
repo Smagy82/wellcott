@@ -94,11 +94,14 @@ export async function findClinicsInBounds(
   minLat: number, maxLat: number,
   minLng: number, maxLng: number,
   limit = 300,
+  dentalOnly = false,
 ): Promise<MapClinic[]> {
+  const dentalClause = dentalOnly ? "AND dental_signal IN ('strong','medium')" : '';
   return db.getAllAsync<MapClinic>(
     `SELECT id, name, address, city, latitude, longitude FROM clinics
       WHERE latitude  BETWEEN ? AND ?
         AND longitude BETWEEN ? AND ?
+        ${dentalClause}
       LIMIT ?`,
     [minLat, maxLat, minLng, maxLng, limit],
   );

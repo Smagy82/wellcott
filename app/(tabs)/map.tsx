@@ -94,11 +94,14 @@ export default function MapScreen() {
   const [visibleClinics, setVisibleClinics] = useState<MapClinic[]>([]);
   const [visibleMh,      setVisibleMh]      = useState<MapMhFacility[]>([]);
   const [tooZoomedOut,   setTooZoomedOut]   = useState(false);
+  const [dentalOnly,     setDentalOnly]     = useState(false);
 
   mapModeRef.current = mapMode;
+  const dentalOnlyRef = useRef(false);
+  dentalOnlyRef.current = dentalOnly;
 
   // Load pins for current viewport. Immediate (no debounce) — caller decides timing.
-  const loadPins = async (region: Region, mode: MapMode) => {
+  const loadPins = async (region: Region, mode: MapMode, dental: boolean) => {
     const { latitude, longitude, latitudeDelta, longitudeDelta } = region;
 
     if (latitudeDelta > ZOOM_OUT_THRESHOLD) {
@@ -117,7 +120,7 @@ export default function MapScreen() {
     try {
       const db = await getDb();
       if (mode === 'all' || mode === 'clinics') {
-        findClinicsInBounds(db, minLat, maxLat, minLng, maxLng, PIN_LIMIT)
+        findClinicsInBounds(db, minLat, maxLat, minLng, maxLng, PIN_LIMIT, dental)
           .then(setVisibleClinics)
           .catch(() => {});
       } else {
@@ -139,7 +142,7 @@ export default function MapScreen() {
   const loadPinsDebounced = (region: Region) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      loadPins(region, mapModeRef.current);
+      loadPins(region, mapModeRef.current, dentalOnlyRef.current);
     }, DEBOUNCE_MS);
   };
 
@@ -151,16 +154,24 @@ export default function MapScreen() {
       ? { latitude: first.latitude, longitude: first.longitude, latitudeDelta: 0.3, longitudeDelta: 0.3 }
       : US_REGION;
     regionRef.current = region;
-    loadPins(region, mapModeRef.current);
+    loadPins(region, mapModeRef.current, dentalOnlyRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // Reload immediately when filter mode changes (no debounce needed)
+  // Reload when entity mode changes; reset dentalOnly if switching to mh
   useEffect(() => {
     if (status !== 'ready') return;
-    loadPins(regionRef.current, mapMode);
+    if (mapMode === 'mh') setDentalOnly(false);
+    loadPins(regionRef.current, mapMode, mapMode === 'mh' ? false : dentalOnlyRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapMode]);
+
+  // Reload when dental filter toggles
+  useEffect(() => {
+    if (status !== 'ready') return;
+    loadPins(regionRef.current, mapModeRef.current, dentalOnly);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dentalOnly]);
 
   const requestLocation = async () => {
     await Location.requestForegroundPermissionsAsync();
@@ -304,22 +315,45 @@ export default function MapScreen() {
         </View>
       )}
 
-      {/* Filter chips — top overlay */}
-      <View style={[styles.chipRow, { top: insets.top + 12 }]} pointerEvents="box-none">
-        {chips.map(({ key, label }) => (
-          <Pressable
-            key={key}
-            onPress={() => setMapMode(key)}
-            style={[styles.chip, mapMode === key && styles.chipActive]}
-          >
-            <AppText
-              variant="button"
-              style={[styles.chipText, mapMode === key && styles.chipTextActive]}
+      {/* Filter panel — top overlay */}
+      <View style={[styles.filterPanel, { top: insets.top + 12 }]} pointerEvents="box-none">
+        <View style={styles.chipRow} pointerEvents="box-none">
+          {chips.map(({ key, label }) => (
+            <Pressable
+              key={key}
+              onPress={() => setMapMode(key)}
+              style={[styles.chip, mapMode === key && styles.chipActive]}
             >
-              {label}
+              <AppText
+                variant="button"
+                style={[styles.chipText, mapMode === key && styles.chipTextActive]}
+              >
+                {label}
+              </AppText>
+            </Pressable>
+          ))}
+          {mapMode !== 'mh' && <View style={styles.chipDivider} />}
+          {mapMode !== 'mh' && (
+            <Pressable
+              onPress={() => setDentalOnly((v) => !v)}
+              style={[styles.chip, dentalOnly && styles.chipActive]}
+            >
+              <AppText
+                variant="button"
+                style={[styles.chipText, dentalOnly && styles.chipTextActive]}
+              >
+                {t('clinics.filterDental')}
+              </AppText>
+            </Pressable>
+          )}
+        </View>
+        {dentalOnly && mapMode !== 'mh' && (
+          <View style={styles.dentalNote} pointerEvents="none">
+            <AppText variant="caption" style={styles.dentalNoteText}>
+              {t('clinics.dentalFilterNote')}
             </AppText>
-          </Pressable>
-        ))}
+          </View>
+        )}
       </View>
 
       {/* Control stack — zoom + location */}
@@ -361,16 +395,34 @@ const styles = StyleSheet.create({
   },
   zoomHintText: { color: '#fff' },
 
-  // Filter chips — absolute overlay at top of map
-  chipRow: {
+  // Filter panel — absolute overlay at top of map
+  filterPanel: {
     position: 'absolute',
     left: 16,
     right: 16,
+    zIndex: 10,
+    gap: 6,
+  },
+  chipRow: {
     flexDirection: 'row',
     gap: 8,
     flexWrap: 'wrap',
-    zIndex: 10,
   },
+  chipDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 20,
+    backgroundColor: colors.primaryDark,
+    opacity: 0.25,
+    marginHorizontal: 2,
+    alignSelf: 'center',
+  },
+  dentalNote: {
+    backgroundColor: colors.tintSky,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  dentalNoteText: { color: colors.tintSkyIcon, lineHeight: 18 },
   chip: {
     borderRadius: radius.pill,
     paddingVertical: 7,
