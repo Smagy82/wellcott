@@ -43,35 +43,50 @@ export default function FavoritesScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: SavedClinic }) => (
-    <ScalePressable
-      scale={0.98}
-      style={styles.card}
-      onPress={() => router.push(`/clinic/${encodeURIComponent(item.id)}`)}
-    >
-      <View style={styles.cardInner}>
-        <View style={styles.cardText}>
-          <Text style={styles.cardName}>{item.name}</Text>
-          {item.address ? (
-            <Text style={styles.cardAddress}>{item.address}</Text>
-          ) : null}
+  const renderItem = ({ item }: { item: SavedClinic }) => {
+    return (
+      <ScalePressable
+        scale={0.98}
+        style={styles.card}
+        onPress={() => {
+          const route = item.source === 'mh'
+            ? `/mh/${encodeURIComponent(item.id)}`
+            : `/clinic/${encodeURIComponent(item.id)}`;
+          router.push(route as Parameters<typeof router.push>[0]);
+        }}
+      >
+        <View style={styles.cardInner}>
+          <View style={styles.cardText}>
+            {item.source === 'mh' ? (
+              <View style={styles.mhBadge}>
+                <Text style={styles.mhBadgeText}>{t('mh.tabMh')}</Text>
+              </View>
+            ) : null}
+            <Text style={styles.cardName}>{item.name}</Text>
+            {item.address ? (
+              <Text style={styles.cardAddress}>{item.address}</Text>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              toggleSaved(item.id, item.source).catch(() => {});
+            }}
+          >
+            <Heart weight="fill" size={22} color={colors.primary} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); toggleSaved(item.id).catch(() => {}); }}
-        >
-          <Heart weight="fill" size={22} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
-    </ScalePressable>
-  );
+      </ScalePressable>
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title={t('favorites.title')} />
       <FlatList
         data={clinics}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.source}:${item.id}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
       />
@@ -104,4 +119,13 @@ const styles = StyleSheet.create({
   cardText: { flex: 1, marginRight: 12 },
   cardName: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 3 },
   cardAddress: { fontFamily: font.regular, fontSize: 13, color: colors.muted, lineHeight: 18 },
+  mhBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.tintLilac,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginBottom: 4,
+  },
+  mhBadgeText: { fontFamily: font.semibold, fontSize: 11, color: colors.tintLilacIcon },
 });

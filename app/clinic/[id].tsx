@@ -85,7 +85,7 @@ export default function ClinicDetailScreen() {
 
   const handleShare = () => shareClinic(clinic, t);
 
-  const fav = isSaved(clinic.id);
+  const fav = isSaved(clinic.id, 'clinic');
 
   return (
     <>
@@ -103,7 +103,7 @@ export default function ClinicDetailScreen() {
             style={styles.heartBtn}
             onPress={() => {
               const address = `${clinic.address}, ${clinic.city}, ${clinic.state} ${clinic.zip}`;
-              toggleSaved(clinic.id, { name: clinic.name, address }).catch(() => {});
+              toggleSaved(clinic.id, 'clinic', { name: clinic.name, address }).catch(() => {});
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >

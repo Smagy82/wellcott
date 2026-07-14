@@ -38,7 +38,7 @@ import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { useNearbyMh } from '../../src/lib/useNearbyMh';
 import { searchClinicsByText, suggestCities, type CitySuggestion } from '../../src/lib/clinicSearch';
-import { searchMhByText } from '../../src/lib/mentalHealthSearch';
+import { searchMhByText, formatMhAddress } from '../../src/lib/mentalHealthSearch';
 import { getDb } from '../../src/lib/database';
 import type { ClinicWithDistance } from '../../src/types/clinic';
 import type { MhWithDistance } from '../../src/types/mentalHealth';
@@ -167,11 +167,11 @@ const ClinicCard = memo(function ClinicCard({
   const cardScale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
-  const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id));
+  const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id, 'clinic'));
 
   const handleToggleSave = () => {
     const address = `${item.address}, ${item.city}, ${item.state} ${item.zip}`;
-    toggleSavedSync(item.id, { name: item.name, address });
+    toggleSavedSync(item.id, 'clinic', { name: item.name, address });
   };
 
   const handlePressIn = () => { cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 }); };
@@ -272,6 +272,12 @@ const MhCard = memo(function MhCard({
   const cardScale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
+  const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id, 'mh'));
+
+  const handleToggleSave = () => {
+    toggleSavedSync(item.id, 'mh', { name: item.name1, address: formatMhAddress(item) });
+  };
+
   const handlePressIn = () => { cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 }); };
   const handlePressOut = () => { cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 }); };
 
@@ -279,15 +285,21 @@ const MhCard = memo(function MhCard({
     if (item.phone) Linking.openURL(`tel:${item.phone}`);
   };
 
+  const handleDirections = () => {
+    const q = encodeURIComponent(formatMhAddress(item));
+    Linking.openURL(`https://maps.google.com/?q=${q}`);
+  };
+
   const handleShare = async () => {
     const parts: string[] = [item.name1];
     if (item.name2) parts.push(item.name2);
-    parts.push(`${item.city}, ${item.state}`);
+    parts.push(formatMhAddress(item));
     if (item.phone) parts.push(item.phone);
     try { await Share.share({ message: parts.join('\n') }); } catch { /* cancelled */ }
   };
 
   const showDistance = Number.isFinite(item.distanceMiles);
+  const showDirections = !!(item.street1 || item.latitude !== null);
 
   return (
     <View style={styles.cardWrap}>
@@ -307,7 +319,7 @@ const MhCard = memo(function MhCard({
               <View style={styles.addressRow}>
                 <MapPin size={13} weight="fill" color={colors.primary} />
                 <AppText variant="secondary" style={styles.address} numberOfLines={1}>
-                  {item.city}, {item.state}
+                  {formatMhAddress(item)}
                 </AppText>
               </View>
 
@@ -339,6 +351,16 @@ const MhCard = memo(function MhCard({
                     <AppText variant="button" style={styles.btnCallText}>{t('common.call')}</AppText>
                   </TouchableOpacity>
                 ) : null}
+                {showDirections ? (
+                  <TouchableOpacity
+                    style={styles.btnDir}
+                    onPress={(e) => { e.stopPropagation?.(); handleDirections(); }}
+                    activeOpacity={0.82}
+                  >
+                    <NavigationArrow size={14} color={colors.primaryDark} />
+                    <AppText variant="button" style={styles.btnDirText}>{t('common.directions')}</AppText>
+                  </TouchableOpacity>
+                ) : null}
                 <TouchableOpacity
                   style={styles.btnShare}
                   onPress={(e) => { e.stopPropagation?.(); handleShare(); }}
@@ -350,6 +372,7 @@ const MhCard = memo(function MhCard({
             </View>
 
             <View style={styles.cardRight}>
+              <View style={styles.heartSpacer} />
               {showDistance && (
                 <AppText variant="caption" style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</AppText>
               )}
@@ -357,6 +380,10 @@ const MhCard = memo(function MhCard({
           </View>
         </Animated.View>
       </Pressable>
+
+      <View style={styles.heartAnchor} pointerEvents="box-none">
+        <HeartButton saved={saved} onToggle={handleToggleSave} />
+      </View>
     </View>
   );
 });

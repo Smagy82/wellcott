@@ -1,15 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const KEY = '@wellcott:saved_v1';
+const KEY = '@wellcott:saved_v2';
 
 export type SavedClinic = {
   id: string;
+  source: 'clinic' | 'mh';
   name: string;
   address: string | null;
   savedAt: string;
 };
 
-type Store = Record<string, SavedClinic>;
+type Store = Record<string, SavedClinic>; // key: `${source}:${id}`
 type Listener = (ids: Set<string>) => void;
 type VoidListener = () => void;
 
@@ -57,22 +58,25 @@ export function getSavedIds(): Set<string> {
   return cache ? new Set(Object.keys(cache)) : new Set();
 }
 
-export function isSaved(id: string): boolean {
-  return cache ? id in cache : false;
+export function isSaved(id: string, source: 'clinic' | 'mh'): boolean {
+  return cache ? `${source}:${id}` in cache : false;
 }
 
 export async function toggleSaved(
   id: string,
+  source: 'clinic' | 'mh',
   meta?: { name?: string; address?: string | null },
 ): Promise<boolean> {
+  const storeKey = `${source}:${id}`;
   const store = { ...(await load()) };
-  if (id in store) {
-    delete store[id];
+  if (storeKey in store) {
+    delete store[storeKey];
     await persist(store);
     return false;
   }
-  store[id] = {
+  store[storeKey] = {
     id,
+    source,
     name: meta?.name ?? '',
     address: meta?.address ?? null,
     savedAt: new Date().toISOString(),
@@ -97,19 +101,21 @@ export function subscribeAny(cb: VoidListener): () => void {
 // Safe to call without await — UI snaps instantly.
 export function toggleSavedSync(
   id: string,
+  source: 'clinic' | 'mh',
   meta?: { name?: string; address?: string | null },
 ): void {
+  const storeKey = `${source}:${id}`;
   if (cache === null) {
-    // Store not loaded yet — fall back to async path
-    toggleSaved(id, meta).catch(() => {});
+    toggleSaved(id, source, meta).catch(() => {});
     return;
   }
   const store = { ...cache };
-  if (id in store) {
-    delete store[id];
+  if (storeKey in store) {
+    delete store[storeKey];
   } else {
-    store[id] = {
+    store[storeKey] = {
       id,
+      source,
       name: meta?.name ?? '',
       address: meta?.address ?? null,
       savedAt: new Date().toISOString(),

@@ -114,6 +114,11 @@ export async function findAllMhForMap(
   }));
 }
 
+/** Форматирует полный адрес объекта MH, пропуская пустые части. */
+export function formatMhAddress(mh: MhFacility): string {
+  return [mh.street1, mh.city, mh.state, mh.zip].filter(Boolean).join(', ');
+}
+
 /** Полная запись по id. */
 export async function getMhById(
   db: SQLite.SQLiteDatabase,

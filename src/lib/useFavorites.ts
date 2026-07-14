@@ -6,6 +6,7 @@ export type Favorite = {
   clinic_id: string;
   clinic_name: string;
   clinic_address: string | null;
+  source: 'clinic' | 'mh';
   created_at: string;
 };
 
@@ -26,35 +27,40 @@ export function useFavorites() {
   useEffect(() => { load(); }, [load]);
 
   const isFavorite = useCallback(
-    (clinicId: string) => favorites.some(f => f.clinic_id === clinicId),
-    [favorites]
+    (clinicId: string, source: 'clinic' | 'mh' = 'clinic') =>
+      favorites.some(f => f.clinic_id === clinicId && f.source === source),
+    [favorites],
   );
 
   const toggleFavorite = useCallback(async (clinic: {
-    clinic_id: string; clinic_name: string; clinic_address?: string | null;
+    clinic_id: string;
+    clinic_name: string;
+    clinic_address?: string | null;
+    source: 'clinic' | 'mh';
   }) => {
-    const existing = favorites.find(f => f.clinic_id === clinic.clinic_id);
+    const existing = favorites.find(
+      f => f.clinic_id === clinic.clinic_id && f.source === clinic.source,
+    );
     const { data: userData } = await supabase.auth.getUser();
     const uid = userData.user?.id;
-    console.log('FAV toggle:', clinic, 'uid:', uid);
-    if (!uid) { console.error('FAV toggle: no uid, aborting'); return; }
+    if (!uid) return;
 
     if (existing) {
-      setFavorites(prev => prev.filter(f => f.clinic_id !== clinic.clinic_id));
-      const { error } = await supabase.from('favorites').delete().eq('id', existing.id);
-      if (error) console.error('FAV delete error:', error.message, error.details, error.hint);
+      setFavorites(prev =>
+        prev.filter(f => !(f.clinic_id === clinic.clinic_id && f.source === clinic.source)),
+      );
+      await supabase.from('favorites').delete().eq('id', existing.id);
     } else {
       const row = {
         user_id: uid,
         clinic_id: clinic.clinic_id,
         clinic_name: clinic.clinic_name,
         clinic_address: clinic.clinic_address ?? null,
+        source: clinic.source,
       };
       const { data, error } = await supabase
         .from('favorites').insert(row).select().single();
-      if (error) {
-        console.error('FAV insert error:', error.message, error.details, error.hint);
-      } else if (data) {
+      if (!error && data) {
         setFavorites(prev => [data as Favorite, ...prev]);
       }
     }

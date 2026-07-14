@@ -10,11 +10,18 @@ import {
 import { AppText } from '../../src/components/AppText';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Heart } from 'phosphor-react-native';
 import { getDb } from '../../src/lib/database';
-import { getMhById } from '../../src/lib/mentalHealthSearch';
+import { getMhById, formatMhAddress } from '../../src/lib/mentalHealthSearch';
 import type { MhFacility } from '../../src/types/mentalHealth';
 import { theme } from '../../src/theme';
 import { Crisis988Card } from '../../src/components/Crisis988Card';
+import {
+  init as initSaved,
+  isSaved,
+  toggleSaved,
+  subscribe as subscribeSaved,
+} from '../../src/store/savedClinics';
 
 const { colors, radius, font, shadow, spacing } = theme;
 
@@ -24,17 +31,22 @@ export default function MhDetailScreen() {
   const router = useRouter();
   const [facility, setFacility] = useState<MhFacility | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
+        await initSaved();
         const db = await getDb();
         const result = await getMhById(db, decodeURIComponent(id ?? ''));
-        setFacility(result);
+        if (!cancelled) setFacility(result);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    const unsub = subscribeSaved(() => forceUpdate((n) => n + 1));
+    return () => { cancelled = true; unsub(); };
   }, [id]);
 
   if (loading) {
@@ -69,6 +81,15 @@ export default function MhDetailScreen() {
     Linking.openURL(`https://maps.google.com/?q=${q}`);
   };
 
+  const fav = isSaved(facility.id, 'mh');
+
+  const handleToggleFav = () => {
+    toggleSaved(facility.id, 'mh', {
+      name: facility.name1,
+      address: formatMhAddress(facility),
+    }).catch(() => {});
+  };
+
   return (
     <>
       <Stack.Screen options={{ title: facility.name1 }} />
@@ -79,7 +100,20 @@ export default function MhDetailScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
             <AppText variant="secondary" style={styles.backLabel}>{t('common.back')}</AppText>
           </TouchableOpacity>
-          <AppText variant="heading" style={styles.headerName}>{facility.name1}</AppText>
+          <View style={styles.headerNameRow}>
+            <AppText variant="heading" style={styles.headerName}>{facility.name1}</AppText>
+            <TouchableOpacity
+              style={styles.heartBtn}
+              onPress={handleToggleFav}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Heart
+                weight={fav ? 'fill' : 'regular'}
+                size={26}
+                color={fav ? colors.danger : colors.onPrimaryDim}
+              />
+            </TouchableOpacity>
+          </View>
           {facility.name2 ? (
             <AppText variant="secondary" style={styles.headerName2}>{facility.name2}</AppText>
           ) : null}
@@ -209,7 +243,9 @@ const styles = StyleSheet.create({
   },
   backRow: { marginBottom: 10 },
   backLabel: { color: colors.onPrimaryMuted, fontFamily: font.regular },
-  headerName: { color: colors.onPrimary, lineHeight: 28 },
+  headerNameRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  headerName: { color: colors.onPrimary, lineHeight: 28, flex: 1, marginRight: 10 },
+  heartBtn: { paddingTop: 2 },
   headerName2: { color: colors.onPrimaryDim, marginTop: 4, fontFamily: font.regular },
 
   spanishWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
