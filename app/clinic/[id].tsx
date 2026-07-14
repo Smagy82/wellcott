@@ -22,6 +22,7 @@ import {
   subscribe as subscribeSaved,
 } from '../../src/store/savedClinics';
 import { shareClinic } from '../../src/lib/shareClinic';
+import { isOpenNow } from '../../src/lib/openingHours';
 import { theme } from '../../src/theme';
 import { PrescriptionSavingsCard } from '../../src/components/PrescriptionSavingsCard';
 
@@ -86,6 +87,7 @@ export default function ClinicDetailScreen() {
   const handleShare = () => shareClinic(clinic, t);
 
   const fav = isSaved(clinic.id, 'clinic');
+  const openStatus = isOpenNow(clinic.hoursJson ?? null);
 
   return (
     <>
@@ -118,7 +120,7 @@ export default function ClinicDetailScreen() {
       </View>
 
       {/* Badges */}
-      {(clinic.acceptsUninsured || clinic.slidingScale) && (
+      {(clinic.acceptsUninsured || clinic.slidingScale || openStatus !== null) && (
         <View style={styles.badgesSection}>
           <View style={styles.badges}>
             {clinic.acceptsUninsured && (
@@ -134,6 +136,21 @@ export default function ClinicDetailScreen() {
                   {t('clinicList.slidingScale')}
                 </Text>
               </View>
+            )}
+            {openStatus !== null && (
+              openStatus.open
+                ? <View style={[styles.badge, styles.badgeMint]}>
+                    <Text style={[styles.badgeText, { color: colors.tintMintIcon }]}>
+                      {t('clinicList.openNow')}
+                    </Text>
+                  </View>
+                : <View style={[styles.badge, { backgroundColor: 'rgba(100,116,139,0.12)' }]}>
+                    <Text style={[styles.badgeText, { color: colors.muted }]}>
+                      {openStatus.nextChange
+                        ? t('clinicList.closedOpensAt', { time: openStatus.nextChange })
+                        : t('clinicList.closed')}
+                    </Text>
+                  </View>
             )}
           </View>
           {clinic.slidingScale && (

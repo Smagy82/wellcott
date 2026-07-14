@@ -29,7 +29,10 @@
     "locationOffSub": "Turn on location, or search by city above.",
     "noLocationResults": "No clinics found for \"{{query}}\".",
     "acceptsUninsured": "Accepts uninsured",
-    "slidingScale": "Sliding scale"
+    "slidingScale": "Sliding scale",
+    "openNow": "Open now",
+    "closedOpensAt": "Closed · Opens {{time}}",
+    "closed": "Closed"
   },
   "map": {
     "findingClinics": "Finding clinics near you…",

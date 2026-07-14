@@ -35,6 +35,7 @@ import {
   Heart,
 } from 'phosphor-react-native';
 import { shareClinic } from '../../src/lib/shareClinic';
+import { isOpenNow } from '../../src/lib/openingHours';
 import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { useNearbyMh } from '../../src/lib/useNearbyMh';
@@ -169,6 +170,7 @@ const ClinicCard = memo(function ClinicCard({
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
   const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id, 'clinic'));
+  const openStatus = isOpenNow(item.hoursJson ?? null);
 
   const handleToggleSave = () => {
     const address = `${item.address}, ${item.city}, ${item.state} ${item.zip}`;
@@ -222,6 +224,19 @@ const ClinicCard = memo(function ClinicCard({
                   <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
                     <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</AppText>
                   </View>
+                )}
+                {openStatus !== null && (
+                  openStatus.open
+                    ? <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
+                        <AppText variant="chip" style={[styles.badgeText, { color: colors.tagGreenText }]}>{t('clinicList.openNow')}</AppText>
+                      </View>
+                    : <View style={[styles.badge, { backgroundColor: 'rgba(100,116,139,0.12)' }]}>
+                        <AppText variant="chip" style={[styles.badgeText, { color: colors.muted }]}>
+                          {openStatus.nextChange
+                            ? t('clinicList.closedOpensAt', { time: openStatus.nextChange })
+                            : t('clinicList.closed')}
+                        </AppText>
+                      </View>
                 )}
               </View>
 

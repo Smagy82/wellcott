@@ -29,7 +29,10 @@
     "locationOffSub": "Active la ubicación o busque por ciudad arriba.",
     "noLocationResults": "No se encontraron clínicas para \"{{query}}\".",
     "acceptsUninsured": "Acepta sin seguro",
-    "slidingScale": "Escala móvil"
+    "slidingScale": "Escala móvil",
+    "openNow": "",
+    "closedOpensAt": "",
+    "closed": ""
   },
   "map": {
     "findingClinics": "Buscando clínicas cerca de usted…",
