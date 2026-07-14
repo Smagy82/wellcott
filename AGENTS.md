@@ -22,10 +22,13 @@ npx expo start --tunnel --clear
 
 Гибрид: **офлайн-справочник + онлайн-кабинет**.
 
-- **Офлайн**: 10 429 клиник HRSA + 11 992 MH-учреждений SAMHSA в SQLite (`assets/clinics-v5.db`),
+- **Офлайн**: 10 429 клиник HRSA + 11 992 MH-учреждений SAMHSA в SQLite (`assets/clinics-v6.db`),
   зашиты в бандл. Две таблицы: `clinics` (HRSA) и `mh_facilities` (SAMHSA).
   Поиск гео + текст, детали, карта, Help. Не требует сети.
   Статистика: 10 429 клиник | google_enriched 2 985 | hours_json 2 702.
+  dental_signal: strong+medium ≈ 5 400 клиник (organization-level, ~2 261 сайтов проверено).
+  ⚠️ dental_signal — ORGANIZATION-LEVEL: один сайт = все адреса организации.
+  "Dental mentioned on website" ≠ "дантист есть в конкретной точке". UI ОБЯЗАН это отражать.
 - **Онлайн**: Supabase (auth email+пароль, Postgres, Storage). Личный кабинет —
   избранное, визиты, траты с фото чеков. Всё с RLS (юзер видит только своё).
 
