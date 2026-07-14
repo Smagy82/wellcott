@@ -1,8 +1,8 @@
 # Data Probe Report — SAMHSA & HRSA UDS
 
-**Date**: 2026-07-14  
-**Probes**: `probe-samhsa.mjs`, `probe-uds.mjs`  
-**Working dir**: project root (run with `node scripts/probe/probe-samhsa.mjs`)
+**Date**: 2026-07-13  
+**Probes**: `probe-samhsa.mjs`, `probe-uds.mjs`, ручные curl-тесты  
+**Working dir**: project root
 
 ---
 
@@ -12,287 +12,187 @@
 
 | Parameter | Result |
 |-----------|--------|
-| API key required | **NO** — 200 without any auth header |
-| Rate limit | **NONE** — no `x-ratelimit-*` headers returned |
-| License | US Federal open data (SAMHSA / HHS). Public domain (17 U.S.C. § 105). No ToS restrictions. Attribution "Source: SAMHSA findtreatment.gov" recommended. |
+| API key required | **NO** — 200 без auth header |
+| Rate limit | **NONE** — нет `x-ratelimit-*` headers |
+| License | US Federal open data (SAMHSA / HHS). Public domain (17 U.S.C. § 105). Offline кэш и бандлинг в приложении **разрешены**. Рекомендуется attribution: "Source: SAMHSA findtreatment.gov". |
 
-### 1.2 Correct API Parameters
-
-The URL in the task brief was wrong on two points:
+### 1.2 Правильные параметры API
 
 ```
-# WRONG: limitType=2 + limitValue=80467 (meters) → geo search silently broken
-https://findtreatment.gov/locator/exportsAsJson/v2?sAddr={lng},{lat}&limitType=2&limitValue=80467&...
-
-# CORRECT: limitType=1 + limitValue in MILES
-https://findtreatment.gov/locator/exportsAsJson/v2?sAddr={lat},{lng}&limitType=1&limitValue=50&pageSize=100&page=1
+GET https://findtreatment.gov/locator/exportsAsJson/v2
+  ?sAddr={lat},{lng}    ← ШИРОТА ПЕРВОЙ (PDF Table 2 содержит опечатку — lng,lat)
+  &limitType=2          ← 0=штат, 1=county, 2=радиус в метрах
+  &limitValue=80467     ← 50 миль в метрах (16093=10 миль)
+  &sType=mh             ← только mental health; без параметра — все типы (SUD+MH)
+  &pageSize=100         ← max 2000
+  &page=1               ← 1-indexed
 ```
 
-### 1.3 CRITICAL: Geographic Search is Broken
+⚠️ **Баг в начальном зонде**: первая версия probe-samhsa.mjs использовала `sAddr={lng},{lat}` — перепутаны координаты. Все три точки возвращали одни и те же 19 объектов (дефолтный регион API). **Зонд был сломан, а не источник.**
 
-**Conclusion: the geo filtering is not functional regardless of parameters.**
+### 1.3 Подтверждённый геопоиск (50-миль радиус, sType=mh)
 
-Evidence:
-- Without `sAddr` at all → same 19 results as with sAddr
-- LA query → first result is Athens, GA (1,987 miles away)
-- Fort Wayne query → first result is Athens, GA (498 miles away)
-- Rural Montana query → first result is Athens, GA (1,455 miles away)
-- All three test points return **exactly the same 19 facilities** in the same order
+| Точка | recordCount | totalPages | PYAS (payment assist) | из них sliding scale |
+|-------|-------------|------------|----------------------|----------------------|
+| Los Angeles, CA (34.0522, −118.2437) | **471** | 5 | 39/100 | 18/100 |
+| Fort Wayne, IN (41.0793, −85.1394) | **57** | 1 | 35/57 | 30/57 |
+| Rural Montana / Miles City (46.4083, −105.8403) | **2** | 1 | 2/2 | 2/2 |
 
-The `sAddr` coordinate parameter is being accepted but ignored. The API is returning a global subset of ~19 facilities, not a geographic search.
+LA >> Montana → геопоиск работает корректно.
 
-Tested on: 2026-07-14. This may be a production regression on SAMHSA's side.
+### 1.4 Национальный охват (sType=mh, все штаты + DC)
 
-### 1.4 Facility Object Schema (full field list)
+Все 51 запрос выполнен с `limitType=0` (по штату):
 
-```
-_irow         (number)  — page row index (1-based)
-name1         (string)  — primary facility name
-name2         (string)  — secondary name / DBA (often "")
-street1       (string)  — street address
-street2       (null)    — address line 2 (usually null)
-city          (string)  — city
-state         (string)  — 2-letter state
-zip           (string)  — ZIP code
-phone         (string)  — phone number (see caveat below)
-intake1       (null)    — intake phone (often null)
-hotline1      (null)    — crisis hotline (often null)
-website       (null)    — URL (often null)
-latitude      (string)  — ⚠️ MISLABELED: actually contains LONGITUDE value
-longitude     (string)  — ⚠️ MISLABELED: actually contains LATITUDE value
-miles         (number)  — distance from query point (unreliable given broken geo)
-services      (Array | null) — rich service code array (see §1.5); null for some types
-typeFacility  (string)  — "OTP", "HRSA", or other type codes
-```
+| Метрика | Значение |
+|---------|---------|
+| **Всего MH-facilities по США** | **12,427** |
+| Крупнейшие штаты | CA=1007, NY=834, OH=664, FL=559, IL=474, PA=455 |
+| Малонаселённые | WY=43, ND=45, SD=37, VT=61, HI=22 |
 
-**Lat/lng swap bug**: the field named `latitude` in the response contains what is clearly a longitude value (e.g., "-94.709" for a facility in Massachusetts), and `longitude` contains the latitude (~39°N). The API has these labels reversed.
+Это только `sType=mh` (mental health). С добавлением `sType=sa` (SUD) и `sType=both` цифра будет больше. SAMHSA говорит о ~17,000 суммарно по обоим типам.
 
-**Phone data quality**: sample records show "(999) 999-9999" — a placeholder. Real records have valid numbers; this indicates some facilities in the database have never been verified.
+### 1.5 Sliding Fee — как это работает
 
-### 1.5 Services Field Structure (when non-null)
+`PYAS` ("Payment Assistance Available") ≠ "sliding fee scale".  
+- `PYAS` означает "уточни у facility" — общий флаг payment assistance.  
+- ~40% объектов с `PYAS` содержат в поле `f3` строку "Sliding fee scale" — это реальный sliding scale.
+- Фильтр sliding scale в UI: `services[].f2 === 'PYAS' && services[].f3?.includes('Sliding fee scale')`.
 
-Services is an array of objects, each with:
+### 1.6 Bulk Download
+
+`N-SUMHSS` (National Survey of Mental Health and Substance Use Treatment Services) — ежегодный опрос SAMHSA. **Bulk PUF (Public Use File) не доступен**: все протестированные URL возвращают 404. Единственный публичный путь к данным — `findtreatment.gov` API.
+
+### 1.7 Структура facility-объекта
 
 ```json
 {
-  "f1": "Type of Care",
-  "f2": "TC",
-  "f3": "Substance use treatment; Detoxification"
+  "name1": "...",       "name2": "...",
+  "street1": "...",     "city": "...", "state": "CA", "zip": "...",
+  "phone": "...",
+  "website": "...",
+  "latitude": "34.044...",    ← строка, НЕ число
+  "longitude": "-118.24...",
+  "miles": 0.5,
+  "typeFacility": "MH",
+  "services": [
+    { "f1": "Type of Care",              "f2": "TC",   "f3": "Mental health treatment services" },
+    { "f1": "Payment Assistance Avail.", "f2": "PYAS", "f3": "Sliding fee scale (fee is based on income and other factors)" }
+  ]
 }
 ```
 
-`f2` is the service code. Known codes observed:
-| f2 | f1 | Example f3 |
-|----|-------|---------|
-| TC | Type of Care | Substance use treatment; Detoxification |
-| SET | Service Setting | Outpatient; Intensive outpatient |
-| OM | Opioid Medications | Buprenorphine; Naltrexone |
-| PAY | Payment/Insurance | Cash or self-payment; Medicaid |
-| SG | Special Groups | Adolescents; Co-occurring disorders |
-| AGE | Age Groups | Adults; Seniors |
-| TAP | Treatment Approaches | CBT; 12-step |
-| LCA | License/Accreditation | State SUD agency; CARF |
-
-**No sliding fee / sliding scale code found** in any returned record.  
-**No dental code** (this is a SUD treatment locator).  
-**PAY field** includes payment options but no "sliding fee scale" as a distinct category.
-
-### 1.6 Pagination
-
-| Field | Value |
-|-------|-------|
-| `page` | current page (1-indexed) |
-| `totalPages` | total page count |
-| `recordCount` | total matching records |
-| `rows` | array of facility objects (up to pageSize per page) |
-
-Pagination works via `?page=N`. However, given geographic search is broken, pagination is moot for real use.
-
-### 1.7 Facility Counts per Test Point (50-mile radius)
-
-| Location | HTTP | recordCount | Notes |
-|----------|------|-------------|-------|
-| Fort Wayne, IN | 200 | 19 | Same Athens GA set |
-| Los Angeles, CA | 200 | 19 | Same Athens GA set |
-| Rural Montana (Miles City) | 200 | 19 | Same Athens GA set |
-
-**All three return the same 19 records.** This confirms geographic search is non-functional.
-
-### 1.8 What This API Actually Covers
-
-SAMHSA findtreatment.gov is a **substance use disorder and opioid treatment locator**, not a general health center finder.
-
-- `typeFacility = "OTP"` — DEA-registered Opioid Treatment Programs (methadone clinics)
-- `typeFacility = "HRSA"` — appears in some records but unclear scope
-- Services are 100% SUD-related: detox, buprenorphine, 12-step, CBT, etc.
-- **Not covered**: primary care, dental, general mental health, FQHCs
+Поля `latitude` / `longitude` — строки, нужно `parseFloat()`. `services` может быть `null` для некоторых facility-типов.
 
 ---
 
-## PROBE 2 — HRSA UDS Data (Dental / Behavioral Health)
+## PROBE 2 — HRSA Dental / Behavioral Health Data
 
-### 2.1 Available HRSA Downloads (Confirmed Working)
+### 2.1 Доступные публичные файлы HRSA
 
-| File | URL | Size | Contains |
-|------|-----|------|---------|
-| Site directory CSV | `data.hrsa.gov/DataDownload/DD_Files/Health_Center_Service_Delivery_and_LookAlike_Sites.csv` | **13.1 MB** | 56 columns, site-level FQHC directory |
-| Site directory XLSX | same path, `.xlsx` | 5.5 MB | Same data |
-| H80-2024.xlsx | `data.hrsa.gov/DataDownload/StaticDocuments/H80-2024.xlsx` | 27.4 MB | H80 grantee performance data (not site-level) |
-| LAL-2024.xlsx | same dir, `LAL-2024.xlsx` | 2.6 MB | Look-Alike sites |
+| Файл | Размер | Содержит |
+|------|--------|---------|
+| `Health_Center_Service_Delivery_and_LookAlike_Sites.csv` | 13.1 MB | 56 колонок, directory сайтов, **содержит BHCMISID**, но **нет dental/BH** |
+| `SITE_DASHBOARD.csv` (через data.hrsa.gov) | 38 MB | 18 колонок: имя, адрес, тип сайта, Grant Number; **нет dental/BH** |
+| `H80-2024.xlsx` | 27.4 MB | H80 grantee performance, не по сайтам |
+| `BCD_HC.zip` (заявленный crosswalk BCD_ID→BHCMISID) | **404** | **Не существует** публично |
 
-UDS Table 3A (dental/BH patient counts): **NOT available as public bulk download.**  
-Returns 403 from bphc.hrsa.gov. Available only via FOIA request or BPHC data warehouse access (requires grantee credentials).
+### 2.2 Join Key — Полный анализ
 
-### 2.2 HRSA Site CSV — Column Structure
+**Наш `clinics.id`** = `HCC_FCT_ID` из HRSA HDW API.
 
-The 13.1 MB CSV has 56 columns. **Key columns for our use:**
-
-| Column | Example | Notes |
-|--------|---------|-------|
-| `BHCMIS Organization Identification Number` | "012160" | 6-digit grantee ID → join key to UDS |
-| `BPHC Assigned Number` | "BPS-H80-005662" | Site-level BPHC ID |
-| `Health Center Number` | "H80CS00314" | Grantee grant number |
-| `Site Name` | "EMMAUS HOUSE" | May differ from our `name` field |
-| `Site Address/City/State/ZIP` | — | Matches our DB |
-| `Geocoding Artifact Address Primary X Coordinate` | -71.08 | Longitude (X) |
-| `Geocoding Artifact Address Primary Y Coordinate` | 42.77 | Latitude (Y) |
-| `FQHC Site NPI Number` | "1033675582" | Sparse (many empty) |
-| `Health Center Service Delivery Site Location Setting Description` | "All Other Clinic Types" | Setting type |
-| `Site Status Description` | "Active" | Filter for active sites |
-
-**No `dental`, `behavioral`, `mental`, `vision`, or `pharmacy` columns.** The CSV is a directory, not a services database.
-
-### 2.3 Our Database Schema & Join Key Analysis
-
-```sql
-CREATE TABLE clinics (
-  id                TEXT PRIMARY KEY,   -- numeric string, e.g. "350", "9692"
-  name              TEXT NOT NULL,
-  address, city, state, zip, county TEXT,
-  phone, website    TEXT,
-  latitude, longitude REAL,
-  site_type         TEXT,
-  accepts_uninsured INTEGER DEFAULT 1,
-  sliding_scale     INTEGER DEFAULT 1,
-  place_id TEXT, hours_json TEXT, google_enriched INTEGER DEFAULT 0
-);
+Из исходника `build-clinic-db.mjs`:
+```javascript
+id: String(r.HCC_FCT_ID ?? `${r.SITE_NM}|${r.SITE_ZIP_CD}`),
 ```
 
-**Statistics:**
-- Total clinics: 10,429
-- States: 55
-- ID range: 2 – 18,946
-- ID length distribution: 4-digit (4,957), 5-digit (4,916), 3-digit (498), 2-digit (54), 1-digit (4)
+Из HRSA developer guide (`DeveloperGuide.pdf`): `HCC_FCT_ID` = "Health Center Site Fact Identification Number; One-up incremental counter for new entities."
 
-**Join key finding:** Our `clinics.id` values are NOT a recognized HRSA public identifier:
+**Полный список полей HRSA HDW API** (из developer guide):  
+`ROW_ID`, `SITE_NM`, `SITE_URL`, `HCC_FCT_ID`, `SITE_ADDRESS`, `SITE_CITY`, `STATE_NM`, `SITE_STATE_ABBR`, `SITE_ZIP_CD`, `SITE_PHONE_NUM`, `HCC_LOC_DESC`, `HCC_TYP_DESC`, `DW_RECORD_CREATE_DT`, `APPROX_VALUE_CD`, `LAT_LON`, `Distance`
 
-| Identifier | Format | Matches our id? |
-|-----------|--------|-----------------|
-| BHCMISID | 6-digit, e.g. "012160" | NO — wrong digit count, wrong range |
-| BPHC Assigned Number | "BPS-H80-005662" | NO — alphanumeric prefix |
-| Health Center Number | "H80CS00314" | NO — alphanumeric |
-| Health Center Location ID | varies (mostly "1") | NO |
-| NPI | 10-digit | NO |
+**`BHCMISID` в API отсутствует** — не просто не сохранялся в ETL, его нет в ответе API вообще.
 
-Our IDs (350, 9692, 3693...) appear to be **HRSA internal site identifiers from the Health Center Finder API** (findahealthcenter.hrsa.gov) — a different namespace not present in the public bulk CSV.
+**Матрица публичных идентификаторов HRSA:**
 
-**Practical join path:**
-```
-clinics (name + city + state)  →  [fuzzy match]  →  HRSA site CSV  →  BHCMISID  →  UDS Table 3A
-```
-Expected fuzzy-match coverage: **85–92%** (names sometimes differ between HRSA API and site CSV; address is more reliable).
+| Источник | HCC_FCT_ID | BHCMISID | Dental/BH |
+|----------|-----------|----------|-----------|
+| HRSA HDW API (наш источник) | ✅ | ❌ | ❌ |
+| Публичный site CSV (13.1 MB) | ❌ | ✅ | ❌ |
+| SITE_DASHBOARD.csv (38 MB) | ❌ | ❌ | ❌ |
+| BCD_HC.zip (crosswalk) | — | — | — (404) |
+| UDS Table 5 (dental FTE, BH FTE) | ❌ | ✅ (ключ) | ✅ (но нет bulk download) |
 
-### 2.4 UDS Data — What It Contains and What We'd Need
+**Вывод**: детерминированный join `HCC_FCT_ID` → `BHCMISID` **невозможен** через публичные данные. Единственный мост — адресный match (name+city+state), который отклонён.
 
-**UDS Table 3A** (filed annually by each grantee, keyed on BHCMISID):
+### 2.3 UDS Данные — Что содержит, что доступно
 
-| Field | Meaning |
-|-------|---------|
-| `DENTAL_PATIENTS` | Count of patients who received dental care (0 = no dental) |
-| `DENTAL_VISITS` | Dental visit count |
-| `MH_PATIENTS` | Mental health patients |
-| `SA_PATIENTS` | Substance use disorder patients |
-| `BH_PATIENTS` | Total behavioral health (MH + SUD, combined in 2023+) |
+**UDS Table 3A** ("Services Rendered") — количество пациентов по типам услуг на уровне grantee:  
+`dental_patients`, `medical_patients`, `BH_patients`, `enabling_services_patients`
 
-**Published national statistics (HRSA UDS 2022 Summary):**
-- Grantees offering dental: ~820 of ~1,400 (**~59%**)
-- Grantees offering mental health: ~1,250 of ~1,400 (**~89%**)
-- Grantees offering SUD treatment: ~950 of ~1,400 (**~68%**)
+**UDS Table 5** ("Staffing & Utilization") — FTE персонала:  
+`dental_FTE`, `BH_FTE` (LCSW, psychiatrist, etc.)
 
-**Granularity caveat:** UDS is at **grantee level**. A grantee with 5 sites will report one dental_patients number for all 5. We cannot know from UDS which specific site has a dental chair. A grantee offering dental at one site but not others would look "has dental" for all its sites.
+Оба — **на уровне grantee, не сайта**. Один grantee может иметь 1–20+ сайтов.
 
-### 2.5 Data Access Reality
+**Доступность**:
+- `bphc.hrsa.gov` bulk download → **403** (требует BPHC data warehouse login)
+- FOIA запрос → доступен, но 20–60 рабочих дней; CSV с BHCMISID + dental_patients
+- BPHC profile pages (по grantee) → **403 CDN (Akamai)** блокирует bot requests
 
-| Path | Status | Notes |
-|------|--------|-------|
-| `bphc.hrsa.gov` UDS bulk download | **403 Blocked** | Requires BPHC data warehouse login |
-| FOIA request (hrsa.gov/foia) | Available but slow | Weeks to months; CSV delivered; then need name match |
-| HRSA site CSV + BHCMIS name match | **WORKS** | 13.1 MB, instant download; gets BHCMIS but NOT dental/BH |
-| UDS Mapper (Georgetown) | Unknown | Third-party aggregator; may have processed UDS |
-| Individual BPHC profile pages | Partially available | Per-grantee HTML pages show services; scrapeable |
+Из HRSA UDS 2022 Summary (опубликованная агрегированная статистика):
+- Grantees с dental: **~820 из ~1,400 (~59%)**
+- Grantees с MH: **~1,250 из ~1,400 (~89%)**
+- Grantees с SUD: **~950 из ~1,400 (~68%)**
 
 ---
 
 ## ВЕРДИКТ
 
-### Вертикаль A — SAMHSA findtreatment.gov (SUD / поведенческое здоровье как отдельный локатор)
+### Вертикаль A — SAMHSA MH Locator
 
-**НЕ ДЕЛАЕМ.**
+**ИСТОЧНИК ВАЛИДЕН. ДЕЛАЕМ — но не сейчас.**
 
-Причины:
-1. **Геопоиск сломан**: одни и те же 19 фасилити возвращаются для LA, Fort Wayne и Монтаны. `sAddr` параметр игнорируется.
-2. **Не тот вертикаль**: SAMHSA API — это локатор программ лечения наркозависимости (OTP/methadone/buprenorphine), а не FQHC/primary care.
-3. **Данные о координатах перепутаны** местами (`latitude` содержит longitude-значение).
-4. **Нет dental, нет sliding scale** в данных.
-5. **Мало точек**: даже если geo починить, в SAMHSA реестре ~17,000 SUD-программ по США — существенно меньше и другой тип, чем наши 10,429 FQHC.
-6. **Дубликация**: наши clinics и так покрывают поведенческое здоровье через FQHC — добавлять отдельный SUD-ориентированный локатор отдельным вертикалом нет смысла до релиза.
+Причины отложить:
+- Текущий app — FQHC/primary care locator. MH-вертикаль потребует отдельного UX.
+- SAMHSA покрывает outpatient MH programs, residential SUD, OTP (methadone) — другой профиль, чем FQHC.
+- Нет пересечения с нашими 10,429 сайтами (разные организации).
 
-Потенциал: если/когда SAMHSA починит геопоиск и мы решим делать вертикаль "addiction treatment / harm reduction" — вернуться к этому API. Данные публичные, без ключа, rich service codes.
+Причины вернуться:
+- 12,427 MH facilities, geosearch работает, PYAS+sliding фильтруется, без ключа, public domain.
+- "MH + no insurance" — реальный запрос наших пользователей.
+- API готов к интеграции без ETL: live-запросы по координатам, пагинация, sliding scale фильтр.
+
+**Следующий шаг (когда решим делать MH-вертикаль):** новый экран "Mental Health Resources" с live API call — никакого ETL не нужно.
 
 ---
 
-### Вертикаль B — HRSA UDS dental / behavioral health флаги
+### Вертикаль B — Dental/BH флаги в FQHC базе
 
-**НУЖЕН ДРУГОЙ ИСТОЧНИК.** Bulk UDS данные публично не скачать. Но задача решаема — двумя разными путями:
+**ТУПИК — публичного пути нет.**
 
-#### Путь 1 (Рекомендуемый, 3–5 дней): HRSA site CSV + name match + BPHC profile scrape
+Цепочка блокировок:
+1. `HCC_FCT_ID` → `BHCMISID`: нет публичного crosswalk (`BCD_HC.zip` = 404)
+2. `BHCMISID` → UDS dental/BH: нет bulk download (bphc.hrsa.gov = 403)
+3. BPHC profile pages: CDN Akamai возвращает 403 на bot requests
+4. Fuzzy address match: отклонён (неприемлемо для медицинских данных)
 
-1. Скачать `Health_Center_Service_Delivery_and_LookAlike_Sites.csv` (13.1 MB, работает)
-2. Нормализовать name+city+state → связать `clinics.id` → BHCMISID (ожидаемый матч: ~88%, ~9,200 из 10,429 клиник)
-3. Для каждого BHCMISID сделать запрос к публичной странице BPHC health center profile — там есть сводка по услугам
-4. Добавить колонки `has_dental` и `has_behavioral_health` (INTEGER 0/1) в SQLite
-5. Обновить UI: новые фильтры + бейджи
+**Единственные оставшиеся пути:**
+| Путь | Реалистичность |
+|------|---------------|
+| FOIA request (hrsa.gov/foia) | Да, но 20–60 рабочих дней + нужен join через адрес |
+| Ручное обогащение топ-100 клиник (Google, сайты) | Да, для MVP dental фильтра по крупным рынкам |
+| Ждать HRSA STAR initiative (site-level данные, 2024+) | Вероятно через 1–2 года станет публичным |
 
-**Accuracy**: ~59% гранти имеют dental, ~89% — mental health. Применяется на уровне гранти (не сайта) — ок для MVP.
-
-#### Путь 2 (Точный, медленный): FOIA request
-
-- Запросить UDS Table 3A за 2023 через hrsa.gov/foia
-- Время ответа: 20–60 рабочих дней
-- Получить CSV с BHCMISID + dental_patients + MH_patients
-- Сделать join через name match
-- Accuracy: выше (точные данные)
-
-#### Ограничение для обоих путей
-
-Наш `clinics.id` ≠ BHCMISID ≠ любой известный публичный HRSA ID. Join только через name+city+state (fuzzy). Это решаемо (Levenshtein distance / partial match), но требует одноразового ETL-скрипта и ручной проверки ~10% сложных кейсов.
-
-**Ожидаемый результат (Путь 1):**
-- +1 колонка `has_dental` в clinics-v3.db → фильтр "Dental" в UI
-- +1 колонка `has_behavioral_health` → фильтр "Mental Health"
-- ~88% клиник с корректным флагом, ~12% без (NULL = "unknown")
-- Это покрывает самый частый запрос пользователей (dental = #1 в исследованиях)
-- Итоговый размер БД: +25–50 KB (два INTEGER поля)
+**Практическая рекомендация**: для dental фильтра в MVP — ручное обогащение 500–1000 ключевых клиник через scraping их собственных сайтов (clinic.website URL уже есть в нашей БД). Это не требует HRSA данных вообще.
 
 ---
 
 ### Итог приоритетов
 
-| Задача | Вердикт | Оценка усилий |
+| Задача | Вердикт | Следующий шаг |
 |--------|---------|---------------|
-| SAMHSA SUD locator | **НЕ ДЕЛАЕМ** (geo broken, wrong vertical) | — |
-| Dental фильтр (HRSA CSV + name match + BPHC profile) | **ДЕЛАЕМ — Путь 1** | 3–5 дней |
-| Behavioral health фильтр | **ДЕЛАЕМ — вместе с dental** (те же данные) | +1 день |
-| FOIA UDS bulk | **НЕ ДЕЛАЕМ сейчас** (слишком долго для релиза) | 2–3 месяца |
-
-**Следующий шаг:** написать ETL-скрипт `scripts/etl/enrich-dental-bh.mjs` — скачивает HRSA CSV, делает name match, запрашивает BPHC profiles, пишет результат в SQLite. Делать только после релиза (не блокер).
+| SAMHSA MH locator — источник | ✅ ВАЛИДЕН | Строить когда решим MH-вертикаль |
+| Dental флаг через HRSA/UDS | ❌ ТУПИК (публичных данных нет) | FOIA или scraping clinic websites |
+| BH флаг через HRSA/UDS | ❌ ТУПИК (тот же join key path) | Вместе с dental |
+| SAMHSA sliding scale фильтр | ✅ ДЕЛАЕМ при MH-вертикали | PYAS.f3 contains "Sliding fee scale" |
