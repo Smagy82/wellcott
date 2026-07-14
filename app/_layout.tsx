@@ -17,6 +17,8 @@ import 'react-native-reanimated';
 import { useAuth } from '../src/lib/useAuth';
 import { initLanguage } from '../src/i18n';
 import { theme } from '../src/theme';
+import { supabase } from '../src/lib/supabase';
+import { mergeFromSupabase } from '../src/store/savedClinics';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -69,6 +71,16 @@ function RootLayoutNav() {
     if (!session && !inAuth) router.replace('/auth');
     else if (session && inAuth) router.replace('/(tabs)');
   }, [session, loading, segments]);
+
+  // Merge Supabase favorites into local store on login (fire-and-forget)
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        mergeFromSupabase().catch(() => {});
+      }
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   if (loading) return null;
 

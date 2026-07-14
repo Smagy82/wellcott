@@ -15,33 +15,51 @@ import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { ScalePressable } from '../src/components/ScalePressable';
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart, PencilSimple } from 'phosphor-react-native';
-import { useFavorites, type Favorite } from '../src/lib/useFavorites';
+import {
+  init as initSaved,
+  getSaved,
+  subscribe as subscribeSaved,
+  toggleSaved,
+  updateNote,
+  type SavedClinic,
+} from '../src/store/savedClinics';
 import { theme } from '../src/theme';
 
 const { colors, radius, font, shadow } = theme;
 
 const NOTE_LIMIT = 500;
-
-type FilterMode = 'all' | 'clinic' | 'mh';
+type FilterMode  = 'all' | 'clinic' | 'mh';
 
 export default function FavoritesScreen() {
-  const { t } = useTranslation();
+  const { t }  = useTranslation();
   const router = useRouter();
-  const { favorites, loading, toggleFavorite, updateNote } = useFavorites();
 
-  const [filter, setFilter] = useState<FilterMode>('all');
+  const [initialized, setInitialized] = useState(false);
+  const [clinics, setClinics]         = useState<SavedClinic[]>([]);
+  const [filter,  setFilter]          = useState<FilterMode>('all');
 
   // Modal state
-  const [modalVisible, setModalVisible]     = useState(false);
-  const [editingFav,   setEditingFav]       = useState<Favorite | null>(null);
-  const [draftNote,    setDraftNote]        = useState('');
-  const [saving,       setSaving]           = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingItem,  setEditingItem]  = useState<SavedClinic | null>(null);
+  const [draftNote,    setDraftNote]    = useState('');
+  const [saving,       setSaving]       = useState(false);
 
-  const openModal = (item: Favorite) => {
-    setEditingFav(item);
+  useEffect(() => {
+    initSaved()
+      .then(() => getSaved().then(setClinics))
+      .catch(() => {})
+      .finally(() => setInitialized(true));
+
+    return subscribeSaved(() => {
+      getSaved().then(setClinics).catch(() => {});
+    });
+  }, []);
+
+  const openModal = (item: SavedClinic) => {
+    setEditingItem(item);
     setDraftNote(item.note ?? '');
     setModalVisible(true);
   };
@@ -49,28 +67,29 @@ export default function FavoritesScreen() {
   const closeModal = () => {
     if (saving) return;
     setModalVisible(false);
-    setEditingFav(null);
+    setEditingItem(null);
     setDraftNote('');
   };
 
   const handleSave = async () => {
-    if (!editingFav || saving) return;
+    if (!editingItem || saving) return;
     setSaving(true);
     const trimmed = draftNote.trim();
-    await updateNote(editingFav.source, editingFav.clinic_id, trimmed || null);
+    await updateNote(editingItem.id, editingItem.source, trimmed || null).catch(() => {});
+    // List refreshes via subscribeSaved — no manual setSaved needed
     setSaving(false);
     closeModal();
   };
 
   const handleDelete = async () => {
-    if (!editingFav || saving) return;
+    if (!editingItem || saving) return;
     setSaving(true);
-    await updateNote(editingFav.source, editingFav.clinic_id, null);
+    await updateNote(editingItem.id, editingItem.source, null).catch(() => {});
     setSaving(false);
     closeModal();
   };
 
-  if (loading) {
+  if (!initialized) {
     return (
       <View style={styles.emptyFull}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -78,7 +97,7 @@ export default function FavoritesScreen() {
     );
   }
 
-  if (favorites.length === 0) {
+  if (clinics.length === 0) {
     return (
       <View style={styles.emptyFull}>
         <Heart size={52} color={colors.muted} />
@@ -88,9 +107,9 @@ export default function FavoritesScreen() {
     );
   }
 
-  const clinicCount = favorites.filter((f) => f.source === 'clinic').length;
-  const mhCount     = favorites.filter((f) => f.source === 'mh').length;
-  const filtered    = filter === 'all' ? favorites : favorites.filter((f) => f.source === filter);
+  const clinicCount = clinics.filter((c) => c.source === 'clinic').length;
+  const mhCount     = clinics.filter((c) => c.source === 'mh').length;
+  const filtered    = filter === 'all' ? clinics : clinics.filter((c) => c.source === filter);
 
   const chips: { key: FilterMode; label: string }[] = [
     { key: 'all',    label: t('favorites.filterAll') },
@@ -98,14 +117,14 @@ export default function FavoritesScreen() {
     { key: 'mh',     label: `${t('favorites.filterMh')} (${mhCount})` },
   ];
 
-  const renderItem = ({ item }: { item: Favorite }) => (
+  const renderItem = ({ item }: { item: SavedClinic }) => (
     <ScalePressable
       scale={0.98}
       style={styles.card}
       onPress={() => {
         const route = item.source === 'mh'
-          ? `/mh/${encodeURIComponent(item.clinic_id)}`
-          : `/clinic/${encodeURIComponent(item.clinic_id)}`;
+          ? `/mh/${encodeURIComponent(item.id)}`
+          : `/clinic/${encodeURIComponent(item.id)}`;
         router.push(route as Parameters<typeof router.push>[0]);
       }}
     >
@@ -116,9 +135,9 @@ export default function FavoritesScreen() {
               <Text style={styles.mhBadgeText}>{t('mh.tabMh')}</Text>
             </View>
           ) : null}
-          <Text style={styles.cardName}>{item.clinic_name}</Text>
-          {item.clinic_address ? (
-            <Text style={styles.cardAddress}>{item.clinic_address}</Text>
+          <Text style={styles.cardName}>{item.name}</Text>
+          {item.address ? (
+            <Text style={styles.cardAddress}>{item.address}</Text>
           ) : null}
           {item.note ? (
             <Text style={styles.cardNote} numberOfLines={2}>{item.note}</Text>
@@ -143,12 +162,7 @@ export default function FavoritesScreen() {
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              toggleFavorite({
-                clinic_id:      item.clinic_id,
-                clinic_name:    item.clinic_name,
-                clinic_address: item.clinic_address,
-                source:         item.source,
-              });
+              toggleSaved(item.id, item.source).catch(() => {});
             }}
           >
             <Heart weight="fill" size={18} color={colors.primary} />
@@ -186,7 +200,7 @@ export default function FavoritesScreen() {
 
       <FlatList
         data={filtered}
-        keyExtractor={(item) => `${item.source}:${item.clinic_id}`}
+        keyExtractor={(item) => `${item.source}:${item.id}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListHeaderComponent={ListHeader}
@@ -206,10 +220,10 @@ export default function FavoritesScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <Pressable style={styles.overlay} onPress={closeModal}>
-            {/* Inner Pressable prevents tap-on-sheet from closing */}
+            {/* Inner Pressable stops tap-on-sheet from closing the modal */}
             <Pressable style={styles.sheet}>
               <Text style={styles.modalTitle}>
-                {t(editingFav?.note ? 'favorites.noteEdit' : 'favorites.noteAdd')}
+                {t(editingItem?.note ? 'favorites.noteEdit' : 'favorites.noteAdd')}
               </Text>
 
               <TextInput
@@ -226,7 +240,7 @@ export default function FavoritesScreen() {
               <Text style={styles.noteCounter}>{draftNote.length}/{NOTE_LIMIT}</Text>
 
               <View style={styles.modalButtons}>
-                {editingFav?.note ? (
+                {editingItem?.note ? (
                   <TouchableOpacity
                     style={[styles.modalBtn, styles.modalBtnDanger]}
                     onPress={handleDelete}
@@ -247,7 +261,10 @@ export default function FavoritesScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.modalBtn, styles.modalBtnSave, saving && styles.modalBtnDisabled]}
+                  style={[
+                    styles.modalBtn, styles.modalBtnSave,
+                    saving && styles.modalBtnDisabled,
+                  ]}
                   onPress={handleSave}
                   disabled={saving}
                 >
@@ -271,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   emptyTitle: { fontFamily: font.bold, fontSize: 17, color: colors.text, marginTop: 14, marginBottom: 6 },
-  emptySub: { fontFamily: font.regular, fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },
+  emptySub:   { fontFamily: font.regular, fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 19 },
 
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
 
@@ -311,7 +328,6 @@ const styles = StyleSheet.create({
   emptyFiltered:     { paddingVertical: 48, alignItems: 'center' },
   emptyFilteredText: { fontFamily: font.regular, fontSize: 14, color: colors.muted },
 
-  // Modal
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(19,78,74,0.35)',
@@ -324,12 +340,7 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 36,
   },
-  modalTitle: {
-    fontFamily: font.bold,
-    fontSize: 16,
-    color: colors.text,
-    marginBottom: 14,
-  },
+  modalTitle: { fontFamily: font.bold, fontSize: 16, color: colors.text, marginBottom: 14 },
   noteInput: {
     fontFamily: font.regular,
     fontSize: 14,
@@ -351,10 +362,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
   },
-  modalButtons:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  modalBtnSpacer:  { flex: 1 },
-  modalBtn:        { borderRadius: radius.pill, paddingVertical: 9, paddingHorizontal: 18 },
-  modalBtnDisabled:{ opacity: 0.5 },
+  modalButtons:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  modalBtnSpacer: { flex: 1 },
+  modalBtn:       { borderRadius: radius.pill, paddingVertical: 9, paddingHorizontal: 18 },
+  modalBtnDisabled: { opacity: 0.5 },
 
   modalBtnDanger:     { borderWidth: 1.5, borderColor: colors.dangerBorder },
   modalBtnDangerText: { fontFamily: font.semibold, fontSize: 14, color: colors.dangerText },
