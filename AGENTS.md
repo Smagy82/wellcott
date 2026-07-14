@@ -159,6 +159,32 @@ FQHC обязаны принимать пациентов независимо �
 Правильная форма: «нет документа? — клиника всё равно примет, спроси что подойдёт».
 Иммиграционный статус прямым текстом не упоминать — риск при ревью сторов.
 
+### ЗАПРЕЩЁННЫЕ СЛОВА В UI-тексте — проверять ПЕРЕД каждым коммитом с текстом
+
+```bash
+grep -rni "coverage\|covered\|covers" src/i18n/locales/en.json
+grep -rni "free" src/i18n/locales/en.json
+```
+
+**`coverage` / `covered` / `covers`** — ЗАПРЕЩЕНЫ ВСЕГДА.
+В США = страховое покрытие. У нашего пользователя страховки нет. Sliding scale ≠ coverage.
+Замены: "what you pay", "services offered", "included in the fee", "what this program pays for".
+Ловушка: "Covers exams and x-rays" → НАРУШЕНИЕ. Писать: "Includes exams and x-rays."
+
+**`FREE`** — запрещён по умолчанию для всего из HRSA-базы (clinics-v*.db).
+FQHC = sliding scale; клиника ВПРАВЕ взять nominal charge ($5–20). Обещать бесплатно = врать.
+Разрешённая формулировка: "often free or a small flat fee".
+
+✅ FREE допустим только для:
+- Кризисных линий (988, Crisis Text Line, SAMHSA Helpline) — реально $0
+- Mission of Mercy / ADCF / RAM events — без требований по доходу
+- Donated Dental Services (DDS) — с обязательным упоминанием eligibility рядом
+- SingleCare prescription card и аналогичные сервисы — реально $0
+- GFE (Good Faith Estimate) — законодательно бесплатный документ
+- "Free clinics" / "Free and charitable clinics" — собственное имя типа организации (NAFC)
+
+Сомневаешься → не пиши FREE. Любое новое использование — сначала проверить источник.
+
 ### Sliding fee — весь доход домохозяйства
 Sliding fee считается от дохода относительно размера домохозяйства (FPG-таблица). Любой текст
 про proof of income должен упоминать: если кто-то ещё в домохозяйстве работает — его доход
