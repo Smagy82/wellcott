@@ -13,6 +13,7 @@
 import Database from 'better-sqlite3';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { canonicalize, toFetchUrls, analyzeHtml } from './lib/dental-signals.mjs';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const DB_PATH = resolve(__dir, '../assets/clinics-v6.db');
@@ -25,62 +26,6 @@ const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (
 const LIMIT      = process.env.LIMIT      ? parseInt(process.env.LIMIT)  : null;
 const COUNT_ONLY = process.env.COUNT_ONLY === '1';
 const CHECKED_AT = new Date().toISOString().slice(0, 10);
-
-// ── URL helpers ───────────────────────────────────────────────────────────────
-
-const TRASH = new Set(['n/a', 'na', 'none', '-', '']);
-
-function canonicalize(raw) {
-  if (!raw) return null;
-  const s = raw.trim().toLowerCase();
-  if (TRASH.has(s)) return null;
-  // Strip scheme + www + trailing slash
-  let c = s.replace(/^https?:\/\//i, '').replace(/^www\./, '').replace(/\/+$/, '');
-  // Must contain a dot and be > 4 chars
-  if (c.length < 5 || !c.includes('.')) return null;
-  return c;
-}
-
-function toFetchUrls(canon) {
-  return [`https://${canon}`, `http://${canon}`];
-}
-
-// ── Signal patterns ───────────────────────────────────────────────────────────
-
-const NOISE_RES = [
-  /dental\s+insurance/gi,
-  /dental\s+coverage/gi,
-  /no\s+dental/gi,
-  /dental\s+not\s+offered/gi,
-  /dental\s+plan/gi,
-];
-
-const STRONG_RES = [
-  /href="[^"]*dental[^"]*"/gi,
-  /href="[^"]*oral-health[^"]*"/gi,
-  /dental\s+services/gi,
-  /dental\s+care/gi,
-  /oral\s+health\s+services/gi,
-];
-
-const MEDIUM_RES = [
-  /\bdentist\b/gi,
-  /\bdentistry\b/gi,
-  /\boral\s+health\b/gi,
-];
-
-function analyzeHtml(html) {
-  let cleaned = html;
-  for (const re of NOISE_RES) cleaned = cleaned.replace(re, ' ');
-
-  const strong = STRONG_RES.some(re => { re.lastIndex = 0; return re.test(cleaned); });
-  if (strong) return 'strong';
-
-  const medium = MEDIUM_RES.some(re => { re.lastIndex = 0; return re.test(cleaned); });
-  if (medium) return 'medium';
-
-  return 'none';
-}
 
 // ── Fetch with https→http fallback ────────────────────────────────────────────
 

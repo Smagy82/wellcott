@@ -123,3 +123,73 @@ Add dental filter chip in the clinic list UI, showing only clinics with
 `dental_signal IN ('strong', 'medium')`, with an inline caveat banner.
 
 Do NOT add to this commit — data + schema only.
+
+---
+
+## Retry Pass (scripts/retry-dental-flags.mjs)
+
+**Date:** 2026-07-14
+**Settings:** timeout 25s, 3 workers, 500ms delay, 2 retries/site (3s pause between)
+
+### Sites
+
+| Metric | Value |
+|--------|-------|
+| Clinics with valid website stuck in unknown | 952 |
+| Unique canonical sites retried | 428 |
+| Succeeded on retry | 42 |
+| Still failed | 386 |
+
+### Newly resolved (unknown → real signal)
+
+| Signal | Sites (orgs) | Clinic rows |
+|--------|-------------|------------|
+| `strong` | 30 | +99 |
+| `none` | 12 | +22 |
+| **Total** | **42** | **+121** |
+
+### Final distribution after retry
+
+| Signal | Clinics | Δ vs pass 1 |
+|--------|---------|-------------|
+| `strong` | 5,415 | +99 |
+| `none` | 1,030 | +22 |
+| `medium` | 64 | 0 |
+| `unknown` | 3,920 | −121 |
+
+### Top-10 double-failed domains (failed both passes — likely dead/blocking)
+
+| Domain | Locations |
+|--------|-----------|
+| accesscommunityhealth.net | 28 |
+| gvhc.org | 24 |
+| mcrhs.org | 22 |
+| medxpr.com | 19 |
+| mtcomp.org/homeplace | 17 |
+| yvfwc.com | 17 |
+| clinicas.org | 15 |
+| winnchc.org | 12 |
+| chccc.org | 11 |
+| lmcmc.com | 11 |
+
+Several of these are large real FQHCs (accesscommunityhealth.net = Access Community Health Network
+Chicago 28 sites; gvhc.org = Golden Valley Health Centers 24 sites) — they block bots or are
+temporarily down. Their dental_signal stays `unknown`, which is honest: we couldn't determine it,
+not that they don't have dental.
+
+### Failure breakdown
+
+Of the 386 still-failed domains, root causes from the log:
+- **Garbage URLs in DB** (email addresses, spaces, typos like `www,gvhc.org`, `ww.ibclinic.org`,
+  `http:\\...`, `htp://...`) — should have been caught by canonicalize() but weren't (path-based
+  canonical keys still tried)
+- **County/state government health sites** (sanmateo.ca.us, sccgov.org, kingcounty.gov) —
+  TLS error or redirect to Cloudflare/WAF
+- **Org-specific path URLs** that are dead subpages of otherwise-live sites
+  (communityhealthcenters.org/locations/*, gvhc.org/locations/*)
+- **Genuinely dead domains** (wcchc..com, nhcare.0rg, cowlitzfamilyhealth.oeg — typos)
+
+### Conclusion
+
+Retry pass rescued 121 clinics from unknown. Remaining 831 valid-website-unknown clinics
+are a mix of bot-blocking sites, dead sites, and garbage URLs. They correctly stay unknown.
