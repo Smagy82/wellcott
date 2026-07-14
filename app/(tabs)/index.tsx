@@ -651,9 +651,6 @@ export default function ClinicsScreen() {
         <AppText variant="largeTitle" style={styles.largeTitle}>
           {mode === 'clinics' ? t('tabs.clinics') : t('mh.tabMh')}
         </AppText>
-        {filtered.length > 0 && mode === 'clinics' && (
-          <AppText style={styles.largeSub}>{filtered.length} clinics near you</AppText>
-        )}
       </RNAnimated.View>
 
       <View style={styles.listTop}>
@@ -798,7 +795,6 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   largeTitle: {},
-  largeSub: { fontFamily: font.regular, fontSize: 14, color: colors.muted, marginTop: 3 },
 
   glassBar: {
     position: 'absolute', top: 0, left: 0, right: 0,
