@@ -23,6 +23,14 @@ export type AddBillPayload = {
   note?: string | null;
 };
 
+export type UpdateBillPayload = AddBillPayload;
+
+export async function fetchBillById(id: string): Promise<Bill | null> {
+  const { data, error } = await supabase.from('bills').select('*').eq('id', id).single();
+  if (error || !data) return null;
+  return data as Bill;
+}
+
 /** Parse the stored category field into an array. Handles both legacy plain strings and JSON arrays. */
 export function parseCategories(raw: string): string[] {
   try {
@@ -77,11 +85,31 @@ export function useBills() {
     return { ok: true };
   }, []);
 
+  const updateBill = useCallback(async (id: string, payload: UpdateBillPayload): Promise<{ ok: boolean; error?: string }> => {
+    const cats = payload.categories.length > 0 ? payload.categories : ['other'];
+    const row = {
+      amount: payload.amount,
+      category: JSON.stringify(cats),
+      bill_date: payload.bill_date,
+      merchant: payload.merchant ?? null,
+      photo_path: payload.photo_path ?? null,
+      note: payload.note ?? null,
+      visit_id: payload.visit_id ?? null,
+    };
+    const { data, error } = await supabase.from('bills').update(row).eq('id', id).select().single();
+    if (error) {
+      console.error('BILL update error:', error.message, error.details, error.hint);
+      return { ok: false, error: error.message };
+    }
+    if (data) setBills(prev => prev.map(b => b.id === id ? (data as Bill) : b));
+    return { ok: true };
+  }, []);
+
   const deleteBill = useCallback(async (id: string) => {
     setBills(prev => prev.filter(b => b.id !== id));
     const { error } = await supabase.from('bills').delete().eq('id', id);
     if (error) console.error('BILL delete error:', error.message, error.details, error.hint);
   }, []);
 
-  return { bills, loading, reload: load, addBill, deleteBill, totalSpent };
+  return { bills, loading, reload: load, addBill, updateBill, deleteBill, totalSpent };
 }

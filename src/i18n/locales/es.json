@@ -12,7 +12,9 @@
     "enableLocation": "Activar ubicación",
     "financialHelp": "Ayuda financiera",
     "failedToSave": "No se pudo guardar",
-    "share": ""
+    "share": "",
+    "edit": "",
+    "delete": ""
   },
   "tabs": {
     "clinics": "Clínicas",
@@ -158,8 +160,21 @@
     "empty": "Aún no hay visitas",
     "emptySub": "Agregue su primera visita"
   },
+  "visitDetail": {
+    "navTitle": "",
+    "deleteConfirmTitle": "",
+    "deleteConfirmMessage": "",
+    "deleteConfirmOk": "",
+    "deleteConfirmCancel": "",
+    "notFound": "",
+    "labelReason": "",
+    "labelNote": "",
+    "linkedBills": "",
+    "noLinkedBills": ""
+  },
   "visitAdd": {
     "navTitle": "",
+    "navTitleEdit": "",
     "clinicOptional": "Clínica (opcional)",
     "sourceNone": "Ninguna",
     "sourceSaved": "De guardadas",
@@ -171,7 +186,8 @@
     "reasonPlaceholder": "ej. Chequeo, Análisis, Dental…",
     "noteOptional": "Nota (opcional)",
     "notePlaceholder": "Notas sobre esta visita…",
-    "saveVisit": "Guardar visita"
+    "saveVisit": "Guardar visita",
+    "saveChanges": ""
   },
   "bills": {
     "navTitle": "",
@@ -179,8 +195,20 @@
     "empty": "Aún no hay gastos",
     "emptySub": "Agregue su primera factura"
   },
+  "billDetail": {
+    "navTitle": "",
+    "deleteConfirmTitle": "",
+    "deleteConfirmMessage": "",
+    "deleteConfirmOk": "",
+    "deleteConfirmCancel": "",
+    "notFound": "",
+    "labelCategory": "",
+    "labelWhere": "",
+    "labelNote": ""
+  },
   "billAdd": {
     "navTitle": "",
+    "navTitleEdit": "",
     "amount": "Monto *",
     "amountPlaceholder": "0.00",
     "category": "Categoría",
@@ -201,7 +229,8 @@
     "cat_labs": "laboratorio",
     "cat_meds": "medicamentos",
     "cat_procedure": "procedimiento",
-    "cat_other": "otro"
+    "cat_other": "otro",
+    "saveChanges": ""
   },
   "slidingScale": {
     "navTitle": "",

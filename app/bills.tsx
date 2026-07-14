@@ -42,12 +42,12 @@ function PhotoThumb({ path }: { path: string }) {
   return <Image source={{ uri }} style={styles.photoThumb} />;
 }
 
-function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
+function BillCard({ item, onDelete, onPress }: { item: Bill; onDelete: () => void; onPress: () => void }) {
   const { t } = useTranslation();
   const cats = parseCategories(item.category);
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       {item.photo_path ? <PhotoThumb path={item.photo_path} /> : null}
       <View style={styles.cardBody}>
         <View style={styles.cardTop}>
@@ -72,7 +72,7 @@ function BillCard({ item, onDelete }: { item: Bill; onDelete: () => void }) {
       <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onDelete(); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={styles.deleteBtn}>
         <Trash size={20} color={colors.muted} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -93,7 +93,13 @@ export default function BillsScreen() {
       <FlatList
         data={bills}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BillCard item={item} onDelete={() => deleteBill(item.id)} />}
+        renderItem={({ item }) => (
+          <BillCard
+            item={item}
+            onDelete={() => deleteBill(item.id)}
+            onPress={() => router.push(`/bill/${item.id}` as Parameters<typeof router.push>[0])}
+          />
+        )}
         contentContainerStyle={[styles.list, bills.length === 0 && styles.listEmpty]}
         ListHeaderComponent={
           <View style={styles.summaryCard}>

@@ -12,7 +12,9 @@
     "enableLocation": "Enable location",
     "financialHelp": "Financial help",
     "failedToSave": "Failed to save",
-    "share": "Share"
+    "share": "Share",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "tabs": {
     "clinics": "Clinics",
@@ -202,8 +204,21 @@
     "empty": "No visits yet",
     "emptySub": "Add your first visit"
   },
+  "visitDetail": {
+    "navTitle": "Visit",
+    "deleteConfirmTitle": "Delete this visit?",
+    "deleteConfirmMessage": "This cannot be undone.",
+    "deleteConfirmOk": "Delete",
+    "deleteConfirmCancel": "Cancel",
+    "notFound": "Visit not found.",
+    "labelReason": "Reason",
+    "labelNote": "Note",
+    "linkedBills": "Expenses for this visit",
+    "noLinkedBills": "No expenses linked"
+  },
   "visitAdd": {
     "navTitle": "Add visit",
+    "navTitleEdit": "Edit visit",
     "clinicOptional": "Clinic (optional)",
     "sourceNone": "None",
     "sourceSaved": "From saved",
@@ -215,7 +230,8 @@
     "reasonPlaceholder": "e.g. Check-up, Lab work, Dental…",
     "noteOptional": "Note (optional)",
     "notePlaceholder": "Any notes about this visit…",
-    "saveVisit": "Save visit"
+    "saveVisit": "Save visit",
+    "saveChanges": "Save changes"
   },
   "bills": {
     "navTitle": "Expenses",
@@ -223,8 +239,20 @@
     "empty": "No expenses yet",
     "emptySub": "Add your first bill"
   },
+  "billDetail": {
+    "navTitle": "Expense",
+    "deleteConfirmTitle": "Delete this expense?",
+    "deleteConfirmMessage": "This cannot be undone.",
+    "deleteConfirmOk": "Delete",
+    "deleteConfirmCancel": "Cancel",
+    "notFound": "Expense not found.",
+    "labelCategory": "Category",
+    "labelWhere": "Where",
+    "labelNote": "Note"
+  },
   "billAdd": {
     "navTitle": "Add expense",
+    "navTitleEdit": "Edit expense",
     "amount": "Amount *",
     "amountPlaceholder": "0.00",
     "category": "Category",
@@ -245,7 +273,8 @@
     "cat_labs": "labs",
     "cat_meds": "meds",
     "cat_procedure": "procedure",
-    "cat_other": "other"
+    "cat_other": "other",
+    "saveChanges": "Save changes"
   },
   "slidingScale": {
     "navTitle": "Sliding Scale Estimator",

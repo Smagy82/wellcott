@@ -19,6 +19,14 @@ export type AddVisitPayload = {
   note?: string | null;
 };
 
+export type UpdateVisitPayload = AddVisitPayload;
+
+export async function fetchVisitById(id: string): Promise<Visit | null> {
+  const { data, error } = await supabase.from('visits').select('*').eq('id', id).single();
+  if (error || !data) return null;
+  return data as Visit;
+}
+
 export function useVisits() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,11 +66,28 @@ export function useVisits() {
     return { ok: true };
   }, []);
 
+  const updateVisit = useCallback(async (id: string, payload: UpdateVisitPayload): Promise<{ ok: boolean; error?: string }> => {
+    const row = {
+      clinic_id: payload.clinic_id ?? null,
+      clinic_name: payload.clinic_name ?? null,
+      visit_date: payload.visit_date,
+      reason: payload.reason ?? null,
+      note: payload.note ?? null,
+    };
+    const { data, error } = await supabase.from('visits').update(row).eq('id', id).select().single();
+    if (error) {
+      console.error('VISIT update error:', error.message, error.details, error.hint);
+      return { ok: false, error: error.message };
+    }
+    if (data) setVisits(prev => prev.map(v => v.id === id ? (data as Visit) : v));
+    return { ok: true };
+  }, []);
+
   const deleteVisit = useCallback(async (id: string) => {
     setVisits(prev => prev.filter(v => v.id !== id));
     const { error } = await supabase.from('visits').delete().eq('id', id);
     if (error) console.error('VISIT delete error:', error.message, error.details, error.hint);
   }, []);
 
-  return { visits, loading, reload: load, addVisit, deleteVisit };
+  return { visits, loading, reload: load, addVisit, updateVisit, deleteVisit };
 }

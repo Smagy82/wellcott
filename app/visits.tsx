@@ -38,7 +38,11 @@ export default function VisitsScreen() {
   const renderItem = ({ item }: { item: Visit }) => {
     const title = item.clinic_name || item.reason || 'Visit';
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/visit/${item.id}` as Parameters<typeof router.push>[0])}
+        activeOpacity={0.85}
+      >
         <View style={styles.cardLeft}>
           <Text style={styles.cardName}>{title}</Text>
           <Text style={styles.cardDate}>{formatDate(item.visit_date)}</Text>
@@ -56,7 +60,7 @@ export default function VisitsScreen() {
         >
           <Trash size={20} color={colors.muted} />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
 
