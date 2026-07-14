@@ -22,8 +22,10 @@ npx expo start --tunnel --clear
 
 Гибрид: **офлайн-справочник + онлайн-кабинет**.
 
-- **Офлайн**: 10 429 клиник HRSA в SQLite (`assets/clinics-v3.db`), зашиты в бандл.
-  Поиск гео + текст, детали, карта (Apple Maps), Help. Не требует сети.
+- **Офлайн**: 10 429 клиник HRSA + 11 992 MH-учреждений SAMHSA в SQLite (`assets/clinics-v5.db`),
+  зашиты в бандл. Две таблицы: `clinics` (HRSA) и `mh_facilities` (SAMHSA).
+  Поиск гео + текст, детали, карта, Help. Не требует сети.
+  Статистика: 10 429 клиник | google_enriched 2 985 | hours_json 2 702.
 - **Онлайн**: Supabase (auth email+пароль, Postgres, Storage). Личный кабинет —
   избранное, визиты, траты с фото чеков. Всё с RLS (юзер видит только своё).
 
@@ -56,6 +58,50 @@ npx expo start --tunnel --clear
 - `initLanguage()` вызывается в `_layout.tsx` до рендера (ждать `langReady`).
 - В i18next обязательны `fallbackLng: 'en'` + `returnEmptyString: false` — иначе пустой
   стаб в es.json рендерится пустой строкой вместо английского текста.
+
+## ЗАПРЕЩЁННЫЕ СЛОВА — КРИТИЧНО, читать перед любым текстом в UI
+
+### `coverage` / `covered` / `covers` — ЗАПРЕЩЕНЫ ВСЕГДА
+В США читается как «страховое покрытие». У нашего юзера страховки НЕТ.
+Sliding scale — скидка от прайса клиники, а не покрытие.
+Замены: "what you pay", "what the discount includes", "what this program pays for",
+"services offered", "included in the fee", "government health insurance".
+Ловушка: слово проскакивает в начале предложения — "Covers exams and x-rays."
+Нарушение. Писать: "Includes exams and x-rays."
+Запрет действует и на имена полей в данных (assets/*.json), не только на UI-текст.
+
+### `FREE` — запрещён ПО УМОЛЧАНИЮ, разрешён точечно
+ЗАПРЕЩЁН для всего из таблицы `clinics` (HRSA/FQHC). FQHC = sliding scale.
+При низком доходе часто $0, но клиника ВПРАВЕ взять nominal charge ($5–20).
+Честно: "often free or a small flat fee".
+
+РАЗРЕШЁН там, где фактически верно:
+- Кризисные линии (988, Crisis Text Line, SAMHSA Helpline) — реально $0
+- Mission of Mercy / ADCF, Remote Area Medical (RAM) — без ID/страховки/проверки дохода
+- Donated Dental Services — бесплатно, но жёсткий eligibility (65+/инвалидность/
+  medically fragile) → рядом с FREE ОБЯЗАН стоять фильтр
+- NAFC free & charitable clinics
+- Good Faith Estimate ("free to request") — бесплатен по закону
+
+Партнёрские/монетизированные блоки (SingleCare и будущие):
+FREE допустим ТОЛЬКО про сам инструмент (карта), НИКОГДА про результат (лекарство).
+Запрещены обещания размера выгоды из маркетинга партнёра ("up to 80% off").
+Обязательна оговорка о вариативности цены.
+
+Сомневаешься → не пиши FREE.
+
+### Динамические i18n-ключи — grep их НЕ находит
+Ключи вида t(`help.cat_${org.category}`), t(`help.org.${org.id}.name`) собираются в рантайме.
+Grep по имени ключа их НЕ найдёт → «неиспользуемый» ключ может быть живым.
+Искать по ПРЕФИКСУ: grep -rn "help.org\." app/ src/
+defaultValue маскирует пропущенный ключ: в UI покажется сырое значение
+("copay_disease_specific") вместо текста. Не падает — тихо портит UI.
+
+### Проверка перед сдачей любой задачи с текстом
+```bash
+grep -rni "coverage\|covered\|covers" src/ app/ assets/*.json
+grep -rni "free" src/i18n/locales/en.json   # каждое вхождение сверить со списком выше
+```
 
 ## clinicSearch.ts — API (важно не перепутать)
 
@@ -158,32 +204,6 @@ FQHC обязаны принимать пациентов независимо �
 статуса. Формулировки чек-листа НЕ должны намекать, что без документа не примут.
 Правильная форма: «нет документа? — клиника всё равно примет, спроси что подойдёт».
 Иммиграционный статус прямым текстом не упоминать — риск при ревью сторов.
-
-### ЗАПРЕЩЁННЫЕ СЛОВА В UI-тексте — проверять ПЕРЕД каждым коммитом с текстом
-
-```bash
-grep -rni "coverage\|covered\|covers" src/i18n/locales/en.json
-grep -rni "free" src/i18n/locales/en.json
-```
-
-**`coverage` / `covered` / `covers`** — ЗАПРЕЩЕНЫ ВСЕГДА.
-В США = страховое покрытие. У нашего пользователя страховки нет. Sliding scale ≠ coverage.
-Замены: "what you pay", "services offered", "included in the fee", "what this program pays for".
-Ловушка: "Covers exams and x-rays" → НАРУШЕНИЕ. Писать: "Includes exams and x-rays."
-
-**`FREE`** — запрещён по умолчанию для всего из HRSA-базы (clinics-v*.db).
-FQHC = sliding scale; клиника ВПРАВЕ взять nominal charge ($5–20). Обещать бесплатно = врать.
-Разрешённая формулировка: "often free or a small flat fee".
-
-✅ FREE допустим только для:
-- Кризисных линий (988, Crisis Text Line, SAMHSA Helpline) — реально $0
-- Mission of Mercy / ADCF / RAM events — без требований по доходу
-- Donated Dental Services (DDS) — с обязательным упоминанием eligibility рядом
-- SingleCare prescription card и аналогичные сервисы — реально $0
-- GFE (Good Faith Estimate) — законодательно бесплатный документ
-- "Free clinics" / "Free and charitable clinics" — собственное имя типа организации (NAFC)
-
-Сомневаешься → не пиши FREE. Любое новое использование — сначала проверить источник.
 
 ### Sliding fee — весь доход домохозяйства
 Sliding fee считается от дохода относительно размера домохозяйства (FPG-таблица). Любой текст

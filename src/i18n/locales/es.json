@@ -78,7 +78,20 @@
     "section211Title": "",
     "section211Body": "",
     "section211Call": "",
-    "section211Site": ""
+    "section211Site": "",
+    "org": {
+      "dollar-for": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "needymeds": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "unitedway-211": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "hrsa-helpline": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "nafc-free-clinics": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "medicaid-chip": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "aca-marketplace": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "goodrx": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "totalassist-pan-paf": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "healthwell": { "name": "", "whatItDoes": "", "whoQualifies": "" },
+      "undue-medical-debt": { "name": "", "whatItDoes": "", "whoQualifies": "" }
+    }
   },
   "profile": {
     "greetingMorning": "Buenos días",
@@ -393,10 +406,10 @@
   },
   "prescriptions": {
     "bannerTitle": "Ahorre en recetas",
-    "bannerSub": "Tarjeta gratis, hasta 80% de descuento. Sin seguro.",
+    "bannerSub": "",
     "cardTitle": "Ahorro en recetas",
-    "cardBody": "Muestre una tarjeta de descuento gratuita en la farmacia y ahorre hasta 80% en medicamentos. Funciona sin seguro.",
-    "cardButton": "Obtener tarjeta gratis",
-    "cardDisclaimer": "Servicio gratuito vía SingleCare. No es un seguro."
+    "cardBody": "",
+    "cardButton": "",
+    "cardDisclaimer": ""
   }
 }

@@ -78,8 +78,9 @@ src/
     PrescriptionSavingsBanner.tsx — компактный баннер (список клиник)
     PrescriptionSavingsCard.tsx   — полная карточка (детали клиники)
   lib/
-    database.ts         — загрузка clinics-v3.db из assets в SQLite
-    clinicSearch.ts     — findClinicsNear, getClinicById, searchClinicsByText (полная база), findAllClinicsForMap
+    database.ts         — загрузка clinics-v5.db из assets в SQLite
+    clinicSearch.ts     — findClinicsNear, getClinicById, searchClinicsByText (полная база), findAllClinicsForMap, findClinicsInBounds
+    mentalHealthSearch.ts — findMhNear, searchMhByText, findAllMhForMap, getMhById, findMhInBounds
     useNearbyClinics.ts — хук (гео → запрос → статус loading/ready/...)
     supabase.ts         — клиент Supabase (AsyncStorage-сессия)
     useAuth.ts          — хук сессии (session, loading, onAuthStateChange)
@@ -89,10 +90,12 @@ src/
     uploadPhoto.ts      — uploadBillPhoto (arrayBuffer→Storage), getSignedUrl
   types/
     clinic.ts           — Clinic, ClinicRow, ClinicWithDistance, rowToClinic
+    mentalHealth.ts     — MhFacility, MhRow, MhWithDistance, MapMhFacility, rowToMh
     financialHelp.ts    — FinancialHelpOrg
 
 assets/
-  clinics-v3.db         — 10 429 клиник HRSA, обогащено Google Places (CA/NY/NJ/IL + Fort Wayne)
+  clinics-v5.db         — 10 429 клиник HRSA + 11 992 MH-учреждений SAMHSA (таблицы: clinics + mh_facilities),
+                          обогащено Google Places (CA/NY/NJ/IL + Fort Wayne); google_enriched 2 985 | hours_json 2 702
   financial-help.json   — 11 организаций финпомощи, статика
 
 # ETL — запускать локально, не входят в бандл
@@ -142,7 +145,7 @@ RLS-политики раздельные (select/insert/update/delete), не `f
 ### Клиники — HRSA (офлайн)
 
 `build-clinic-db.mjs` делает POST-запросы к HRSA API по каждому штату.
-**10 429 клиник, 50 штатов.** База бандлится в `assets/clinics-v3.db`
+**10 429 клиник, 50 штатов.** База бандлится в `assets/clinics-v5.db`
 и копируется на устройство при первом запуске.
 Токен нужен только при сборке базы — в само приложение не попадает.
 
@@ -159,11 +162,18 @@ GOOGLE_API_KEY='...' ONLY_STATES=CA,NY,NJ,IL MAX_REQUESTS=4900 node enrich-clini
 COUNT_ONLY=1 node enrich-clinics-google.mjs
 ```
 
-**Статус на clinics-v3.db:**
+**Статус на clinics-v5.db:**
 - Всего клиник: 10 429 | google_enriched: 2 985 | с hours_json: 2 702
 - Прогнаны: CA, NY, NJ, IL + ранее Fort Wayne (IN). Последний прогон ~$108.60.
 - Остальные штаты не прогнаны — детали показывают «Call to confirm hours».
 - Полный прогон по стране: оценка ~$130–$140 (зависит от hit rate).
+
+### Mental health — SAMHSA (офлайн)
+
+`build-samhsa-db.mjs` загружает SAMHSA Treatment Locator API по всем штатам.
+**11 992 учреждений** в таблице `mh_facilities` той же базы `clinics-v5.db`.
+Ключевые поля: `latitude/longitude` (только у 10 952 записей с координатами),
+`has_sliding_fee`, `languages`, `age_groups`, `setting`, `intake_phone`.
 
 ### Финансовая помощь — статика
 
@@ -178,7 +188,7 @@ COUNT_ONLY=1 node enrich-clinics-google.mjs
 - Список клиник — гео-поиск, чипы радиуса 10/25/50 mi; если поиск непустой — полная база без радиуса (name+city, регистронезависимо, LIMIT 100)
 - Детали клиники — адрес, телефон, часы, сайт, Call / Directions, блок финпомощи
 - Help — 2 блока, рабочие ссылки и звонки
-- Map — Apple Maps, все 10 429 клиник (findAllClinicsForMap, асинхронно после рендера), кластеризация react-native-map-clustering; tracksViewChanges=false
+- Map — Apple Maps, чипы [All / Clinics / Mental health]; viewport-based loading (findClinicsInBounds / findMhInBounds, bbox SQL, LIMIT 300, debounce 350ms); zoom-out guard (latitudeDelta > 8 → скрыть пины); кластеризация react-native-map-clustering
 - Баннер «Save on prescriptions» (SingleCare, заглушка) в списке и деталях клиники
 
 **i18n:**

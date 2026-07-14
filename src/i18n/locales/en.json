@@ -78,7 +78,64 @@
     "section211Title": "Getting to your appointment",
     "section211Body": "211 is a public helpline that connects you to local programs — including rides to medical appointments. No cost to call.",
     "section211Call": "Call 211",
-    "section211Site": "211.org"
+    "section211Site": "211.org",
+    "org": {
+      "dollar-for": {
+        "name": "Dollar For",
+        "whatItDoes": "Helps you apply for hospital charity care. Nonprofit hospitals are required to offer financial assistance, and Dollar For handles the paperwork for you.",
+        "whoQualifies": "Anyone with a bill from a nonprofit hospital. Based on income and family size."
+      },
+      "needymeds": {
+        "name": "NeedyMeds",
+        "whatItDoes": "Free directory of prescription savings programs, patient assistance programs, and low-cost clinics. Free drug discount card.",
+        "whoQualifies": "Anyone. No income or insurance requirement for the discount card."
+      },
+      "unitedway-211": {
+        "name": "211 (United Way)",
+        "whatItDoes": "Free, confidential helpline that connects you to local health, food, housing, and financial-assistance resources.",
+        "whoQualifies": "Anyone, any situation."
+      },
+      "hrsa-helpline": {
+        "name": "HRSA health center helpline",
+        "whatItDoes": "Federal helpline to locate a nearby community health center and confirm services.",
+        "whoQualifies": "Anyone looking for low-cost primary care."
+      },
+      "nafc-free-clinics": {
+        "name": "Free and charitable clinics (NAFC)",
+        "whatItDoes": "Directory of volunteer-run free and charitable clinics and pharmacies, often at no cost for the uninsured.",
+        "whoQualifies": "Usually uninsured or underinsured, income-based. Varies by clinic."
+      },
+      "medicaid-chip": {
+        "name": "Medicaid and CHIP",
+        "whatItDoes": "Free or very low-cost government health insurance for people with low income. CHIP is for children.",
+        "whoQualifies": "Income-based. Limits vary by state; some states have not expanded Medicaid."
+      },
+      "aca-marketplace": {
+        "name": "ACA Marketplace (HealthCare.gov)",
+        "whatItDoes": "Health insurance with income-based subsidies. Some plans have low or zero monthly premiums.",
+        "whoQualifies": "Most people without employer or government insurance. Subsidies are income-based."
+      },
+      "goodrx": {
+        "name": "GoodRx",
+        "whatItDoes": "Compares prescription prices and gives discount coupons at pharmacies nationwide.",
+        "whoQualifies": "Anyone. Works in place of insurance."
+      },
+      "totalassist-pan-paf": {
+        "name": "TotalAssist (PAN + Patient Advocate Foundation)",
+        "whatItDoes": "Copay and out-of-pocket grants plus free case management for around 150 serious and chronic conditions.",
+        "whoQualifies": "Usually need insurance and a specific qualifying diagnosis. Rarely pays full cost for the uninsured."
+      },
+      "healthwell": {
+        "name": "HealthWell Foundation",
+        "whatItDoes": "Grants for copays, premiums, deductibles, and travel for underinsured patients with specific diseases.",
+        "whoQualifies": "Must have insurance and a qualifying diagnosis. Income up to about 500% of the federal poverty level."
+      },
+      "undue-medical-debt": {
+        "name": "Undue Medical Debt",
+        "whatItDoes": "Buys and forgives medical debt. You cannot apply — recipients are notified once their debt is cleared.",
+        "whoQualifies": "Selected automatically, income-based. Informational only."
+      }
+    }
   },
   "profile": {
     "greetingMorning": "Good morning",
@@ -402,10 +459,10 @@
   },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",
-    "bannerSub": "Free card, up to 80% off. No insurance needed.",
+    "bannerSub": "Free discount card — savings vary by medication and pharmacy.",
     "cardTitle": "Prescription savings",
-    "cardBody": "Show a free discount card at the pharmacy and save up to 80% on medications. Works without insurance.",
+    "cardBody": "Show a free savings card at the pharmacy. Discounts vary by medication and location. Works without insurance.",
     "cardButton": "Get free savings card",
-    "cardDisclaimer": "Free service via SingleCare. Not insurance."
+    "cardDisclaimer": "Free card via SingleCare. Savings vary. Not insurance. We may earn a referral fee."
   }
 }

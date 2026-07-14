@@ -14,17 +14,14 @@ export type FinancialHelpAction = 'apply' | 'call' | 'info' | 'directory';
 
 export interface FinancialHelpOrg {
   id: string;
-  name: string;
   category: FinancialHelpCategory;
-  whatItDoes: string;
-  whoQualifies: string;
   /** Подходит ли нашему ядру (нет денег, нет страховки).
-   *  false = осторожно: нужна страховка/диагноз, полную стоимость не покрывает. */
+   *  false = осторожно: нужна страховка/диагноз, полную стоимость не оплачивает. */
   bestForUninsured: boolean;
   actionType: FinancialHelpAction;
   url: string;
-  phone: string;                     // '' если нет
-  coverage: 'national' | string;     // 'national' или 2-буквенный код штата
+  phone: string;                  // '' если нет
+  scope: 'national' | string;    // 'national' или 2-буквенный код штата
 }
 
 export interface FinancialHelpData {

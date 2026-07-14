@@ -34,15 +34,15 @@ function OrgCard({ org }: { org: FinancialHelpOrg }) {
   return (
     <View style={styles.card}>
       <View style={styles.cardTop}>
-        <AppText variant="sectionHead" style={styles.orgName}>{org.name}</AppText>
+        <AppText variant="sectionHead" style={styles.orgName}>{t(`help.org.${org.id}.name`)}</AppText>
         <View style={styles.badge}>
           <AppText variant="chip" style={styles.badgeText}>{t(catKey)}</AppText>
         </View>
       </View>
-      <AppText variant="secondary" style={styles.whatItDoes}>{org.whatItDoes}</AppText>
+      <AppText variant="secondary" style={styles.whatItDoes}>{t(`help.org.${org.id}.whatItDoes`)}</AppText>
       <AppText variant="caption" style={styles.whoQualifies}>
         <AppText variant="caption" style={styles.whoLabel}>{t('help.whoLabel')}</AppText>
-        {org.whoQualifies}
+        {t(`help.org.${org.id}.whoQualifies`)}
       </AppText>
       <TouchableOpacity style={styles.actionBtn} onPress={() => handleAction(org)} activeOpacity={0.82}>
         <AppText variant="button" style={styles.actionBtnText}>{actionLabel()}</AppText>
