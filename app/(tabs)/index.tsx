@@ -690,20 +690,18 @@ export default function ClinicsScreen() {
           ))}
         </ScrollView>
 
-        {/* Sliding fee — own row, space always reserved to prevent height jump on mode switch */}
-        <View
-          style={styles.slidingFeeRow}
-          pointerEvents={mode === 'mh' ? 'auto' : 'none'}
-        >
-          <Pressable
-            onPress={() => setSlidingFeeOnly((v) => !v)}
-            style={[styles.chip, slidingFeeOnly && styles.chipActive, mode !== 'mh' && { opacity: 0 }]}
-          >
-            <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
-              {t('mh.slidingFeeOnly')}
-            </AppText>
-          </Pressable>
-        </View>
+        {mode === 'mh' && (
+          <View style={styles.slidingFeeRow}>
+            <Pressable
+              onPress={() => setSlidingFeeOnly((v) => !v)}
+              style={[styles.chip, slidingFeeOnly && styles.chipActive]}
+            >
+              <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
+                {t('mh.slidingFeeOnly')}
+              </AppText>
+            </Pressable>
+          </View>
+        )}
 
         {!isSearching && (
           <AppText variant="caption" style={styles.listHeader}>
