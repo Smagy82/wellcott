@@ -123,10 +123,12 @@
     "emptyFiltered": ""
   },
   "visits": {
+    "navTitle": "",
     "empty": "Aún no hay visitas",
     "emptySub": "Agregue su primera visita"
   },
   "visitAdd": {
+    "navTitle": "",
     "clinicOptional": "Clínica (opcional)",
     "sourceNone": "Ninguna",
     "sourceSaved": "De guardadas",
@@ -141,11 +143,13 @@
     "saveVisit": "Guardar visita"
   },
   "bills": {
+    "navTitle": "",
     "totalSpent": "Total gastado",
     "empty": "Aún no hay gastos",
     "emptySub": "Agregue su primera factura"
   },
   "billAdd": {
+    "navTitle": "",
     "amount": "Monto *",
     "amountPlaceholder": "0.00",
     "category": "Categoría",

@@ -123,10 +123,12 @@
     "emptyFiltered": "Nothing saved in this category"
   },
   "visits": {
+    "navTitle": "Visit history",
     "empty": "No visits yet",
     "emptySub": "Add your first visit"
   },
   "visitAdd": {
+    "navTitle": "Add visit",
     "clinicOptional": "Clinic (optional)",
     "sourceNone": "None",
     "sourceSaved": "From saved",
@@ -141,11 +143,13 @@
     "saveVisit": "Save visit"
   },
   "bills": {
+    "navTitle": "Expenses",
     "totalSpent": "Total spent",
     "empty": "No expenses yet",
     "emptySub": "Add your first bill"
   },
   "billAdd": {
+    "navTitle": "Add expense",
     "amount": "Amount *",
     "amountPlaceholder": "0.00",
     "category": "Category",
