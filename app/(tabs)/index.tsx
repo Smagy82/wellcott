@@ -5,6 +5,7 @@ import {
   Keyboard,
   Linking,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   TextInput,
@@ -220,6 +221,11 @@ const ClinicCard = memo(function ClinicCard({
                 {item.slidingScale && (
                   <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
                     <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</AppText>
+                  </View>
+                )}
+                {(item.dentalSignal === 'strong' || item.dentalSignal === 'medium') && (
+                  <View style={[styles.badge, { backgroundColor: colors.tintSky }]}>
+                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tintSkyIcon }]}>{t('clinics.dentalBadgeShort')}</AppText>
                   </View>
                 )}
               </View>
@@ -563,6 +569,15 @@ export default function ClinicsScreen() {
     return query.trim() ? mhTextResults : mhFacilities;
   }, [mode, clinics, mhFacilities, query, textResults, mhTextResults]);
 
+  // Inject prescription savings banner after 3rd clinic card (or at end if <3 clinics)
+  const listData = useMemo(() => {
+    if (mode !== 'clinics') return filtered as any[];
+    const data = filtered as ClinicWithDistance[];
+    if (data.length === 0) return [] as any[];
+    if (data.length <= 3) return [...data, { __banner: true }] as any[];
+    return [...data.slice(0, 3), { __banner: true }, ...data.slice(3)] as any[];
+  }, [filtered, mode]);
+
   const handleModeSelect = (m: Mode) => {
     setMode(m);
     setQuery('');
@@ -677,7 +692,12 @@ export default function ClinicsScreen() {
           <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
         )}
 
-        <View style={styles.chips}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScroll}
+          contentContainerStyle={styles.chipsContent}
+        >
           {RADII.map((r) => (
             <RadiusChip
               key={r}
@@ -686,15 +706,13 @@ export default function ClinicsScreen() {
               onPress={() => { setRadiusMi(r); setQuery(''); setShowSuggestions(false); }}
             />
           ))}
+          <View style={styles.chipDivider} />
           {mode === 'mh' && (
             <Pressable
               onPress={() => setSlidingFeeOnly((v) => !v)}
               style={[styles.chip, slidingFeeOnly && styles.chipActive]}
             >
-              <AppText
-                variant="button"
-                style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}
-              >
+              <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
                 {t('mh.slidingFeeOnly')}
               </AppText>
             </Pressable>
@@ -704,15 +722,18 @@ export default function ClinicsScreen() {
               onPress={() => setDentalOnly((v) => !v)}
               style={[styles.chip, dentalOnly && styles.chipActive]}
             >
-              <AppText
-                variant="button"
-                style={[styles.chipText, dentalOnly && styles.chipTextActive]}
-              >
+              <AppText variant="button" style={[styles.chipText, dentalOnly && styles.chipTextActive]}>
                 {t('clinics.filterDental')}
               </AppText>
             </Pressable>
           )}
-        </View>
+        </ScrollView>
+
+        {mode === 'clinics' && dentalOnly && (
+          <View style={styles.dentalNote}>
+            <AppText variant="caption" style={styles.dentalNoteText}>{t('clinics.dentalFilterNote')}</AppText>
+          </View>
+        )}
 
         {!isSearching && (
           <AppText variant="caption" style={styles.listHeader}>
@@ -721,8 +742,6 @@ export default function ClinicsScreen() {
               : t('mh.nearbyCount', { count: filtered.length, radius: radiusMi })}
           </AppText>
         )}
-
-        {mode === 'clinics' && <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />}
 
         {mode === 'mh' && (
           <View style={styles.crisis988Wrap}>
@@ -737,14 +756,15 @@ export default function ClinicsScreen() {
     <ScreenTransition>
     <View style={styles.flex}>
       <RNAnimated.FlatList
-        data={filtered as any[]}
-        keyExtractor={(item: any) => item.id}
+        data={listData}
+        keyExtractor={(item: any) => item.__banner ? 'prescription-banner' : item.id}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }: { item: any }) =>
-          mode === 'clinics'
+        renderItem={({ item }: { item: any }) => {
+          if (item.__banner) return <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />;
+          return mode === 'clinics'
             ? <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} onToast={showToast} />
-            : <MhCard item={item} isShareGuarded={isShareGuarded} />
-        }
+            : <MhCard item={item} isShareGuarded={isShareGuarded} />;
+        }}
         contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
         ListHeaderComponent={ListHeader}
         keyboardShouldPersistTaps="handled"
@@ -857,7 +877,23 @@ const styles = StyleSheet.create({
     color: colors.text, marginBottom: 10, ...shadow,
   },
 
-  chips: { flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap' },
+  chipsScroll: { marginBottom: 10, marginHorizontal: -spacing.lg },
+  chipsContent: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.lg, alignItems: 'center' },
+  chipDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 20,
+    backgroundColor: colors.primaryDark,
+    opacity: 0.2,
+    marginHorizontal: 4,
+  },
+  dentalNote: {
+    backgroundColor: colors.tintSky,
+    borderRadius: radius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  dentalNoteText: { color: colors.tintSkyIcon, lineHeight: 18 },
   chip: {
     borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 18,
     backgroundColor: colors.card, borderWidth: 1.5,
