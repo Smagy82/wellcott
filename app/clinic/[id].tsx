@@ -120,7 +120,7 @@ export default function ClinicDetailScreen() {
       </View>
 
       {/* Badges */}
-      {(clinic.acceptsUninsured || clinic.slidingScale || openStatus !== null) && (
+      {(clinic.acceptsUninsured || clinic.slidingScale || clinic.hasDental || openStatus !== null) && (
         <View style={styles.badgesSection}>
           <View style={styles.badges}>
             {clinic.acceptsUninsured && (
@@ -134,6 +134,13 @@ export default function ClinicDetailScreen() {
               <View style={[styles.badge, styles.badgeBlue]}>
                 <Text style={[styles.badgeText, { color: colors.tintBlueIcon }]}>
                   {t('clinicList.slidingScale')}
+                </Text>
+              </View>
+            )}
+            {clinic.hasDental && (
+              <View style={[styles.badge, { backgroundColor: 'rgba(251,191,36,0.18)' }]}>
+                <Text style={[styles.badgeText, { color: '#B45309' }]}>
+                  {t('clinicList.dentalServices')}
                 </Text>
               </View>
             )}
@@ -155,6 +162,9 @@ export default function ClinicDetailScreen() {
           </View>
           {clinic.slidingScale && (
             <Text style={styles.badgeNote}>{t('clinicDetail.slidingScaleInfo')}</Text>
+          )}
+          {clinic.hasDental && (
+            <Text style={styles.badgeNote}>{t('clinicList.dentalDisclaimer')}</Text>
           )}
         </View>
       )}
@@ -209,6 +219,9 @@ export default function ClinicDetailScreen() {
           {clinic.address}, {clinic.city}, {clinic.state} {clinic.zip}
         </InfoRow>
         {clinic.phone ? <InfoRow label={t('clinicDetail.labelPhone')}>{clinic.phone}</InfoRow> : null}
+        {clinic.appointmentPhone && clinic.appointmentPhone !== clinic.phone ? (
+          <InfoRow label={t('clinicDetail.labelAppointmentPhone')}>{clinic.appointmentPhone}</InfoRow>
+        ) : null}
         {clinic.website ? (
           <View style={styles.row}>
             <Text style={styles.rowLabel}>{t('clinicDetail.labelWebsite')}</Text>

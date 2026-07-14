@@ -68,6 +68,7 @@ export interface MapClinic {
   city: string;
   latitude: number;
   longitude: number;
+  has_dental: 0 | 1;
 }
 
 /**
@@ -93,7 +94,7 @@ export async function findClinicsInBounds(
   limit = 300,
 ): Promise<MapClinic[]> {
   return db.getAllAsync<MapClinic>(
-    `SELECT id, name, address, city, latitude, longitude FROM clinics
+    `SELECT id, name, address, city, latitude, longitude, has_dental FROM clinics
       WHERE latitude  BETWEEN ? AND ?
         AND longitude BETWEEN ? AND ?
       LIMIT ?`,

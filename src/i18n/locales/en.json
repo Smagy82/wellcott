@@ -32,7 +32,10 @@
     "slidingScale": "Sliding scale",
     "openNow": "Open now",
     "closedOpensAt": "Closed · Opens {{time}}",
-    "closed": "Closed"
+    "closed": "Closed",
+    "dentalServices": "Dental services",
+    "dentalOnly": "Dental",
+    "dentalDisclaimer": "Call to confirm dental services and pricing"
   },
   "map": {
     "findingClinics": "Finding clinics near you…",
@@ -41,6 +44,7 @@
     "filterAll": "All",
     "filterClinics": "Clinics",
     "filterMh": "Mental health",
+    "filterDental": "Dental",
     "zoomIn": "Zoom in to see locations"
   },
   "clinicDetail": {
@@ -52,6 +56,7 @@
     "labelWebsite": "Website",
     "labelHours": "Hours",
     "callToConfirmHours": "Call to confirm hours.",
+    "labelAppointmentPhone": "Dental appointments",
     "cantAffordCare": "Can't afford care?",
     "cantAffordCareSub": "Ask their patient financial services, or get help finding assistance.",
     "disclaimer": "Prices and services vary — always call ahead. Information is for reference only.",

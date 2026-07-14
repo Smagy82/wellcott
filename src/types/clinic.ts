@@ -15,6 +15,8 @@ export interface Clinic {
   siteType?: string;
   acceptsUninsured: boolean;
   slidingScale: boolean;
+  hasDental?: boolean;
+  appointmentPhone?: string;
   services?: string[];
   placeId?: string;
   hoursJson?: string;
@@ -39,6 +41,8 @@ export interface ClinicRow {
   site_type: string | null;
   accepts_uninsured: 0 | 1;
   sliding_scale: 0 | 1;
+  has_dental: 0 | 1 | null;
+  appointment_phone: string | null;
   place_id: string | null;
   hours_json: string | null;
 }
@@ -59,6 +63,8 @@ export function rowToClinic(r: ClinicRow): Clinic {
     siteType: r.site_type ?? undefined,
     acceptsUninsured: r.accepts_uninsured === 1,
     slidingScale: r.sliding_scale === 1,
+    hasDental: r.has_dental === 1,
+    appointmentPhone: r.appointment_phone ?? undefined,
     placeId: r.place_id ?? undefined,
     hoursJson: r.hours_json ?? undefined,
   };

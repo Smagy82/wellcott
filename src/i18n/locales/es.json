@@ -32,7 +32,10 @@
     "slidingScale": "Escala móvil",
     "openNow": "",
     "closedOpensAt": "",
-    "closed": ""
+    "closed": "",
+    "dentalServices": "",
+    "dentalOnly": "",
+    "dentalDisclaimer": ""
   },
   "map": {
     "findingClinics": "Buscando clínicas cerca de usted…",
@@ -41,6 +44,7 @@
     "filterAll": "",
     "filterClinics": "",
     "filterMh": "",
+    "filterDental": "",
     "zoomIn": ""
   },
   "clinicDetail": {
@@ -52,6 +56,7 @@
     "labelWebsite": "Sitio web",
     "labelHours": "Horario",
     "callToConfirmHours": "Llame para confirmar el horario.",
+    "labelAppointmentPhone": "",
     "cantAffordCare": "¿No puede pagar la atención?",
     "cantAffordCareSub": "Pregunte por sus servicios financieros para pacientes, o reciba ayuda para encontrar asistencia.",
     "disclaimer": "Los precios y servicios varían — llame siempre antes. La información es solo de referencia.",

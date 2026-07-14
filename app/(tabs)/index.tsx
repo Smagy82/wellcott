@@ -225,6 +225,11 @@ const ClinicCard = memo(function ClinicCard({
                     <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</AppText>
                   </View>
                 )}
+                {item.hasDental && (
+                  <View style={[styles.badge, { backgroundColor: 'rgba(251,191,36,0.15)' }]}>
+                    <AppText variant="chip" style={[styles.badgeText, { color: '#B45309' }]}>{t('clinicList.dentalServices')}</AppText>
+                  </View>
+                )}
                 {openStatus !== null && (
                   openStatus.open
                     ? <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
@@ -480,6 +485,7 @@ export default function ClinicsScreen() {
   const [mode, setMode] = useState<Mode>('clinics');
   const [radiusMi, setRadiusMi] = useState<RadiusValue>(25);
   const [slidingFeeOnly, setSlidingFeeOnly] = useState(false);
+  const [dentalOnly, setDentalOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [mhTextResults, setMhTextResults] = useState<MhWithDistance[]>([]);
@@ -573,10 +579,11 @@ export default function ClinicsScreen() {
 
   const filtered = useMemo(() => {
     if (mode === 'clinics') {
-      return query.trim() ? textResults : clinics;
+      const base = query.trim() ? textResults : clinics;
+      return dentalOnly ? base.filter((c) => c.hasDental) : base;
     }
     return query.trim() ? mhTextResults : mhFacilities;
-  }, [mode, clinics, mhFacilities, query, textResults, mhTextResults]);
+  }, [mode, clinics, mhFacilities, query, textResults, mhTextResults, dentalOnly]);
 
 
   const handleModeSelect = (m: Mode) => {
@@ -585,6 +592,7 @@ export default function ClinicsScreen() {
     setCitySuggestions([]);
     setShowSuggestions(false);
     if (m === 'clinics') setSlidingFeeOnly(false);
+    if (m === 'mh') setDentalOnly(false);
   };
 
   const requestLocation = async () => {
@@ -713,6 +721,19 @@ export default function ClinicsScreen() {
             >
               <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
                 {t('mh.slidingFeeOnly')}
+              </AppText>
+            </Pressable>
+          </View>
+        )}
+
+        {mode === 'clinics' && (
+          <View style={styles.slidingFeeRow}>
+            <Pressable
+              onPress={() => setDentalOnly((v) => !v)}
+              style={[styles.chip, dentalOnly && styles.chipActive]}
+            >
+              <AppText variant="button" style={[styles.chipText, dentalOnly && styles.chipTextActive]}>
+                {t('clinicList.dentalOnly')}
               </AppText>
             </Pressable>
           </View>

@@ -46,7 +46,7 @@ const PIN_LIMIT   = 300;
 const SPRING_IN  = { mass: 0.6, damping: 10, stiffness: 200 } as const;
 const SPRING_OUT = { mass: 1,   damping: 14, stiffness: 180 } as const;
 
-type MapMode = 'all' | 'clinics' | 'mh';
+type MapMode = 'all' | 'clinics' | 'mh' | 'dental';
 
 // ── Map control button ───────────────────────────────────────────────────────
 
@@ -116,9 +116,11 @@ export default function MapScreen() {
 
     try {
       const db = await getDb();
-      if (mode === 'all' || mode === 'clinics') {
+      if (mode === 'all' || mode === 'clinics' || mode === 'dental') {
         findClinicsInBounds(db, minLat, maxLat, minLng, maxLng, PIN_LIMIT)
-          .then(setVisibleClinics)
+          .then((pins) => {
+            setVisibleClinics(mode === 'dental' ? pins.filter((c) => c.has_dental === 1) : pins);
+          })
           .catch(() => {});
       } else {
         setVisibleClinics([]);
@@ -243,6 +245,7 @@ export default function MapScreen() {
 
   const clusterColor =
     mapMode === 'clinics' ? colors.primary :
+    mapMode === 'dental'  ? '#B45309' :
     mapMode === 'mh'      ? colors.tintLilacIcon :
     colors.muted;
 
@@ -250,6 +253,7 @@ export default function MapScreen() {
     { key: 'all',     label: t('map.filterAll') },
     { key: 'clinics', label: t('map.filterClinics') },
     { key: 'mh',      label: t('map.filterMh') },
+    { key: 'dental',  label: t('map.filterDental') },
   ];
 
   return (
