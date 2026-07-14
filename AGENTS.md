@@ -66,6 +66,19 @@ npx expo start --tunnel --clear
 - `findAllClinicsForMap(db)` → `MapClinic[]` (только 6 полей: id, name, address, city, lat, lng).
   Для карты — вызывать только в `useEffect` после рендера, НЕ синхронно.
 
+## mentalHealthSearch.ts — API (важно не перепутать с clinicSearch.ts)
+
+- `findMhNear(db, lat, lng, radiusMiles, limit?, slidingFeeOnly?)` → MH-объекты в радиусе + haversine-дистанция.
+  Только записи **С координатами** (`latitude IS NOT NULL`). Для списка и карты.
+- `searchMhByText(db, query, limit?, slidingFeeOnly?)` → вся таблица `mh_facilities`, `LOWER() LIKE` по `name1+name2+city`.
+  Включает записи **БЕЗ координат** — в этом смысл: 1 040 объектов найдутся текстом, но не геопоиском.
+- `findAllMhForMap(db)` → `MapMhFacility[]` (id, name1, city, latitude, longitude, hasSlidingFee).
+  Только с координатами. Вызывать **только в useEffect**, не синхронно (~11k строк).
+- `getMhById(db, id)` → `MhFacility | null`.
+- `slidingFeeOnly=true` → добавляет `AND has_sliding_fee = 1` к `findMhNear` и `searchMhByText`.
+
+Типы: `src/types/mentalHealth.ts` — `MhFacility`, `MhRow`, `MhWithDistance`, `rowToMh`.
+
 ## Бандл-база — грабли (уже пройдены, не повторять)
 
 - При обновлении `assets/clinics-v*.db` **ОБЯЗАТЕЛЬНО бампать имя файла** (v2→v3 и т.д.),
