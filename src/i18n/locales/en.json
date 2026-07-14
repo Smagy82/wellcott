@@ -114,8 +114,13 @@
     "backToSignIn": "Back to sign in"
   },
   "favorites": {
+    "title": "Saved",
     "empty": "No saved clinics yet",
-    "emptySub": "Tap the heart on any clinic to save it here"
+    "emptySub": "Tap the heart on any clinic to save it here",
+    "filterAll": "All",
+    "filterClinics": "Clinics",
+    "filterMh": "Mental health",
+    "emptyFiltered": "Nothing saved in this category"
   },
   "visits": {
     "empty": "No visits yet",

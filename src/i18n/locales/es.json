@@ -114,8 +114,13 @@
     "backToSignIn": "Volver al inicio de sesión"
   },
   "favorites": {
+    "title": "",
     "empty": "Aún no hay clínicas guardadas",
-    "emptySub": "Toque el corazón en cualquier clínica para guardarla aquí"
+    "emptySub": "Toque el corazón en cualquier clínica para guardarla aquí",
+    "filterAll": "",
+    "filterClinics": "",
+    "filterMh": "",
+    "emptyFiltered": ""
   },
   "visits": {
     "empty": "Aún no hay visitas",
