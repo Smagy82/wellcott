@@ -108,6 +108,42 @@
   gfe.dispute.b1 и gfe.dispute.b2. НЕ менять в es.json до ручной вычитки.
 - Слова "coverage"/"covered" в текстах GFE ЗАПРЕЩЕНЫ — см. общее правило.
 
+---
+
+## РАЗВЕДКА ДАННЫХ — ИТОГИ (13.07.2026)
+
+### SAMHSA findtreatment.gov — ЗЕЛЁНЫЙ ✅
+
+- **12,427 MH facilities** по всей стране (запрошено limitType=0 по всем 50 штатам + DC).
+- **Public domain** (17 U.S.C. § 105, SAMHSA / HHS). Офлайн-кэш и бандлинг в приложении разрешены.
+- **Bulk = 50 запросов**: `limitType=0&limitValue={stateId}&sType=mh&pageSize=2000` — функционально bulk.
+- Параметры подтверждены: `sAddr={lat},{lng}` (широта первой!), `limitType=2` = радиус в метрах.
+  Полная документация: `scripts/probe/samhsa-api-notes.md`.
+- Sliding scale детектируется: `services[].f2==='PYAS' && f3.includes('Sliding fee scale')`.
+- **Блокер**: нужен API-доступ по форме (форма на findtreatment.gov) + статический IP (VPS).
+- **Реализация — ПОСЛЕ релиза в сторы.** Отдельный MH-экран, не смешивать с FQHC.
+
+### Dental через HRSA/UDS — ТУПИК, ЗАКРЫТО ⛔
+
+- `BHCMISID` отсутствует в HRSA HDW API (подтверждено developer guide).
+- `BCD_HC.zip` (crosswalk `HCC_FCT_ID → BHCMISID`) → 404, не существует публично.
+- UDS bulk download (Table 3A / Table 5) → 403 (bphc.hrsa.gov, требует логин).
+- BPHC profile pages → 403 CDN (Akamai блокирует ботов).
+- Детерминированного join `clinics.id → BHCMISID` нет. Адресный fuzzy match — отклонён.
+- **Скрейпинг сайтов клиник — ОТКЛОНЁН**: эвристика "есть слово dental на сайте" даёт
+  ложные срабатывания. Человек едет 40 миль и слышит "мы этим не занимаемся" —
+  это убивает доверие. В медданных эвристики недопустимы.
+
+### Dental — план Б (приоритеты)
+
+1. **Дентальные школы (~70 в США)** — статический JSON по аналогии с `financial-help.json`.
+   Ноль ETL, ноль зависимостей от внешних API. Делать **первым** из dental-направления.
+2. **NAFC** (National Association of Free & Charitable Clinics, ~1400 клиник) — в базе есть
+   явные теги услуг включая dental. Требует партнёрства или API-доступа.
+3. **Pop-up события** (RAM/Mission of Mercy calendar) — разовые события, другой UX-паттерн.
+
+---
+
 ## ОТКРЫТЫЕ ВОПРОСЫ ПО SLIDING SCALE (из обсуждения 12.07.2026)
 - Nominal charge: при ≤100% FPG клиника ВПРАВЕ брать символическую плату ($5–20).
   Поэтому НЕЛЬЗЯ обещать "бесплатно" — только "often free or a small flat fee".
