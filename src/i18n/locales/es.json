@@ -124,7 +124,13 @@
     "filterAll": "",
     "filterClinics": "",
     "filterMh": "",
-    "emptyFiltered": ""
+    "emptyFiltered": "",
+    "noteAdd": "",
+    "noteEdit": "",
+    "notePlaceholder": "",
+    "noteSave": "",
+    "noteCancel": "",
+    "noteDelete": ""
   },
   "visits": {
     "navTitle": "",

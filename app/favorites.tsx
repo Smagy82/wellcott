@@ -1,7 +1,12 @@
 import {
+  ActivityIndicator,
   FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -10,34 +15,70 @@ import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { ScalePressable } from '../src/components/ScalePressable';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heart } from 'phosphor-react-native';
-import {
-  init as initSaved,
-  getSaved,
-  toggleSaved,
-  subscribe as subscribeSaved,
-  type SavedClinic,
-} from '../src/store/savedClinics';
+import { Heart, PencilSimple } from 'phosphor-react-native';
+import { useFavorites, type Favorite } from '../src/lib/useFavorites';
 import { theme } from '../src/theme';
 
 const { colors, radius, font, shadow } = theme;
+
+const NOTE_LIMIT = 500;
 
 type FilterMode = 'all' | 'clinic' | 'mh';
 
 export default function FavoritesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [clinics, setClinics] = useState<SavedClinic[]>([]);
+  const { favorites, loading, toggleFavorite, updateNote } = useFavorites();
+
   const [filter, setFilter] = useState<FilterMode>('all');
 
-  useEffect(() => {
-    initSaved().then(() => getSaved().then(setClinics)).catch(() => {});
-    return subscribeSaved(() => { getSaved().then(setClinics).catch(() => {}); });
-  }, []);
+  // Modal state
+  const [modalVisible, setModalVisible]     = useState(false);
+  const [editingFav,   setEditingFav]       = useState<Favorite | null>(null);
+  const [draftNote,    setDraftNote]        = useState('');
+  const [saving,       setSaving]           = useState(false);
 
-  if (clinics.length === 0) {
+  const openModal = (item: Favorite) => {
+    setEditingFav(item);
+    setDraftNote(item.note ?? '');
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    if (saving) return;
+    setModalVisible(false);
+    setEditingFav(null);
+    setDraftNote('');
+  };
+
+  const handleSave = async () => {
+    if (!editingFav || saving) return;
+    setSaving(true);
+    const trimmed = draftNote.trim();
+    await updateNote(editingFav.source, editingFav.clinic_id, trimmed || null);
+    setSaving(false);
+    closeModal();
+  };
+
+  const handleDelete = async () => {
+    if (!editingFav || saving) return;
+    setSaving(true);
+    await updateNote(editingFav.source, editingFav.clinic_id, null);
+    setSaving(false);
+    closeModal();
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.emptyFull}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (favorites.length === 0) {
     return (
       <View style={styles.emptyFull}>
         <Heart size={52} color={colors.muted} />
@@ -47,10 +88,9 @@ export default function FavoritesScreen() {
     );
   }
 
-  const clinicCount = clinics.filter((c) => c.source === 'clinic').length;
-  const mhCount    = clinics.filter((c) => c.source === 'mh').length;
-
-  const filtered = filter === 'all' ? clinics : clinics.filter((c) => c.source === filter);
+  const clinicCount = favorites.filter((f) => f.source === 'clinic').length;
+  const mhCount     = favorites.filter((f) => f.source === 'mh').length;
+  const filtered    = filter === 'all' ? favorites : favorites.filter((f) => f.source === filter);
 
   const chips: { key: FilterMode; label: string }[] = [
     { key: 'all',    label: t('favorites.filterAll') },
@@ -58,14 +98,14 @@ export default function FavoritesScreen() {
     { key: 'mh',     label: `${t('favorites.filterMh')} (${mhCount})` },
   ];
 
-  const renderItem = ({ item }: { item: SavedClinic }) => (
+  const renderItem = ({ item }: { item: Favorite }) => (
     <ScalePressable
       scale={0.98}
       style={styles.card}
       onPress={() => {
         const route = item.source === 'mh'
-          ? `/mh/${encodeURIComponent(item.id)}`
-          : `/clinic/${encodeURIComponent(item.id)}`;
+          ? `/mh/${encodeURIComponent(item.clinic_id)}`
+          : `/clinic/${encodeURIComponent(item.clinic_id)}`;
         router.push(route as Parameters<typeof router.push>[0]);
       }}
     >
@@ -76,20 +116,44 @@ export default function FavoritesScreen() {
               <Text style={styles.mhBadgeText}>{t('mh.tabMh')}</Text>
             </View>
           ) : null}
-          <Text style={styles.cardName}>{item.name}</Text>
-          {item.address ? (
-            <Text style={styles.cardAddress}>{item.address}</Text>
+          <Text style={styles.cardName}>{item.clinic_name}</Text>
+          {item.clinic_address ? (
+            <Text style={styles.cardAddress}>{item.clinic_address}</Text>
+          ) : null}
+          {item.note ? (
+            <Text style={styles.cardNote} numberOfLines={2}>{item.note}</Text>
           ) : null}
         </View>
-        <TouchableOpacity
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            toggleSaved(item.id, item.source).catch(() => {});
-          }}
-        >
-          <Heart weight="fill" size={22} color={colors.primary} />
-        </TouchableOpacity>
+
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              openModal(item);
+            }}
+          >
+            <PencilSimple
+              size={18}
+              color={item.note ? colors.primary : colors.iconIdle}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              toggleFavorite({
+                clinic_id:      item.clinic_id,
+                clinic_name:    item.clinic_name,
+                clinic_address: item.clinic_address,
+                source:         item.source,
+              });
+            }}
+          >
+            <Heart weight="fill" size={18} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
     </ScalePressable>
   );
@@ -119,15 +183,81 @@ export default function FavoritesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title={t('favorites.title')} />
+
       <FlatList
         data={filtered}
-        keyExtractor={(item) => `${item.source}:${item.id}`}
+        keyExtractor={(item) => `${item.source}:${item.clinic_id}`}
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={EmptyFiltered}
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Note edit modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={closeModal}
+      >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <Pressable style={styles.overlay} onPress={closeModal}>
+            {/* Inner Pressable prevents tap-on-sheet from closing */}
+            <Pressable style={styles.sheet}>
+              <Text style={styles.modalTitle}>
+                {t(editingFav?.note ? 'favorites.noteEdit' : 'favorites.noteAdd')}
+              </Text>
+
+              <TextInput
+                multiline
+                value={draftNote}
+                onChangeText={(txt) => setDraftNote(txt.slice(0, NOTE_LIMIT))}
+                placeholder={t('favorites.notePlaceholder')}
+                placeholderTextColor={colors.muted}
+                style={styles.noteInput}
+                autoFocus
+                scrollEnabled
+              />
+
+              <Text style={styles.noteCounter}>{draftNote.length}/{NOTE_LIMIT}</Text>
+
+              <View style={styles.modalButtons}>
+                {editingFav?.note ? (
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.modalBtnDanger]}
+                    onPress={handleDelete}
+                    disabled={saving}
+                  >
+                    <Text style={styles.modalBtnDangerText}>{t('favorites.noteDelete')}</Text>
+                  </TouchableOpacity>
+                ) : null}
+
+                <View style={styles.modalBtnSpacer} />
+
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalBtnCancel]}
+                  onPress={closeModal}
+                  disabled={saving}
+                >
+                  <Text style={styles.modalBtnCancelText}>{t('favorites.noteCancel')}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalBtnSave, saving && styles.modalBtnDisabled]}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  <Text style={styles.modalBtnSaveText}>{t('favorites.noteSave')}</Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -145,12 +275,7 @@ const styles = StyleSheet.create({
 
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
 
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    flexWrap: 'wrap',
-    paddingVertical: 12,
-  },
+  filterRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', paddingVertical: 12 },
   chip: {
     borderRadius: radius.pill,
     paddingVertical: 7,
@@ -160,26 +285,19 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadow,
   },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipText: { fontFamily: font.semibold, fontSize: 13, color: colors.primaryDark },
+  chipActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText:       { fontFamily: font.semibold, fontSize: 13, color: colors.primaryDark },
   chipTextActive: { color: colors.onPrimary },
 
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    ...shadow,
-  },
-  cardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  cardText: { flex: 1, marginRight: 12 },
-  cardName: { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 3 },
+  card:      { backgroundColor: colors.card, borderRadius: radius.lg, ...shadow },
+  cardInner: { flexDirection: 'row', alignItems: 'flex-start', padding: 16 },
+  cardText:  { flex: 1, marginRight: 12 },
+  cardName:    { fontFamily: font.semibold, fontSize: 15, color: colors.text, marginBottom: 3 },
   cardAddress: { fontFamily: font.regular, fontSize: 13, color: colors.muted, lineHeight: 18 },
+  cardNote:    { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 17, marginTop: 6 },
+
+  cardActions: { gap: 14, alignItems: 'center', paddingTop: 2 },
+
   mhBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.tintLilac,
@@ -190,9 +308,60 @@ const styles = StyleSheet.create({
   },
   mhBadgeText: { fontFamily: font.semibold, fontSize: 11, color: colors.tintLilacIcon },
 
-  emptyFiltered: {
-    paddingVertical: 48,
-    alignItems: 'center',
-  },
+  emptyFiltered:     { paddingVertical: 48, alignItems: 'center' },
   emptyFilteredText: { fontFamily: font.regular, fontSize: 14, color: colors.muted },
+
+  // Modal
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(19,78,74,0.35)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: 24,
+    paddingBottom: 36,
+  },
+  modalTitle: {
+    fontFamily: font.bold,
+    fontSize: 16,
+    color: colors.text,
+    marginBottom: 14,
+  },
+  noteInput: {
+    fontFamily: font.regular,
+    fontSize: 14,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: 12,
+    minHeight: 100,
+    maxHeight: 160,
+    textAlignVertical: 'top',
+    backgroundColor: colors.bg,
+  },
+  noteCounter: {
+    fontFamily: font.regular,
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: 'right',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  modalButtons:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  modalBtnSpacer:  { flex: 1 },
+  modalBtn:        { borderRadius: radius.pill, paddingVertical: 9, paddingHorizontal: 18 },
+  modalBtnDisabled:{ opacity: 0.5 },
+
+  modalBtnDanger:     { borderWidth: 1.5, borderColor: colors.dangerBorder },
+  modalBtnDangerText: { fontFamily: font.semibold, fontSize: 14, color: colors.dangerText },
+
+  modalBtnCancel:     { borderWidth: 1.5, borderColor: colors.border },
+  modalBtnCancelText: { fontFamily: font.semibold, fontSize: 14, color: colors.text },
+
+  modalBtnSave:     { backgroundColor: colors.primary },
+  modalBtnSaveText: { fontFamily: font.semibold, fontSize: 14, color: colors.onPrimary },
 });

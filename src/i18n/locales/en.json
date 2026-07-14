@@ -124,7 +124,13 @@
     "filterAll": "All",
     "filterClinics": "Clinics",
     "filterMh": "Mental health",
-    "emptyFiltered": "Nothing saved in this category"
+    "emptyFiltered": "Nothing saved in this category",
+    "noteAdd": "Add note",
+    "noteEdit": "Edit note",
+    "notePlaceholder": "Parking, staff, wait time, what to bring next time…",
+    "noteSave": "Save",
+    "noteCancel": "Cancel",
+    "noteDelete": "Delete note"
   },
   "visits": {
     "navTitle": "Visit history",

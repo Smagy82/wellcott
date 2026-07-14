@@ -7,6 +7,7 @@ export type Favorite = {
   clinic_name: string;
   clinic_address: string | null;
   source: 'clinic' | 'mh';
+  note: string | null;
   created_at: string;
 };
 
@@ -66,5 +67,17 @@ export function useFavorites() {
     }
   }, [favorites]);
 
-  return { favorites, loading, isFavorite, toggleFavorite, reload: load };
+  const updateNote = useCallback(async (
+    source: 'clinic' | 'mh',
+    clinicId: string,
+    note: string | null,
+  ) => {
+    const target = favorites.find(f => f.clinic_id === clinicId && f.source === source);
+    if (!target) return;
+    // Optimistic update
+    setFavorites(prev => prev.map(f => f.id === target.id ? { ...f, note } : f));
+    await supabase.from('favorites').update({ note }).eq('id', target.id);
+  }, [favorites]);
+
+  return { favorites, loading, isFavorite, toggleFavorite, updateNote, reload: load };
 }
