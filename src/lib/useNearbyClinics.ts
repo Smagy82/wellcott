@@ -6,7 +6,7 @@ import type { ClinicWithDistance } from '../types/clinic';
 
 export type NearbyStatus = 'loading' | 'ready' | 'no-permission' | 'error';
 
-export function useNearbyClinics(radiusMiles = 25) {
+export function useNearbyClinics(radiusMiles = 25, dentalOnly = false) {
   const [clinics, setClinics] = useState<ClinicWithDistance[]>([]);
   const [status, setStatus] = useState<NearbyStatus>('loading');
   const [attempt, setAttempt] = useState(0);
@@ -33,6 +33,8 @@ export function useNearbyClinics(radiusMiles = 25) {
           loc.coords.latitude,
           loc.coords.longitude,
           radiusMiles,
+          50,
+          dentalOnly,
         );
         if (!cancelled) {
           setClinics(results);
@@ -44,7 +46,7 @@ export function useNearbyClinics(radiusMiles = 25) {
       }
     })();
     return () => { cancelled = true; };
-  }, [radiusMiles, attempt]);
+  }, [radiusMiles, dentalOnly, attempt]);
 
   return { clinics, status, retry };
 }

@@ -118,7 +118,7 @@ export default function ClinicDetailScreen() {
       </View>
 
       {/* Badges */}
-      {(clinic.acceptsUninsured || clinic.slidingScale) && (
+      {(clinic.acceptsUninsured || clinic.slidingScale || clinic.dentalSignal === 'strong' || clinic.dentalSignal === 'medium') && (
         <View style={styles.badgesSection}>
           <View style={styles.badges}>
             {clinic.acceptsUninsured && (
@@ -135,9 +135,19 @@ export default function ClinicDetailScreen() {
                 </Text>
               </View>
             )}
+            {(clinic.dentalSignal === 'strong' || clinic.dentalSignal === 'medium') && (
+              <View style={[styles.badge, styles.badgeSky]}>
+                <Text style={[styles.badgeText, { color: colors.tintSkyIcon }]}>
+                  {t('clinics.dentalBadge')}
+                </Text>
+              </View>
+            )}
           </View>
           {clinic.slidingScale && (
             <Text style={styles.badgeNote}>{t('clinicDetail.slidingScaleInfo')}</Text>
+          )}
+          {(clinic.dentalSignal === 'strong' || clinic.dentalSignal === 'medium') && (
+            <Text style={styles.badgeNote}>{t('clinics.dentalCaveat')}</Text>
           )}
         </View>
       )}
@@ -285,6 +295,7 @@ const styles = StyleSheet.create({
   badge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
   badgeMint: { backgroundColor: colors.tintMint },
   badgeBlue: { backgroundColor: colors.tintBlue },
+  badgeSky: { backgroundColor: colors.tintSky },
   badgeText: { fontFamily: font.semibold, fontSize: 12 },
   badgeNote: { fontFamily: font.regular, fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 

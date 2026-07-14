@@ -464,6 +464,7 @@ export default function ClinicsScreen() {
   const [mode, setMode] = useState<Mode>('clinics');
   const [radiusMi, setRadiusMi] = useState<RadiusValue>(25);
   const [slidingFeeOnly, setSlidingFeeOnly] = useState(false);
+  const [dentalOnly, setDentalOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [mhTextResults, setMhTextResults] = useState<MhWithDistance[]>([]);
@@ -475,7 +476,7 @@ export default function ClinicsScreen() {
   useEffect(() => { initSaved().catch(() => {}); }, []);
 
   // Both hooks run from mount — data is ready when user switches mode
-  const { clinics, status: clinicStatus, retry: clinicRetry } = useNearbyClinics(radiusMi);
+  const { clinics, status: clinicStatus, retry: clinicRetry } = useNearbyClinics(radiusMi, dentalOnly);
   const { facilities: mhFacilities, status: mhStatus, retry: mhRetry } = useNearbyMh(radiusMi, slidingFeeOnly);
 
   const status = mode === 'clinics' ? clinicStatus : mhStatus;
@@ -499,10 +500,10 @@ export default function ClinicsScreen() {
     if (!q.trim()) { setTextResults([]); return; }
     try {
       const db = await getDb();
-      const results = await searchClinicsByText(db, q, 100);
+      const results = await searchClinicsByText(db, q, 100, dentalOnly);
       setTextResults(results);
     } catch (e) { console.error(e); }
-  }, []);
+  }, [dentalOnly]);
 
   useEffect(() => { runClinicSearch(query); }, [query, runClinicSearch]);
 
@@ -568,6 +569,7 @@ export default function ClinicsScreen() {
     setCitySuggestions([]);
     setShowSuggestions(false);
     if (m === 'clinics') setSlidingFeeOnly(false);
+    if (m === 'mh') setDentalOnly(false);
   };
 
   const requestLocation = async () => {
@@ -694,6 +696,19 @@ export default function ClinicsScreen() {
                 style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}
               >
                 {t('mh.slidingFeeOnly')}
+              </AppText>
+            </Pressable>
+          )}
+          {mode === 'clinics' && (
+            <Pressable
+              onPress={() => setDentalOnly((v) => !v)}
+              style={[styles.chip, dentalOnly && styles.chipActive]}
+            >
+              <AppText
+                variant="button"
+                style={[styles.chipText, dentalOnly && styles.chipTextActive]}
+              >
+                {t('clinics.filterDental')}
               </AppText>
             </Pressable>
           )}

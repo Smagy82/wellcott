@@ -460,6 +460,11 @@
     "intakeCallBtn": "Call intake",
     "intakeHint": "Intake handles new patients — this is usually faster."
   },
+  "clinics": {
+    "filterDental": "Dental (call to confirm)",
+    "dentalBadge": "Dental services",
+    "dentalCaveat": "This health center offers dental services. Call this location to confirm — not every site has a dentist."
+  },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",
     "bannerSub": "Free discount card — savings vary by medication and pharmacy.",

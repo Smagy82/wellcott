@@ -18,6 +18,7 @@ export interface Clinic {
   services?: string[];
   placeId?: string;
   hoursJson?: string;
+  dentalSignal?: 'strong' | 'medium' | 'none' | 'unknown';
 }
 
 export interface ClinicWithDistance extends Clinic {
@@ -41,6 +42,7 @@ export interface ClinicRow {
   sliding_scale: 0 | 1;
   place_id: string | null;
   hours_json: string | null;
+  dental_signal: string | null;
 }
 
 export function rowToClinic(r: ClinicRow): Clinic {
@@ -61,5 +63,6 @@ export function rowToClinic(r: ClinicRow): Clinic {
     slidingScale: r.sliding_scale === 1,
     placeId: r.place_id ?? undefined,
     hoursJson: r.hours_json ?? undefined,
+    dentalSignal: (r.dental_signal as Clinic['dentalSignal']) ?? undefined,
   };
 }
