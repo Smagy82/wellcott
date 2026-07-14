@@ -17,10 +17,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
 import { findAllClinicsForMap, type MapClinic } from '../../src/lib/clinicSearch';
+import { findAllMhForMap, type MapMhFacility } from '../../src/lib/mentalHealthSearch';
 import { getDb } from '../../src/lib/database';
 import { theme } from '../../src/theme';
 
-const { colors, radius, font } = theme;
+const { colors, radius, font, shadow } = theme;
 
 const TAB_BAR_H = 58;
 const TAB_BAR_BOTTOM_EXTRA = 10;
@@ -32,7 +33,6 @@ const US_REGION: Region = {
   longitudeDelta: 40,
 };
 
-// Fixed city-level delta for "go to my location"
 const CITY_DELTA = 0.05;
 const DELTA_MIN  = 0.002;
 const DELTA_MAX  = 60;
@@ -40,9 +40,9 @@ const DELTA_MAX  = 60;
 const SPRING_IN  = { mass: 0.6, damping: 10, stiffness: 200 } as const;
 const SPRING_OUT = { mass: 1,   damping: 14, stiffness: 180 } as const;
 
+type MapMode = 'all' | 'clinics' | 'mh';
+
 // ── Map control button ───────────────────────────────────────────────────────
-// Pressable is the outermost element so the map never steals the touch.
-// Animated.View wraps only the icon for visual scale feedback.
 
 function MapControlButton({
   onPress,
@@ -79,12 +79,13 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
-  // Tracks the map's current region so zoom works from wherever the user is
   const regionRef = useRef<Region>(US_REGION);
 
+  const [mapMode,   setMapMode]   = useState<MapMode>('all');
   const [allClinics, setAllClinics] = useState<MapClinic[]>([]);
+  const [allMh,      setAllMh]      = useState<MapMhFacility[]>([]);
 
-  // Sync regionRef to the first clinic location once data arrives
+  // Sync regionRef once nearby data arrives
   useEffect(() => {
     if (nearbyClinics.length > 0) {
       const c = nearbyClinics[0];
@@ -97,13 +98,25 @@ export default function MapScreen() {
     }
   }, [nearbyClinics]);
 
+  // Load full clinic + MH datasets after location is ready
   useEffect(() => {
     if (status !== 'ready') return;
     let cancelled = false;
-    getDb()
-      .then((db) => findAllClinicsForMap(db))
-      .then((rows) => { if (!cancelled) setAllClinics(rows); })
-      .catch((e) => console.error('Map: load all clinics failed', e));
+    (async () => {
+      try {
+        const db = await getDb();
+        const [clinics, mh] = await Promise.all([
+          findAllClinicsForMap(db),
+          findAllMhForMap(db),
+        ]);
+        if (!cancelled) {
+          setAllClinics(clinics);
+          setAllMh(mh);
+        }
+      } catch (e) {
+        console.error('Map: load pins failed', e);
+      }
+    })();
     return () => { cancelled = true; };
   }, [status]);
 
@@ -112,7 +125,6 @@ export default function MapScreen() {
     retry();
   };
 
-  // Always flies to city-level zoom (0.05°). Requests permission first.
   const goToMyLocation = async () => {
     const { status: perm } = await Location.requestForegroundPermissionsAsync();
     if (perm !== 'granted') return;
@@ -134,7 +146,6 @@ export default function MapScreen() {
     }
   };
 
-  // Zoom in (factor < 1) / out (factor > 1) by scaling deltas
   const zoomBy = (factor: number) => {
     if (!mapRef.current) return;
     const r = regionRef.current;
@@ -188,6 +199,21 @@ export default function MapScreen() {
 
   const stackBottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA + TAB_BAR_H + 12;
 
+  // Cluster color reflects the active layer so dots read as the right type
+  const clusterColor =
+    mapMode === 'clinics' ? colors.primary :
+    mapMode === 'mh'      ? colors.tintLilacIcon :
+    colors.muted; // 'all' — neutral grey, mixed content
+
+  const showClinics = mapMode === 'all' || mapMode === 'clinics';
+  const showMh      = mapMode === 'all' || mapMode === 'mh';
+
+  const chips: { key: MapMode; label: string }[] = [
+    { key: 'all',     label: t('map.filterAll') },
+    { key: 'clinics', label: t('map.filterClinics') },
+    { key: 'mh',      label: t('map.filterMh') },
+  ];
+
   return (
     <ScreenTransition>
     <View style={styles.container}>
@@ -197,15 +223,15 @@ export default function MapScreen() {
         provider={PROVIDER_DEFAULT}
         initialRegion={initialRegion}
         showsUserLocation
-        clusterColor={colors.primary}
+        clusterColor={clusterColor}
         clusterTextColor="#ffffff"
         radius={50}
         animationEnabled={false}
         onRegionChangeComplete={(r) => { regionRef.current = r; }}
       >
-        {allClinics.map((c) => (
+        {showClinics && allClinics.map((c) => (
           <Marker
-            key={c.id}
+            key={`c-${c.id}`}
             coordinate={{ latitude: c.latitude, longitude: c.longitude }}
             title={c.name}
             description={`${c.address}, ${c.city}`}
@@ -214,9 +240,39 @@ export default function MapScreen() {
             tracksViewChanges={false}
           />
         ))}
+
+        {showMh && allMh.map((mh) => (
+          <Marker
+            key={`m-${mh.id}`}
+            coordinate={{ latitude: mh.latitude, longitude: mh.longitude }}
+            title={mh.name1}
+            description={mh.city}
+            onCalloutPress={() => router.push(`/mh/${encodeURIComponent(mh.id)}`)}
+            pinColor={colors.tintLilacIcon}
+            tracksViewChanges={false}
+          />
+        ))}
       </MapView>
 
-      {/* Control stack — zIndex above map, no overflow:hidden so touch isn't clipped */}
+      {/* Filter chips — top overlay, clear of status bar */}
+      <View style={[styles.chipRow, { top: insets.top + 12 }]} pointerEvents="box-none">
+        {chips.map(({ key, label }) => (
+          <Pressable
+            key={key}
+            onPress={() => setMapMode(key)}
+            style={[styles.chip, mapMode === key && styles.chipActive]}
+          >
+            <AppText
+              variant="button"
+              style={[styles.chipText, mapMode === key && styles.chipTextActive]}
+            >
+              {label}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Control stack — zoom + location */}
       <View style={[styles.ctrlStack, { bottom: stackBottom }]}>
         <MapControlButton onPress={() => zoomBy(0.5)}>
           <Plus size={18} color="#134E4A" />
@@ -242,6 +298,32 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
+
+  // Filter chips — absolute overlay at top of map
+  chipRow: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    zIndex: 10,
+  },
+  chip: {
+    borderRadius: radius.pill,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    ...shadow,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: { color: colors.primaryDark },
+  chipTextActive: { color: colors.onPrimary },
 
   // zIndex: 10 ensures the stack receives touches above the map layer.
   // No overflow:hidden — avoids iOS touch clipping on rounded containers.
