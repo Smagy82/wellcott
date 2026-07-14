@@ -402,7 +402,10 @@
     "labelSetting": "",
     "spanish": "",
     "disclaimer": "",
-    "attribution": ""
+    "attribution": "",
+    "slidingScaleInfo": "",
+    "intakeCallBtn": "",
+    "intakeHint": ""
   },
   "prescriptions": {
     "bannerTitle": "Ahorre en recetas",

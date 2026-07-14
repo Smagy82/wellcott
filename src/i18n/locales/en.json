@@ -455,7 +455,10 @@
     "labelSetting": "Setting",
     "spanish": "Se habla español",
     "disclaimer": "Call to confirm services and payment options. Information comes from SAMHSA and may change.",
-    "attribution": "Data source: SAMHSA FindTreatment.gov"
+    "attribution": "Data source: SAMHSA FindTreatment.gov",
+    "slidingScaleInfo": "This facility reports charging based on income. What that means varies — ask when you call.",
+    "intakeCallBtn": "Call intake",
+    "intakeHint": "Intake handles new patients — this is usually faster."
   },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",

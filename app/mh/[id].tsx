@@ -10,7 +10,7 @@ import {
 import { AppText } from '../../src/components/AppText';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Heart } from 'phosphor-react-native';
+import { Heart, FileText, CaretRight } from 'phosphor-react-native';
 import { getDb } from '../../src/lib/database';
 import { getMhById, formatMhAddress } from '../../src/lib/mentalHealthSearch';
 import type { MhFacility } from '../../src/types/mentalHealth';
@@ -70,9 +70,20 @@ export default function MhDetailScreen() {
 
   const speaksSpanish = facility.languages?.toLowerCase().includes('spanish') ?? false;
 
+  // "Call intake" shows only when intake_phone exists, differs from phone, AND phone is also set
+  const showIntakeBtn = !!facility.phone &&
+                        !!facility.intakePhone &&
+                        facility.intakePhone !== facility.phone;
+
+  // Primary call number: phone, or intakePhone as fallback when phone is absent
+  const callNumber = facility.phone ?? facility.intakePhone;
+
   const handleCall = () => {
-    const number = facility.intakePhone ?? facility.phone;
-    if (number) Linking.openURL(`tel:${number}`);
+    if (callNumber) Linking.openURL(`tel:${callNumber}`);
+  };
+
+  const handleCallIntake = () => {
+    if (facility.intakePhone) Linking.openURL(`tel:${facility.intakePhone}`);
   };
 
   const handleDirections = () => {
@@ -89,6 +100,8 @@ export default function MhDetailScreen() {
       address: formatMhAddress(facility),
     }).catch(() => {});
   };
+
+  const hasBadge = facility.hasSlidingFee || facility.hasPayAssist || speaksSpanish;
 
   return (
     <>
@@ -119,33 +132,43 @@ export default function MhDetailScreen() {
           ) : null}
         </View>
 
-        {/* Se habla español badge */}
-        {speaksSpanish ? (
-          <View style={styles.spanishWrap}>
-            <View style={styles.spanishBadge}>
-              <AppText variant="chip" style={styles.spanishText}>{t('mh.spanish')}</AppText>
-            </View>
-          </View>
-        ) : null}
+        {/* 988 crisis card — first for safety */}
+        <View style={styles.crisisWrap}>
+          <Crisis988Card />
+        </View>
 
-        {/* Payment badges */}
-        {(facility.hasSlidingFee || facility.hasPayAssist) ? (
+        {/* Badges: sliding scale + pay assist + español in one row */}
+        {hasBadge ? (
           <View style={styles.badgesWrap}>
             {facility.hasSlidingFee ? (
               <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
-                <AppText variant="chip" style={[styles.badgeText, { color: colors.tagGreenText }]}>
+                <AppText variant="chip" style={{ color: colors.tagGreenText }}>
                   {t('mh.badgeSlidingFee')}
                 </AppText>
               </View>
             ) : null}
             {facility.hasPayAssist && !facility.hasSlidingFee ? (
               <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
-                <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>
+                <AppText variant="chip" style={{ color: colors.tagTealText }}>
                   {t('mh.badgePayAssist')}
                 </AppText>
               </View>
             ) : null}
+            {speaksSpanish ? (
+              <View style={[styles.badge, { backgroundColor: colors.tintLilac }]}>
+                <AppText variant="chip" style={{ color: colors.tintLilacIcon }}>
+                  {t('mh.spanish')}
+                </AppText>
+              </View>
+            ) : null}
           </View>
+        ) : null}
+
+        {/* Sliding scale info — SAMHSA-specific text, intentionally different from FQHC text */}
+        {facility.hasSlidingFee ? (
+          <AppText variant="caption" style={styles.slidingScaleNote}>
+            {t('mh.slidingScaleInfo')}
+          </AppText>
         ) : null}
 
         {/* Info section */}
@@ -158,7 +181,7 @@ export default function MhDetailScreen() {
           {facility.phone ? (
             <PhoneRow label={t('mh.labelPhone')} number={facility.phone} />
           ) : null}
-          {facility.intakePhone ? (
+          {facility.intakePhone && facility.intakePhone !== facility.phone ? (
             <PhoneRow label={t('mh.labelIntakePhone')} number={facility.intakePhone} />
           ) : null}
           {facility.website ? (
@@ -186,20 +209,39 @@ export default function MhDetailScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          {facility.phone ? (
+          {callNumber ? (
             <TouchableOpacity style={[styles.btn, styles.btnFill]} onPress={handleCall}>
               <AppText variant="button" style={styles.btnFillText}>{t('common.call')}</AppText>
+            </TouchableOpacity>
+          ) : null}
+          {showIntakeBtn ? (
+            <TouchableOpacity style={[styles.btn, styles.btnIntake]} onPress={handleCallIntake}>
+              <AppText variant="button" style={styles.btnIntakeText}>{t('mh.intakeCallBtn')}</AppText>
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={handleDirections}>
             <AppText variant="button" style={styles.btnOutlineText}>{t('common.directions')}</AppText>
           </TouchableOpacity>
         </View>
+        {showIntakeBtn ? (
+          <AppText variant="caption" style={styles.intakeHint}>
+            {t('mh.intakeHint')}
+          </AppText>
+        ) : null}
 
-        {/* 988 crisis card */}
-        <View style={styles.crisisWrap}>
-          <Crisis988Card />
-        </View>
+        {/* GFE entry card */}
+        <TouchableOpacity
+          style={styles.gfeCard}
+          activeOpacity={0.8}
+          onPress={() => router.push('/good-faith-estimate')}
+        >
+          <FileText size={22} color={colors.tintMintIcon} />
+          <View style={{ flex: 1 }}>
+            <AppText variant="cardTitle" style={styles.gfeTitle}>{t('gfe.cta.title')}</AppText>
+            <AppText variant="secondary" style={styles.gfeSub}>{t('gfe.cta.subtitle')}</AppText>
+          </View>
+          <CaretRight size={18} color={colors.tintMintIcon} />
+        </TouchableOpacity>
 
         <AppText variant="caption" style={styles.disclaimer}>{t('mh.disclaimer')}</AppText>
         <AppText variant="caption" style={styles.attribution}>{t('mh.attribution')}</AppText>
@@ -248,30 +290,34 @@ const styles = StyleSheet.create({
   heartBtn: { paddingTop: 2 },
   headerName2: { color: colors.onPrimaryDim, marginTop: 4, fontFamily: font.regular },
 
-  spanishWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-  spanishBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.tintLilac,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  crisisWrap: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
   },
-  spanishText: { color: colors.tintLilacIcon },
 
   badgesWrap: {
     flexDirection: 'row',
     gap: 6,
     flexWrap: 'wrap',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   badge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
-  badgeText: {},
+
+  slidingScaleNote: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    color: colors.muted,
+    lineHeight: 18,
+  },
 
   section: {
     backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     borderRadius: radius.sm,
     overflow: 'hidden',
     marginBottom: spacing.lg,
@@ -298,15 +344,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   btn: { flex: 1, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
   btnFill: { backgroundColor: colors.primary },
   btnFillText: { color: colors.onPrimary },
+  btnIntake: { backgroundColor: colors.tintBlue },
+  btnIntakeText: { color: colors.tintBlueIcon },
   btnOutline: { borderWidth: 1.5, borderColor: colors.primary },
   btnOutlineText: { color: colors.primary },
 
-  crisisWrap: { marginHorizontal: spacing.lg, marginBottom: spacing.lg },
+  intakeHint: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    color: colors.muted,
+    lineHeight: 16,
+  },
+
+  gfeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: colors.tintMint,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    borderRadius: radius.md,
+    padding: 16,
+    ...shadow,
+  },
+  gfeTitle: { color: colors.tintMintIcon, marginBottom: 2 },
+  gfeSub: { color: colors.tintMintIcon, lineHeight: 16, opacity: 0.85 },
 
   disclaimer: {
     textAlign: 'center',

@@ -35,7 +35,10 @@ export async function findMhNear(
   const feeClause = slidingFeeOnly ? 'AND has_sliding_fee = 1' : '';
 
   const rows = await db.getAllAsync<MhRow>(
-    `SELECT * FROM mh_facilities
+    `SELECT id, name1, name2, street1, city, state, zip, phone, intake_phone,
+            website, latitude, longitude, has_sliding_fee, has_pay_assist,
+            accepts_self_pay, languages, age_groups, service_setting, snapshot_date
+       FROM mh_facilities
       WHERE latitude  IS NOT NULL
         AND longitude IS NOT NULL
         AND latitude  BETWEEN ? AND ?
@@ -68,7 +71,10 @@ export async function searchMhByText(
   const feeClause = slidingFeeOnly ? 'AND has_sliding_fee = 1' : '';
 
   const rows = await db.getAllAsync<MhRow>(
-    `SELECT * FROM mh_facilities
+    `SELECT id, name1, name2, street1, city, state, zip, phone, intake_phone,
+            website, latitude, longitude, has_sliding_fee, has_pay_assist,
+            accepts_self_pay, languages, age_groups, service_setting, snapshot_date
+       FROM mh_facilities
       WHERE (LOWER(name1) LIKE ? OR LOWER(name2) LIKE ? OR LOWER(city) LIKE ?)
         ${feeClause}
       ORDER BY name1
@@ -158,7 +164,10 @@ export async function getMhById(
   id: string,
 ): Promise<MhFacility | null> {
   const row = await db.getFirstAsync<MhRow>(
-    'SELECT * FROM mh_facilities WHERE id = ?',
+    `SELECT id, name1, name2, street1, city, state, zip, phone, intake_phone,
+            website, latitude, longitude, has_sliding_fee, has_pay_assist,
+            accepts_self_pay, languages, age_groups, service_setting, snapshot_date
+       FROM mh_facilities WHERE id = ?`,
     [id],
   );
   return row ? rowToMh(row) : null;
