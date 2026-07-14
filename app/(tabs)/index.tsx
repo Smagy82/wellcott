@@ -5,6 +5,7 @@ import {
   Keyboard,
   Linking,
   Pressable,
+  Share,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -35,11 +36,15 @@ import {
 import { shareClinic } from '../../src/lib/shareClinic';
 import * as Location from 'expo-location';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
+import { useNearbyMh } from '../../src/lib/useNearbyMh';
 import { searchClinicsByText, suggestCities, type CitySuggestion } from '../../src/lib/clinicSearch';
+import { searchMhByText } from '../../src/lib/mentalHealthSearch';
 import { getDb } from '../../src/lib/database';
 import type { ClinicWithDistance } from '../../src/types/clinic';
+import type { MhWithDistance } from '../../src/types/mentalHealth';
 import { theme } from '../../src/theme';
 import { PrescriptionSavingsBanner } from '../../src/components/PrescriptionSavingsBanner';
+import { Crisis988Card } from '../../src/components/Crisis988Card';
 import {
   init as initSaved,
   isSaved,
@@ -50,11 +55,12 @@ import { ScreenTransition } from '../../src/components/ScreenTransition';
 
 const { colors, radius, font, shadow, spacing } = theme;
 
+type Mode = 'clinics' | 'mh';
+
 const SHARE_GHOST_GUARD_MS = 1000;
 const RADII = [10, 25, 50] as const;
 type RadiusValue = typeof RADII[number];
 
-// Glass header fades in after this many px of scroll
 const GLASS_START = 54;
 const GLASS_END   = 74;
 
@@ -144,10 +150,6 @@ function HeartButton({
 }
 
 // ── Clinic Card ───────────────────────────────────────────────────────────────
-// Layout: left flex content + right fixed 44px column (heart spacer + distance).
-// Heart button is rendered as an ABSOLUTE SIBLING of the card Pressable so
-// touches on it never reach the card's navigation handler.
-// React.memo + per-card useSyncExternalStore: only the toggled card re-renders.
 
 const ClinicCard = memo(function ClinicCard({
   item,
@@ -165,7 +167,6 @@ const ClinicCard = memo(function ClinicCard({
   const cardScale = useSharedValue(1);
   const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
 
-  // Per-card save state — only THIS card re-renders when its save status changes
   const saved = useSyncExternalStore(subscribeSavedAny, () => isSaved(item.id));
 
   const handleToggleSave = () => {
@@ -193,7 +194,6 @@ const ClinicCard = memo(function ClinicCard({
 
   return (
     <View style={styles.cardWrap}>
-      {/* ── Tappable card ── */}
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -201,7 +201,6 @@ const ClinicCard = memo(function ClinicCard({
       >
         <Animated.View style={[styles.card, cardStyle]}>
           <View style={styles.cardRow}>
-            {/* Left: name, address, badges, actions */}
             <View style={styles.cardContent}>
               <AppText variant="cardTitle" style={styles.clinicName} numberOfLines={2}>{item.name}</AppText>
 
@@ -242,9 +241,7 @@ const ClinicCard = memo(function ClinicCard({
               </View>
             </View>
 
-            {/* Right column: 44px — spacer for heart + distance below */}
             <View style={styles.cardRight}>
-              {/* 38×38 spacer — the actual heart Pressable is a sibling */}
               <View style={styles.heartSpacer} />
               {showDistance && (
                 <AppText variant="caption" style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</AppText>
@@ -254,13 +251,139 @@ const ClinicCard = memo(function ClinicCard({
         </Animated.View>
       </Pressable>
 
-      {/* ── Heart — absolute sibling, aligned to cardRight column top ── */}
       <View style={styles.heartAnchor} pointerEvents="box-none">
         <HeartButton saved={saved} onToggle={handleToggleSave} />
       </View>
     </View>
   );
 });
+
+// ── MH Card ───────────────────────────────────────────────────────────────────
+
+const MhCard = memo(function MhCard({
+  item,
+  isShareGuarded,
+}: {
+  item: MhWithDistance;
+  isShareGuarded: () => boolean;
+}) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const cardScale = useSharedValue(1);
+  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: cardScale.value }] }));
+
+  const handlePressIn = () => { cardScale.value = withSpring(0.98, { mass: 0.6, damping: 12, stiffness: 200 }); };
+  const handlePressOut = () => { cardScale.value = withSpring(1, { mass: 0.6, damping: 12, stiffness: 200 }); };
+
+  const handleCall = () => {
+    if (item.phone) Linking.openURL(`tel:${item.phone}`);
+  };
+
+  const handleShare = async () => {
+    const parts: string[] = [item.name1];
+    if (item.name2) parts.push(item.name2);
+    parts.push(`${item.city}, ${item.state}`);
+    if (item.phone) parts.push(item.phone);
+    try { await Share.share({ message: parts.join('\n') }); } catch { /* cancelled */ }
+  };
+
+  const showDistance = Number.isFinite(item.distanceMiles);
+
+  return (
+    <View style={styles.cardWrap}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={() => { if (isShareGuarded()) return; router.push(`/mh/${encodeURIComponent(item.id)}`); }}
+      >
+        <Animated.View style={[styles.card, cardStyle]}>
+          <View style={styles.cardRow}>
+            <View style={styles.cardContent}>
+              <AppText variant="cardTitle" style={styles.clinicName} numberOfLines={2}>{item.name1}</AppText>
+              {item.name2 ? (
+                <AppText variant="caption" style={styles.mhName2} numberOfLines={1}>{item.name2}</AppText>
+              ) : null}
+
+              <View style={styles.addressRow}>
+                <MapPin size={13} weight="fill" color={colors.primary} />
+                <AppText variant="secondary" style={styles.address} numberOfLines={1}>
+                  {item.city}, {item.state}
+                </AppText>
+              </View>
+
+              <View style={styles.badges}>
+                {item.hasSlidingFee ? (
+                  <View style={[styles.badge, { backgroundColor: colors.tagGreenBg }]}>
+                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tagGreenText }]}>
+                      {t('mh.badgeSlidingFee')}
+                    </AppText>
+                  </View>
+                ) : null}
+                {item.hasPayAssist && !item.hasSlidingFee ? (
+                  <View style={[styles.badge, { backgroundColor: colors.tagTealBg }]}>
+                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>
+                      {t('mh.badgePayAssist')}
+                    </AppText>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={styles.actions}>
+                {item.phone ? (
+                  <TouchableOpacity
+                    style={styles.btnCall}
+                    onPress={(e) => { e.stopPropagation?.(); handleCall(); }}
+                    activeOpacity={0.82}
+                  >
+                    <Phone weight="fill" size={14} color="#fff" />
+                    <AppText variant="button" style={styles.btnCallText}>{t('common.call')}</AppText>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity
+                  style={styles.btnShare}
+                  onPress={(e) => { e.stopPropagation?.(); handleShare(); }}
+                  activeOpacity={0.82}
+                >
+                  <ShareNetwork size={17} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.cardRight}>
+              {showDistance && (
+                <AppText variant="caption" style={styles.distanceCol}>{item.distanceMiles.toFixed(1)} mi</AppText>
+              )}
+            </View>
+          </View>
+        </Animated.View>
+      </Pressable>
+    </View>
+  );
+});
+
+// ── Mode switcher ─────────────────────────────────────────────────────────────
+
+function ModeSwitcher({ mode, onSelect }: { mode: Mode; onSelect: (m: Mode) => void }) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.modeSwitcher}>
+      {(['clinics', 'mh'] as Mode[]).map((m) => (
+        <Pressable
+          key={m}
+          onPress={() => onSelect(m)}
+          style={[styles.modeChip, mode === m && styles.modeChipActive]}
+        >
+          <AppText
+            variant="button"
+            style={[styles.modeChipText, mode === m && styles.modeChipTextActive]}
+          >
+            {t(m === 'clinics' ? 'mh.tabClinics' : 'mh.tabMh')}
+          </AppText>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
 
 // ── Radius chips ──────────────────────────────────────────────────────────────
 
@@ -311,9 +434,12 @@ export default function ClinicsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
+  const [mode, setMode] = useState<Mode>('clinics');
   const [radiusMi, setRadiusMi] = useState<RadiusValue>(25);
+  const [slidingFeeOnly, setSlidingFeeOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
+  const [mhTextResults, setMhTextResults] = useState<MhWithDistance[]>([]);
   const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [toast, setToast] = useState<ToastState>({ visible: false, text: '', icon: 'phone' });
@@ -321,23 +447,28 @@ export default function ClinicsScreen() {
 
   useEffect(() => { initSaved().catch(() => {}); }, []);
 
-  const { clinics, status, retry } = useNearbyClinics(radiusMi);
+  // Both hooks run from mount — data is ready when user switches mode
+  const { clinics, status: clinicStatus, retry: clinicRetry } = useNearbyClinics(radiusMi);
+  const { facilities: mhFacilities, status: mhStatus, retry: mhRetry } = useNearbyMh(radiusMi, slidingFeeOnly);
+
+  const status = mode === 'clinics' ? clinicStatus : mhStatus;
+  const retry  = mode === 'clinics' ? clinicRetry  : mhRetry;
+
   const scrollY = useRef(new RNAnimated.Value(0)).current;
 
-  // Glass bar: fully transparent at top, solid blur after GLASS_START px scroll
   const glassOpacity = scrollY.interpolate({
     inputRange: [GLASS_START, GLASS_END],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
-  // Large title inside scroll fades out as glass fades in
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, GLASS_START],
     outputRange: [1, 0],
     extrapolate: 'clamp',
   });
 
-  const runTextSearch = useCallback(async (q: string) => {
+  // Clinic text search
+  const runClinicSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setTextResults([]); return; }
     try {
       const db = await getDb();
@@ -346,10 +477,28 @@ export default function ClinicsScreen() {
     } catch (e) { console.error(e); }
   }, []);
 
-  useEffect(() => { runTextSearch(query); }, [query, runTextSearch]);
+  useEffect(() => { runClinicSearch(query); }, [query, runClinicSearch]);
 
+  // MH text search
   useEffect(() => {
-    if (!showSuggestions || query.trim().length < 2) { setCitySuggestions([]); return; }
+    if (!query.trim()) { setMhTextResults([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const db = await getDb();
+        const results = await searchMhByText(db, query.trim(), 100, slidingFeeOnly);
+        if (!cancelled) setMhTextResults(results);
+      } catch { if (!cancelled) setMhTextResults([]); }
+    })();
+    return () => { cancelled = true; };
+  }, [query, slidingFeeOnly]);
+
+  // City suggestions — clinics mode only
+  useEffect(() => {
+    if (!showSuggestions || query.trim().length < 2 || mode !== 'clinics') {
+      setCitySuggestions([]);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -359,7 +508,7 @@ export default function ClinicsScreen() {
       } catch { if (!cancelled) setCitySuggestions([]); }
     })();
     return () => { cancelled = true; };
-  }, [query, showSuggestions]);
+  }, [query, showSuggestions, mode]);
 
   const shareJustClosedAt = useRef(0);
   const handleClinicShare = (clinic: ClinicWithDistance) => {
@@ -380,9 +529,19 @@ export default function ClinicsScreen() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (query.trim()) return textResults;
-    return clinics;
-  }, [clinics, query, textResults]);
+    if (mode === 'clinics') {
+      return query.trim() ? textResults : clinics;
+    }
+    return query.trim() ? mhTextResults : mhFacilities;
+  }, [mode, clinics, mhFacilities, query, textResults, mhTextResults]);
+
+  const handleModeSelect = (m: Mode) => {
+    setMode(m);
+    setQuery('');
+    setCitySuggestions([]);
+    setShowSuggestions(false);
+    if (m === 'clinics') setSlidingFeeOnly(false);
+  };
 
   const requestLocation = async () => {
     await Location.requestForegroundPermissionsAsync();
@@ -390,8 +549,6 @@ export default function ClinicsScreen() {
   };
 
   const BOTTOM_INSET = Math.max(insets.bottom, 16) + 10 + 58 + 12;
-
-  // Collapsed glass header height = safe area + 44pt content
   const GLASS_H = insets.top + 44;
 
   if (status === 'no-permission') {
@@ -399,6 +556,7 @@ export default function ClinicsScreen() {
     return (
       <View style={styles.flex}>
         <View style={[styles.listTop, { paddingTop: insets.top + 12 }]}>
+          <ModeSwitcher mode={mode} onSelect={handleModeSelect} />
           <TextInput
             style={styles.searchInputStandalone}
             value={query}
@@ -406,21 +564,20 @@ export default function ClinicsScreen() {
             placeholder={t('clinicList.searchPlaceholderCity')}
             placeholderTextColor={colors.muted}
           />
-          <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+          {mode === 'clinics' && (
+            <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+          )}
         </View>
         {hasQuery ? (
           <FlatList
-            data={textResults}
-            keyExtractor={(item) => item.id}
+            data={mode === 'clinics' ? (textResults as any[]) : (mhTextResults as any[])}
+            keyExtractor={(item: any) => item.id}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <ClinicCard
-                item={item}
-                onShare={handleClinicShare}
-                isShareGuarded={isShareGuarded}
-                onToast={showToast}
-              />
-            )}
+            renderItem={({ item }: { item: any }) =>
+              mode === 'clinics'
+                ? <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} onToast={showToast} />
+                : <MhCard item={item} isShareGuarded={isShareGuarded} />
+            }
             contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
             ListEmptyComponent={<AppText variant="body" style={styles.statusText}>{t('clinicList.noLocationResults', { query })}</AppText>}
           />
@@ -459,18 +616,20 @@ export default function ClinicsScreen() {
 
   const isSearching = query.trim().length > 0;
 
-  // Large title + search field live INSIDE the scroll — no floating header overlap
   const ListHeader = (
     <View style={{ paddingTop: insets.top + 12 }}>
-      {/* Large title (fades out as glass bar fades in) */}
       <RNAnimated.View style={[styles.largeTitleWrap, { opacity: largeTitleOpacity }]} pointerEvents="none">
-        <AppText variant="largeTitle" style={styles.largeTitle}>{t('tabs.clinics')}</AppText>
-        {clinics.length > 0 && (
+        <AppText variant="largeTitle" style={styles.largeTitle}>
+          {mode === 'clinics' ? t('tabs.clinics') : t('mh.tabMh')}
+        </AppText>
+        {filtered.length > 0 && mode === 'clinics' && (
           <AppText style={styles.largeSub}>{filtered.length} clinics near you</AppText>
         )}
       </RNAnimated.View>
 
       <View style={styles.listTop}>
+        <ModeSwitcher mode={mode} onSelect={handleModeSelect} />
+
         <View style={styles.searchWrap}>
           <MagnifyingGlass size={16} color={colors.muted} style={{ marginRight: 8 }} />
           <TextInput
@@ -484,7 +643,10 @@ export default function ClinicsScreen() {
             autoCorrect={false}
           />
         </View>
-        <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+
+        {mode === 'clinics' && (
+          <SuggestionList suggestions={citySuggestions} onSelect={handleSuggestionSelect} />
+        )}
 
         <View style={styles.chips}>
           {RADII.map((r) => (
@@ -495,14 +657,36 @@ export default function ClinicsScreen() {
               onPress={() => { setRadiusMi(r); setQuery(''); setShowSuggestions(false); }}
             />
           ))}
+          {mode === 'mh' && (
+            <Pressable
+              onPress={() => setSlidingFeeOnly((v) => !v)}
+              style={[styles.chip, slidingFeeOnly && styles.chipActive]}
+            >
+              <AppText
+                variant="button"
+                style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}
+              >
+                {t('mh.slidingFeeOnly')}
+              </AppText>
+            </Pressable>
+          )}
         </View>
 
         {!isSearching && (
           <AppText variant="caption" style={styles.listHeader}>
-            {t('clinicList.clinicsNearby', { count: filtered.length, radius: radiusMi })}
+            {mode === 'clinics'
+              ? t('clinicList.clinicsNearby', { count: filtered.length, radius: radiusMi })
+              : t('mh.nearbyCount', { count: filtered.length, radius: radiusMi })}
           </AppText>
         )}
-        <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
+
+        {mode === 'clinics' && <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />}
+
+        {mode === 'mh' && (
+          <View style={styles.crisis988Wrap}>
+            <Crisis988Card />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -511,25 +695,22 @@ export default function ClinicsScreen() {
     <ScreenTransition>
     <View style={styles.flex}>
       <RNAnimated.FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
+        data={filtered as any[]}
+        keyExtractor={(item: any) => item.id}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ClinicCard
-            item={item}
-            onShare={handleClinicShare}
-            isShareGuarded={isShareGuarded}
-            onToast={showToast}
-          />
-        )}
+        renderItem={({ item }: { item: any }) =>
+          mode === 'clinics'
+            ? <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} onToast={showToast} />
+            : <MhCard item={item} isShareGuarded={isShareGuarded} />
+        }
         contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
         ListHeaderComponent={ListHeader}
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <AppText variant="body" style={styles.statusText}>
             {isSearching
-              ? t('clinicList.noResultsForQuery', { query })
-              : t('clinicList.noClinicsInRadius', { radius: radiusMi })}
+              ? t(mode === 'clinics' ? 'clinicList.noResultsForQuery' : 'mh.noResults', { query })
+              : t(mode === 'clinics' ? 'clinicList.noClinicsInRadius' : 'mh.noNearby', { radius: radiusMi })}
           </AppText>
         }
         onScroll={RNAnimated.event(
@@ -539,17 +720,16 @@ export default function ClinicsScreen() {
         scrollEventThrottle={16}
       />
 
-      {/* Glass collapsed header — transparent at top, blurs in on scroll.
-          pointerEvents="none" always so search field remains tappable. */}
       <RNAnimated.View
         style={[styles.glassBar, { height: GLASS_H, opacity: glassOpacity }]}
         pointerEvents="none"
       >
-        {/* Only BlurView + semi-transparent tint — no gradients or shadows */}
         <BlurView intensity={56} tint="light" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(240,253,250,0.86)' }]} />
         <View style={styles.glassHairline} />
-        <AppText variant="screenTitle" style={[styles.glassTitle, { marginTop: insets.top + 10 }]}>{t('tabs.clinics')}</AppText>
+        <AppText variant="screenTitle" style={[styles.glassTitle, { marginTop: insets.top + 10 }]}>
+          {mode === 'clinics' ? t('tabs.clinics') : t('mh.tabMh')}
+        </AppText>
       </RNAnimated.View>
 
       <View style={[styles.toastAnchor, { bottom: BOTTOM_INSET + 8 }]} pointerEvents="none">
@@ -573,7 +753,6 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { color: '#fff' },
 
-  // Large title — lives inside the scroll, fades out on scroll
   largeTitleWrap: {
     paddingHorizontal: spacing.lg,
     paddingBottom: 10,
@@ -581,7 +760,6 @@ const styles = StyleSheet.create({
   largeTitle: {},
   largeSub: { fontFamily: font.regular, fontSize: 14, color: colors.muted, marginTop: 3 },
 
-  // Glass bar — absolutely positioned, transparent → blurred on scroll
   glassBar: {
     position: 'absolute', top: 0, left: 0, right: 0,
     overflow: 'hidden',
@@ -598,6 +776,28 @@ const styles = StyleSheet.create({
   glassTitle: {},
 
   listTop: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
+
+  modeSwitcher: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  modeChip: {
+    borderRadius: radius.pill,
+    paddingVertical: 7,
+    paddingHorizontal: 18,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: 'rgba(19,78,74,0.12)',
+    ...shadow,
+  },
+  modeChipActive: {
+    backgroundColor: colors.primaryDark,
+    borderColor: colors.primaryDark,
+  },
+  modeChipText: { color: colors.primaryDark },
+  modeChipTextActive: { color: '#fff' },
+
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: colors.card, borderRadius: radius.md,
@@ -615,7 +815,7 @@ const styles = StyleSheet.create({
     color: colors.text, marginBottom: 10, ...shadow,
   },
 
-  chips: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  chips: { flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap' },
   chip: {
     borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 18,
     backgroundColor: colors.card, borderWidth: 1.5,
@@ -631,19 +831,19 @@ const styles = StyleSheet.create({
   listHeader: { marginBottom: 6, marginLeft: 2 },
   list: { paddingHorizontal: spacing.lg },
 
-  // ── Card ──────────────────────────────────────────────────────────────────
+  crisis988Wrap: { marginTop: 4, marginBottom: 6 },
+
   cardWrap: { marginBottom: 10 },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 14, ...shadow },
 
-  // Horizontal row: content + 44px right column
   cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
   cardContent: { flex: 1, paddingRight: 8 },
 
   clinicName: { marginBottom: 6 },
+  mhName2: { color: colors.muted, marginBottom: 4, marginTop: -2 },
   addressRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
   address: { flex: 1 },
 
-  // Right column: 44px wide, heart spacer + distance
   cardRight: { width: 44, alignItems: 'center', gap: 4 },
   heartSpacer: { width: 38, height: 38 },
   distanceCol: { fontFamily: font.bold, color: colors.primary, textAlign: 'center' },
@@ -671,10 +871,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7, width: 38, alignItems: 'center', justifyContent: 'center',
   },
 
-  // Heart — absolute sibling aligned to top-right of card, over cardRight column
   heartAnchor: {
     position: 'absolute',
-    // card padding is 14, right column is 44px wide, so anchor sits at card's right edge
     top: 14,
     right: 14,
     width: 44,
