@@ -18,6 +18,9 @@ export const theme = {
     tagTealText:   '#0F766E',
     tabPill:       '#CCFBF1',
     danger:        '#DC2626',
+    onPrimary:     '#fff',
+    onPrimaryMuted:'rgba(255,255,255,0.85)',
+    onPrimaryDim:  'rgba(255,255,255,0.75)',
 
     // Compatibility aliases (used by secondary screens)
     textMuted:     '#64748B',

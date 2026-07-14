@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
   },
-  btnCallText: { color: '#fff' },
+  btnCallText: { color: colors.onPrimary },
   btnSms: {
     flex: 1,
     borderWidth: 1.5,

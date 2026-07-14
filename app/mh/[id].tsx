@@ -208,9 +208,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   backRow: { marginBottom: 10 },
-  backLabel: { color: 'rgba(255,255,255,0.85)', fontFamily: font.regular },
-  headerName: { color: '#fff', lineHeight: 28 },
-  headerName2: { color: 'rgba(255,255,255,0.75)', marginTop: 4, fontFamily: font.regular },
+  backLabel: { color: colors.onPrimaryMuted, fontFamily: font.regular },
+  headerName: { color: colors.onPrimary, lineHeight: 28 },
+  headerName2: { color: colors.onPrimaryDim, marginTop: 4, fontFamily: font.regular },
 
   spanishWrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   spanishBadge: {
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   },
   btn: { flex: 1, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
   btnFill: { backgroundColor: colors.primary },
-  btnFillText: { color: '#fff' },
+  btnFillText: { color: colors.onPrimary },
   btnOutline: { borderWidth: 1.5, borderColor: colors.primary },
   btnOutlineText: { color: colors.primary },
 
