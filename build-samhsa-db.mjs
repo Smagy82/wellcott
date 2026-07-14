@@ -104,6 +104,7 @@ function normalize(r) {
     state:           (r.state   ?? '').trim(),
     zip:             (r.zip     ?? '').trim(),
     phone:           (r.phone   ?? '').trim() || null,
+    intake_phone:    (r.intake1 ?? '').trim() || null,
     website:         (r.website ?? '').trim() || null,
     latitude,
     longitude,
@@ -219,6 +220,7 @@ async function main() {
       state            TEXT,
       zip              TEXT,
       phone            TEXT,
+      intake_phone     TEXT,
       website          TEXT,
       latitude         REAL,
       longitude        REAL,
@@ -237,12 +239,12 @@ async function main() {
 
   const insert = db.prepare(`
     INSERT OR REPLACE INTO mh_facilities (
-      id, name1, name2, street1, city, state, zip, phone, website,
+      id, name1, name2, street1, city, state, zip, phone, intake_phone, website,
       latitude, longitude,
       has_sliding_fee, has_pay_assist, accepts_self_pay,
       languages, age_groups, service_setting, snapshot_date
     ) VALUES (
-      @id, @name1, @name2, @street1, @city, @state, @zip, @phone, @website,
+      @id, @name1, @name2, @street1, @city, @state, @zip, @phone, @intake_phone, @website,
       @latitude, @longitude,
       @has_sliding_fee, @has_pay_assist, @accepts_self_pay,
       @languages, @age_groups, @service_setting, @snapshot_date

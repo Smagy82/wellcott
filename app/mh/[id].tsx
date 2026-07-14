@@ -59,7 +59,8 @@ export default function MhDetailScreen() {
   const speaksSpanish = facility.languages?.toLowerCase().includes('spanish') ?? false;
 
   const handleCall = () => {
-    if (facility.phone) Linking.openURL(`tel:${facility.phone}`);
+    const number = facility.intakePhone ?? facility.phone;
+    if (number) Linking.openURL(`tel:${number}`);
   };
 
   const handleDirections = () => {
@@ -121,7 +122,10 @@ export default function MhDetailScreen() {
             </InfoRow>
           ) : null}
           {facility.phone ? (
-            <InfoRow label={t('mh.labelPhone')}>{facility.phone}</InfoRow>
+            <PhoneRow label={t('mh.labelPhone')} number={facility.phone} />
+          ) : null}
+          {facility.intakePhone ? (
+            <PhoneRow label={t('mh.labelIntakePhone')} number={facility.intakePhone} />
           ) : null}
           {facility.website ? (
             <View style={styles.row}>
@@ -177,6 +181,15 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
       <AppText variant="caption" style={styles.rowLabel}>{label}</AppText>
       <AppText variant="body" style={styles.rowValue}>{String(children)}</AppText>
     </View>
+  );
+}
+
+function PhoneRow({ label, number }: { label: string; number: string }) {
+  return (
+    <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(`tel:${number}`)} activeOpacity={0.7}>
+      <AppText variant="caption" style={styles.rowLabel}>{label}</AppText>
+      <AppText variant="body" style={[styles.rowValue, styles.link]}>{number}</AppText>
+    </TouchableOpacity>
   );
 }
 

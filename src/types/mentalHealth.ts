@@ -9,6 +9,7 @@ export interface MhFacility {
   state: string;
   zip?: string;
   phone?: string;
+  intakePhone?: string;
   website?: string;
   latitude: number | null;
   longitude: number | null;
@@ -35,6 +36,7 @@ export interface MhRow {
   state: string | null;
   zip: string | null;
   phone: string | null;
+  intake_phone: string | null;
   website: string | null;
   latitude: number | null;
   longitude: number | null;
@@ -57,6 +59,7 @@ export function rowToMh(r: MhRow): MhFacility {
     state:          r.state          ?? '',
     zip:            r.zip            ?? undefined,
     phone:          r.phone          ?? undefined,
+    intakePhone:    r.intake_phone   ?? undefined,
     website:        r.website        ?? undefined,
     latitude:       r.latitude,
     longitude:      r.longitude,

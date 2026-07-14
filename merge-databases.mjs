@@ -2,7 +2,7 @@
  * merge-databases.mjs
  *
  * Объединяет clinics-v3.db + mh_facilities из samhsa-mh.db
- * → assets/clinics-v4.db
+ * → assets/clinics-v5.db
  *
  * Правило: при обновлении bundled-базы ОБЯЗАТЕЛЬНО бампать имя файла (v3→v4),
  * иначе expo-sqlite не перекопирует файл на устройство (см. AGENTS.md).
@@ -22,7 +22,7 @@ const ROOT = dirname(fileURLToPath(import.meta.url));
 
 const SRC_CLINICS = resolve(ROOT, 'assets/clinics-v3.db');
 const SRC_SAMHSA  = resolve(ROOT, 'samhsa-mh.db');
-const OUT         = resolve(ROOT, 'assets/clinics-v4.db');
+const OUT         = resolve(ROOT, 'assets/clinics-v5.db');
 
 // ── 1. Копируем clinics-v3.db → clinics-v4.db ────────────────────────────────
 
@@ -53,6 +53,7 @@ db.exec(`
     state            TEXT,
     zip              TEXT,
     phone            TEXT,
+    intake_phone     TEXT,
     website          TEXT,
     latitude         REAL,
     longitude        REAL,
@@ -73,11 +74,11 @@ db.exec(`
 
 const insert = db.prepare(`
   INSERT INTO mh_facilities
-    (id, name1, name2, street1, city, state, zip, phone, website,
+    (id, name1, name2, street1, city, state, zip, phone, intake_phone, website,
      latitude, longitude, has_sliding_fee, has_pay_assist, accepts_self_pay,
      languages, age_groups, service_setting, snapshot_date)
   VALUES
-    (@id, @name1, @name2, @street1, @city, @state, @zip, @phone, @website,
+    (@id, @name1, @name2, @street1, @city, @state, @zip, @phone, @intake_phone, @website,
      @latitude, @longitude, @has_sliding_fee, @has_pay_assist, @accepts_self_pay,
      @languages, @age_groups, @service_setting, @snapshot_date)
 `);
@@ -86,7 +87,7 @@ const insertAll = db.transaction((records) => {
   for (const r of records) insert.run(r);
 });
 insertAll(rows);
-console.log(`Записано MH-объектов в clinics-v4.db: ${rows.length}`);
+console.log(`Записано MH-объектов в clinics-v5.db: ${rows.length}`);
 
 // ── 5. Checkpoint + переключение в DELETE перед закрытием ────────────────────
 // VACUUM в WAL-режиме ломает файл (WAL не гарантированно слит в main).
@@ -117,4 +118,4 @@ console.log(`clinics:           ${clinicsCount}`);
 console.log(`mh_facilities:     ${mhCount} (без координат: ${mhNoCoords})`);
 console.log('─────────────────────────────────────────────────────');
 console.log('');
-console.log('Следующий шаг: обновить src/lib/database.ts (clinics-v3 → clinics-v4)');
+console.log('Следующий шаг: обновить src/lib/database.ts (clinics-v4 → clinics-v5)');
