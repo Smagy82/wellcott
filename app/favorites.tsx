@@ -21,6 +21,8 @@ import { Heart, PencilSimple } from 'phosphor-react-native';
 import {
   init as initSaved,
   getSaved,
+  getSavedSync,
+  isStoreReady,
   subscribe as subscribeSaved,
   toggleSaved,
   updateNote,
@@ -37,8 +39,8 @@ export default function FavoritesScreen() {
   const { t }  = useTranslation();
   const router = useRouter();
 
-  const [initialized, setInitialized] = useState(false);
-  const [clinics, setClinics]         = useState<SavedClinic[]>([]);
+  const [initialized, setInitialized] = useState(() => isStoreReady());
+  const [clinics, setClinics]         = useState<SavedClinic[]>(() => isStoreReady() ? getSavedSync() : []);
   const [filter,  setFilter]          = useState<FilterMode>('all');
 
   // Modal state

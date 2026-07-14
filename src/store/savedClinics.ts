@@ -189,6 +189,15 @@ export async function updateNote(
   mirrorNoteUpdate(id, source, note).catch(() => {});
 }
 
+/** True after the first load() has completed. Cache is guaranteed non-null. */
+export function isStoreReady(): boolean { return cache !== null; }
+
+/** Synchronous read from cache — returns [] if not yet loaded. */
+export function getSavedSync(): SavedClinic[] {
+  if (!cache) return [];
+  return Object.values(cache).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+}
+
 export function subscribe(cb: Listener): () => void {
   listeners.add(cb);
   if (cache !== null) cb(new Set(Object.keys(cache)));

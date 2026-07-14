@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Check, CalendarBlank } from 'phosphor-react-native';
 import { useVisits } from '../src/lib/useVisits';
-import { getSaved, subscribe as subscribeSaved, type SavedClinic } from '../src/store/savedClinics';
+import { getSaved, getSavedSync, isStoreReady, subscribe as subscribeSaved, type SavedClinic } from '../src/store/savedClinics';
 import { theme } from '../src/theme';
 
 const { colors, radius, font, shadow } = theme;
@@ -34,7 +34,7 @@ export default function VisitAddScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { addVisit } = useVisits();
-  const [favorites, setFavorites] = useState<SavedClinic[]>([]);
+  const [favorites, setFavorites] = useState<SavedClinic[]>(() => isStoreReady() ? getSavedSync() : []);
 
   useEffect(() => { getSaved().then(setFavorites).catch(() => {}); return subscribeSaved(() => { getSaved().then(setFavorites).catch(() => {}); }); }, []);
 
