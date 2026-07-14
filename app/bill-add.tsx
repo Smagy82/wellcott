@@ -9,16 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { Image as ImageIcon, Camera, XCircle, CalendarBlank } from 'phosphor-react-native';
-import { useBills } from '../src/lib/useBills';
-import { uploadBillPhoto } from '../src/lib/uploadPhoto';
+import { useBills, fetchBillById, parseCategories } from '../src/lib/useBills';
+import { uploadBillPhoto, getSignedUrl } from '../src/lib/uploadPhoto';
 import { theme } from '../src/theme';
 
 const { colors, radius, font } = theme;
@@ -35,7 +35,9 @@ function formatDisplay(d: Date): string {
 export default function BillAddScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { addBill } = useBills();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const editId = params.id ?? null;
+  const { addBill, updateBill } = useBills();
 
   const [amountText, setAmountText] = useState('');
   const [categories, setCategories] = useState<string[]>(['other']);
@@ -44,8 +46,30 @@ export default function BillAddScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [note, setNote] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [existingPhotoPath, setExistingPhotoPath] = useState<string | null>(null);
+  const [existingPhotoUri, setExistingPhotoUri] = useState<string | null>(null);
+  const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
+
+  useEffect(() => {
+    if (!editId) return;
+    setLoadingEdit(true);
+    fetchBillById(editId).then((bill) => {
+      if (!bill) { setLoadingEdit(false); return; }
+      setAmountText(bill.amount.toFixed(2));
+      setCategories(parseCategories(bill.category));
+      setMerchant(bill.merchant ?? '');
+      setDate(new Date(bill.bill_date + 'T00:00:00'));
+      setNote(bill.note ?? '');
+      if (bill.photo_path) {
+        setExistingPhotoPath(bill.photo_path);
+        getSignedUrl(bill.photo_path).then(url => setExistingPhotoUri(url));
+      }
+      setLoadingEdit(false);
+    });
+  }, [editId]);
 
   const pickFromLibrary = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -74,23 +98,40 @@ export default function BillAddScreen() {
       const uploaded = await uploadBillPhoto(photoUri);
       if (!uploaded) console.warn('Photo upload failed, saving bill without photo.');
       else photo_path = uploaded;
+    } else if (!removeExistingPhoto) {
+      photo_path = existingPhotoPath;
     }
-    const result = await addBill({
+    const payload = {
       amount,
       categories: categories.length > 0 ? categories : ['other'],
       bill_date: toYMD(date),
       merchant: merchant.trim() || null,
       note: note.trim() || null,
-      photo_path, visit_id: null,
-    });
+      photo_path,
+      visit_id: null as string | null,
+    };
+    const result = editId
+      ? await updateBill(editId, payload)
+      : await addBill(payload);
     setSaving(false);
     if (result.ok) router.back();
     else setSaveError(result.error ?? t('common.failedToSave'));
   };
 
+  if (loadingEdit) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const showExistingPhoto = existingPhotoPath && !removeExistingPhoto && !photoUri;
+  const hasAnyPhoto = !!photoUri || !!showExistingPhoto;
+
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader title={t('billAdd.navTitle')} />
+      <ScreenHeader title={editId ? t('billAdd.navTitleEdit') : t('billAdd.navTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         <Text style={styles.label}>{t('billAdd.amount')}</Text>
@@ -169,6 +210,13 @@ export default function BillAddScreen() {
               <XCircle size={24} color={colors.danger} />
             </TouchableOpacity>
           </View>
+        ) : showExistingPhoto && existingPhotoUri ? (
+          <View style={styles.photoPreviewWrap}>
+            <Image source={{ uri: existingPhotoUri }} style={styles.photoPreview} />
+            <TouchableOpacity style={styles.removePhoto} onPress={() => { setRemoveExistingPhoto(true); setExistingPhotoUri(null); }}>
+              <XCircle size={24} color={colors.danger} />
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.photoButtons}>
             <TouchableOpacity style={styles.photoBtn} onPress={pickFromLibrary}>
@@ -190,7 +238,7 @@ export default function BillAddScreen() {
         >
           {saving
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.saveBtnText}>{photoUri ? t('billAdd.uploading') : t('billAdd.saveExpense')}</Text>}
+            : <Text style={styles.saveBtnText}>{hasAnyPhoto && photoUri ? t('billAdd.uploading') : editId ? t('billAdd.saveChanges') : t('billAdd.saveExpense')}</Text>}
         </TouchableOpacity>
 
       </ScrollView>

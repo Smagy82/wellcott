@@ -11,11 +11,11 @@ import {
 import { useEffect, useState } from 'react';
 import { Text } from '../src/components/Text';
 import { ScreenHeader } from '../src/components/ScreenHeader';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Check, CalendarBlank } from 'phosphor-react-native';
-import { useVisits } from '../src/lib/useVisits';
+import { useVisits, fetchVisitById } from '../src/lib/useVisits';
 import { getSaved, getSavedSync, isStoreReady, subscribe as subscribeSaved, type SavedClinic } from '../src/store/savedClinics';
 import { theme } from '../src/theme';
 
@@ -33,7 +33,9 @@ type ClinicSource = 'saved' | 'manual' | 'none';
 export default function VisitAddScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { addVisit } = useVisits();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const editId = params.id ?? null;
+  const { addVisit, updateVisit } = useVisits();
   const [favorites, setFavorites] = useState<SavedClinic[]>(() => isStoreReady() ? getSavedSync() : []);
 
   useEffect(() => { getSaved().then(setFavorites).catch(() => {}); return subscribeSaved(() => { getSaved().then(setFavorites).catch(() => {}); }); }, []);
@@ -48,6 +50,27 @@ export default function VisitAddScreen() {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(!!editId);
+
+  useEffect(() => {
+    if (!editId) return;
+    setLoadingEdit(true);
+    fetchVisitById(editId).then((visit) => {
+      if (!visit) { setLoadingEdit(false); return; }
+      setDate(new Date(visit.visit_date + 'T00:00:00'));
+      setReason(visit.reason ?? '');
+      setNote(visit.note ?? '');
+      if (visit.clinic_id) {
+        setClinicSource('saved');
+        setSelectedClinicId(visit.clinic_id);
+        setSelectedClinicName(visit.clinic_name);
+      } else if (visit.clinic_name) {
+        setClinicSource('manual');
+        setManualClinicName(visit.clinic_name);
+      }
+      setLoadingEdit(false);
+    });
+  }, [editId]);
 
   const sourceLabels: Record<ClinicSource, string> = {
     none:   t('visitAdd.sourceNone'),
@@ -62,18 +85,29 @@ export default function VisitAddScreen() {
     let clinic_name: string | null = null;
     if (clinicSource === 'saved') { clinic_id = selectedClinicId; clinic_name = selectedClinicName; }
     else if (clinicSource === 'manual') { clinic_name = manualClinicName.trim() || null; }
-    const result = await addVisit({
+    const payload = {
       clinic_id, clinic_name, visit_date: toYMD(date),
       reason: reason.trim() || null, note: note.trim() || null,
-    });
+    };
+    const result = editId
+      ? await updateVisit(editId, payload)
+      : await addVisit(payload);
     setSaving(false);
     if (result.ok) router.back();
     else setSaveError(result.error ?? t('common.failedToSave'));
   };
 
+  if (loadingEdit) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader title={t('visitAdd.navTitle')} />
+      <ScreenHeader title={editId ? t('visitAdd.navTitleEdit') : t('visitAdd.navTitle')} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         <Text style={styles.label}>{t('visitAdd.clinicOptional')}</Text>
@@ -168,7 +202,7 @@ export default function VisitAddScreen() {
         >
           {saving
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.saveBtnText}>{t('visitAdd.saveVisit')}</Text>}
+            : <Text style={styles.saveBtnText}>{editId ? t('visitAdd.saveChanges') : t('visitAdd.saveVisit')}</Text>}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
