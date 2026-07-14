@@ -374,7 +374,8 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     gap: 8,
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
   },
   chip: {
     borderRadius: radius.pill,
