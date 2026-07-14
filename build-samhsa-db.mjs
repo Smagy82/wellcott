@@ -203,8 +203,10 @@ async function main() {
   // ── Запись в БД ───────────────────────────────────────────────────────────────
 
   const db = new Database(OUT_FILE);
+  // WAL = быстрые INSERT'ы, но перед закрытием нужен явный checkpoint.
+  // synchronous=FULL гарантирует что WAL сброшен на диск до return из транзакции.
   db.pragma('journal_mode = WAL');
-  db.pragma('synchronous = NORMAL');
+  db.pragma('synchronous = FULL');
 
   db.exec(`
     DROP TABLE IF EXISTS mh_facilities;
@@ -254,6 +256,13 @@ async function main() {
   });
 
   insertAll(records);
+
+  // Checkpoint: сбросить WAL в main-файл, переключиться в DELETE-режим.
+  // Без этого при synchronous=NORMAL (и даже FULL) WAL может остаться не слитым
+  // в main-файл при внезапном закрытии → база выглядит пустой.
+  db.pragma('wal_checkpoint(TRUNCATE)');
+  db.pragma('journal_mode = DELETE');
+
   db.close();
 
   const sizeBytes = statSync(OUT_FILE).size;
