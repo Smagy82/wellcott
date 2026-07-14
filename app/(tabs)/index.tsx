@@ -563,14 +563,6 @@ export default function ClinicsScreen() {
     return query.trim() ? mhTextResults : mhFacilities;
   }, [mode, clinics, mhFacilities, query, textResults, mhTextResults]);
 
-  // Inject prescription savings banner after 3rd clinic card (or at end if <3 clinics)
-  const listData = useMemo(() => {
-    if (mode !== 'clinics') return filtered as any[];
-    const data = filtered as ClinicWithDistance[];
-    if (data.length === 0) return [] as any[];
-    if (data.length <= 3) return [...data, { __banner: true }] as any[];
-    return [...data.slice(0, 3), { __banner: true }, ...data.slice(3)] as any[];
-  }, [filtered, mode]);
 
   const handleModeSelect = (m: Mode) => {
     setMode(m);
@@ -699,20 +691,22 @@ export default function ClinicsScreen() {
               onPress={() => { setRadiusMi(r); setQuery(''); setShowSuggestions(false); }}
             />
           ))}
-          {mode === 'mh' && (
-            <>
-              <View style={styles.chipDivider} />
-              <Pressable
-                onPress={() => setSlidingFeeOnly((v) => !v)}
-                style={[styles.chip, slidingFeeOnly && styles.chipActive]}
-              >
-                <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
-                  {t('mh.slidingFeeOnly')}
-                </AppText>
-              </Pressable>
-            </>
-          )}
         </ScrollView>
+
+        {/* Sliding fee — own row, space always reserved to prevent height jump on mode switch */}
+        <View
+          style={styles.slidingFeeRow}
+          pointerEvents={mode === 'mh' ? 'auto' : 'none'}
+        >
+          <Pressable
+            onPress={() => setSlidingFeeOnly((v) => !v)}
+            style={[styles.chip, slidingFeeOnly && styles.chipActive, mode !== 'mh' && { opacity: 0 }]}
+          >
+            <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
+              {t('mh.slidingFeeOnly')}
+            </AppText>
+          </Pressable>
+        </View>
 
         {!isSearching && (
           <AppText variant="caption" style={styles.listHeader}>
@@ -720,6 +714,12 @@ export default function ClinicsScreen() {
               ? t('clinicList.clinicsNearby', { count: filtered.length, radius: radiusMi })
               : t('mh.nearbyCount', { count: filtered.length, radius: radiusMi })}
           </AppText>
+        )}
+
+        {mode === 'clinics' && (
+          <View style={styles.bannerWrap}>
+            <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />
+          </View>
         )}
 
         {mode === 'mh' && (
@@ -735,15 +735,14 @@ export default function ClinicsScreen() {
     <ScreenTransition>
     <View style={styles.flex}>
       <RNAnimated.FlatList
-        data={listData}
-        keyExtractor={(item: any) => item.__banner ? 'prescription-banner' : item.id}
+        data={filtered as any[]}
+        keyExtractor={(item: any) => item.id}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }: { item: any }) => {
-          if (item.__banner) return <PrescriptionSavingsBanner isShareGuarded={isShareGuarded} />;
-          return mode === 'clinics'
+        renderItem={({ item }: { item: any }) =>
+          mode === 'clinics'
             ? <ClinicCard item={item} onShare={handleClinicShare} isShareGuarded={isShareGuarded} onToast={showToast} />
-            : <MhCard item={item} isShareGuarded={isShareGuarded} />;
-        }}
+            : <MhCard item={item} isShareGuarded={isShareGuarded} />
+        }
         contentContainerStyle={[styles.list, { paddingBottom: BOTTOM_INSET }]}
         ListHeaderComponent={ListHeader}
         keyboardShouldPersistTaps="handled"
@@ -858,13 +857,8 @@ const styles = StyleSheet.create({
 
   chipsScroll: { marginBottom: 10, marginHorizontal: -spacing.lg },
   chipsContent: { flexDirection: 'row', gap: 8, paddingHorizontal: spacing.lg, alignItems: 'center' },
-  chipDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 20,
-    backgroundColor: colors.primaryDark,
-    opacity: 0.2,
-    marginHorizontal: 4,
-  },
+  slidingFeeRow: { marginBottom: 10 },
+  bannerWrap: { marginTop: 4, marginBottom: 6 },
   chip: {
     borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 18,
     backgroundColor: colors.card, borderWidth: 1.5,
