@@ -34,7 +34,11 @@
   "map": {
     "findingClinics": "Finding clinics near you…",
     "locationOffSub": "Turn on location to see the map.",
-    "noClinicsNearby": "No clinics nearby."
+    "noClinicsNearby": "No clinics nearby.",
+    "filterAll": "All",
+    "filterClinics": "Clinics",
+    "filterMh": "Mental health",
+    "zoomIn": "Zoom in to see locations"
   },
   "clinicDetail": {
     "notFound": "Clinic not found.",

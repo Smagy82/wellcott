@@ -114,6 +114,39 @@ export async function findAllMhForMap(
   }));
 }
 
+/**
+ * MH-объекты в видимой области карты (bounding-box). LIMIT жёсткий.
+ * Только объекты с координатами. Использует индекс по (latitude, longitude).
+ */
+export async function findMhInBounds(
+  db: SQLite.SQLiteDatabase,
+  minLat: number, maxLat: number,
+  minLng: number, maxLng: number,
+  limit = 300,
+): Promise<MapMhFacility[]> {
+  const rows = await db.getAllAsync<{
+    id: string; name1: string; city: string;
+    latitude: number; longitude: number; has_sliding_fee: 0 | 1;
+  }>(
+    `SELECT id, name1, city, latitude, longitude, has_sliding_fee
+       FROM mh_facilities
+      WHERE latitude  IS NOT NULL
+        AND longitude IS NOT NULL
+        AND latitude  BETWEEN ? AND ?
+        AND longitude BETWEEN ? AND ?
+      LIMIT ?`,
+    [minLat, maxLat, minLng, maxLng, limit],
+  );
+  return rows.map((r) => ({
+    id:           r.id,
+    name1:        r.name1,
+    city:         r.city,
+    latitude:     r.latitude,
+    longitude:    r.longitude,
+    hasSlidingFee: r.has_sliding_fee === 1,
+  }));
+}
+
 /** Форматирует полный адрес объекта MH, пропуская пустые части. */
 export function formatMhAddress(mh: MhFacility): string {
   return [mh.street1, mh.city, mh.state, mh.zip].filter(Boolean).join(', ');

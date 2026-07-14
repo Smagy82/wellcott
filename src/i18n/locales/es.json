@@ -34,7 +34,11 @@
   "map": {
     "findingClinics": "Buscando clínicas cerca de usted…",
     "locationOffSub": "Active la ubicación para ver el mapa.",
-    "noClinicsNearby": "No hay clínicas cercanas."
+    "noClinicsNearby": "No hay clínicas cercanas.",
+    "filterAll": "",
+    "filterClinics": "",
+    "filterMh": "",
+    "zoomIn": ""
   },
   "clinicDetail": {
     "notFound": "Clínica no encontrada.",

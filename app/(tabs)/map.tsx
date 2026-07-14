@@ -16,8 +16,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useNearbyClinics } from '../../src/lib/useNearbyClinics';
-import { findAllClinicsForMap, type MapClinic } from '../../src/lib/clinicSearch';
-import { findAllMhForMap, type MapMhFacility } from '../../src/lib/mentalHealthSearch';
+import { findClinicsInBounds, type MapClinic } from '../../src/lib/clinicSearch';
+import { findMhInBounds, type MapMhFacility } from '../../src/lib/mentalHealthSearch';
 import { getDb } from '../../src/lib/database';
 import { theme } from '../../src/theme';
 
@@ -36,6 +36,12 @@ const US_REGION: Region = {
 const CITY_DELTA = 0.05;
 const DELTA_MIN  = 0.002;
 const DELTA_MAX  = 60;
+
+// latitudeDelta above this → whole state or more visible → skip markers
+const ZOOM_OUT_THRESHOLD = 8;
+
+const DEBOUNCE_MS = 350;
+const PIN_LIMIT   = 300;
 
 const SPRING_IN  = { mass: 0.6, damping: 10, stiffness: 200 } as const;
 const SPRING_OUT = { mass: 1,   damping: 14, stiffness: 180 } as const;
@@ -79,46 +85,82 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
-  const regionRef = useRef<Region>(US_REGION);
+  const regionRef    = useRef<Region>(US_REGION);
+  const debounceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // stable ref to current mode so timeout callback doesn't get stale value
+  const mapModeRef   = useRef<MapMode>('all');
 
-  const [mapMode,   setMapMode]   = useState<MapMode>('all');
-  const [allClinics, setAllClinics] = useState<MapClinic[]>([]);
-  const [allMh,      setAllMh]      = useState<MapMhFacility[]>([]);
+  const [mapMode,        setMapMode]        = useState<MapMode>('all');
+  const [visibleClinics, setVisibleClinics] = useState<MapClinic[]>([]);
+  const [visibleMh,      setVisibleMh]      = useState<MapMhFacility[]>([]);
+  const [tooZoomedOut,   setTooZoomedOut]   = useState(false);
 
-  // Sync regionRef once nearby data arrives
-  useEffect(() => {
-    if (nearbyClinics.length > 0) {
-      const c = nearbyClinics[0];
-      regionRef.current = {
-        latitude: c.latitude,
-        longitude: c.longitude,
-        latitudeDelta: 0.3,
-        longitudeDelta: 0.3,
-      };
+  mapModeRef.current = mapMode;
+
+  // Load pins for current viewport. Immediate (no debounce) — caller decides timing.
+  const loadPins = async (region: Region, mode: MapMode) => {
+    const { latitude, longitude, latitudeDelta, longitudeDelta } = region;
+
+    if (latitudeDelta > ZOOM_OUT_THRESHOLD) {
+      setTooZoomedOut(true);
+      setVisibleClinics([]);
+      setVisibleMh([]);
+      return;
     }
-  }, [nearbyClinics]);
+    setTooZoomedOut(false);
 
-  // Load full clinic + MH datasets after location is ready
+    const minLat = latitude - latitudeDelta / 2;
+    const maxLat = latitude + latitudeDelta / 2;
+    const minLng = longitude - longitudeDelta / 2;
+    const maxLng = longitude + longitudeDelta / 2;
+
+    try {
+      const db = await getDb();
+      if (mode === 'all' || mode === 'clinics') {
+        findClinicsInBounds(db, minLat, maxLat, minLng, maxLng, PIN_LIMIT)
+          .then(setVisibleClinics)
+          .catch(() => {});
+      } else {
+        setVisibleClinics([]);
+      }
+      if (mode === 'all' || mode === 'mh') {
+        findMhInBounds(db, minLat, maxLat, minLng, maxLng, PIN_LIMIT)
+          .then(setVisibleMh)
+          .catch(() => {});
+      } else {
+        setVisibleMh([]);
+      }
+    } catch (e) {
+      console.error('Map: loadPins failed', e);
+    }
+  };
+
+  // Debounced version for pan/zoom events
+  const loadPinsDebounced = (region: Region) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      loadPins(region, mapModeRef.current);
+    }, DEBOUNCE_MS);
+  };
+
+  // Initial load once location is ready
   useEffect(() => {
     if (status !== 'ready') return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const db = await getDb();
-        const [clinics, mh] = await Promise.all([
-          findAllClinicsForMap(db),
-          findAllMhForMap(db),
-        ]);
-        if (!cancelled) {
-          setAllClinics(clinics);
-          setAllMh(mh);
-        }
-      } catch (e) {
-        console.error('Map: load pins failed', e);
-      }
-    })();
-    return () => { cancelled = true; };
+    const first = nearbyClinics[0];
+    const region: Region = first
+      ? { latitude: first.latitude, longitude: first.longitude, latitudeDelta: 0.3, longitudeDelta: 0.3 }
+      : US_REGION;
+    regionRef.current = region;
+    loadPins(region, mapModeRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  // Reload immediately when filter mode changes (no debounce needed)
+  useEffect(() => {
+    if (status !== 'ready') return;
+    loadPins(regionRef.current, mapMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapMode]);
 
   const requestLocation = async () => {
     await Location.requestForegroundPermissionsAsync();
@@ -199,14 +241,10 @@ export default function MapScreen() {
 
   const stackBottom = Math.max(insets.bottom, 16) + TAB_BAR_BOTTOM_EXTRA + TAB_BAR_H + 12;
 
-  // Cluster color reflects the active layer so dots read as the right type
   const clusterColor =
     mapMode === 'clinics' ? colors.primary :
     mapMode === 'mh'      ? colors.tintLilacIcon :
-    colors.muted; // 'all' — neutral grey, mixed content
-
-  const showClinics = mapMode === 'all' || mapMode === 'clinics';
-  const showMh      = mapMode === 'all' || mapMode === 'mh';
+    colors.muted;
 
   const chips: { key: MapMode; label: string }[] = [
     { key: 'all',     label: t('map.filterAll') },
@@ -227,9 +265,12 @@ export default function MapScreen() {
         clusterTextColor="#ffffff"
         radius={50}
         animationEnabled={false}
-        onRegionChangeComplete={(r) => { regionRef.current = r; }}
+        onRegionChangeComplete={(r) => {
+          regionRef.current = r;
+          loadPinsDebounced(r);
+        }}
       >
-        {showClinics && allClinics.map((c) => (
+        {!tooZoomedOut && visibleClinics.map((c) => (
           <Marker
             key={`c-${c.id}`}
             coordinate={{ latitude: c.latitude, longitude: c.longitude }}
@@ -241,7 +282,7 @@ export default function MapScreen() {
           />
         ))}
 
-        {showMh && allMh.map((mh) => (
+        {!tooZoomedOut && visibleMh.map((mh) => (
           <Marker
             key={`m-${mh.id}`}
             coordinate={{ latitude: mh.latitude, longitude: mh.longitude }}
@@ -254,7 +295,16 @@ export default function MapScreen() {
         ))}
       </MapView>
 
-      {/* Filter chips — top overlay, clear of status bar */}
+      {/* "Zoom in" hint — shown instead of 12k pins when too far out */}
+      {tooZoomedOut && (
+        <View style={styles.zoomHint} pointerEvents="none">
+          <AppText variant="button" style={styles.zoomHintText}>
+            {t('map.zoomIn')}
+          </AppText>
+        </View>
+      )}
+
+      {/* Filter chips — top overlay */}
       <View style={[styles.chipRow, { top: insets.top + 12 }]} pointerEvents="box-none">
         {chips.map(({ key, label }) => (
           <Pressable
@@ -299,6 +349,18 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
 
+  // "Zoom in" overlay — centered, semi-transparent pill
+  zoomHint: {
+    position: 'absolute',
+    bottom: 120,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(19,78,74,0.75)',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  zoomHintText: { color: '#fff' },
+
   // Filter chips — absolute overlay at top of map
   chipRow: {
     position: 'absolute',
@@ -325,8 +387,6 @@ const styles = StyleSheet.create({
   chipText: { color: colors.primaryDark },
   chipTextActive: { color: colors.onPrimary },
 
-  // zIndex: 10 ensures the stack receives touches above the map layer.
-  // No overflow:hidden — avoids iOS touch clipping on rounded containers.
   ctrlStack: {
     position: 'absolute',
     right: 14,

@@ -82,6 +82,25 @@ export async function findAllClinicsForMap(
   );
 }
 
+/**
+ * Клиники в видимой области карты (bounding-box). LIMIT жёсткий.
+ * Использует индекс по (latitude, longitude) — запрос быстрый даже при 10k записей.
+ */
+export async function findClinicsInBounds(
+  db: SQLite.SQLiteDatabase,
+  minLat: number, maxLat: number,
+  minLng: number, maxLng: number,
+  limit = 300,
+): Promise<MapClinic[]> {
+  return db.getAllAsync<MapClinic>(
+    `SELECT id, name, address, city, latitude, longitude FROM clinics
+      WHERE latitude  BETWEEN ? AND ?
+        AND longitude BETWEEN ? AND ?
+      LIMIT ?`,
+    [minLat, maxLat, minLng, maxLng, limit],
+  );
+}
+
 /** Подсказки городов по префиксу. Возвращает [] если query короче 2 символов. */
 export interface CitySuggestion {
   city: string;
