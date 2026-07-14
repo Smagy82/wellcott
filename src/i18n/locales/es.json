@@ -407,13 +407,6 @@
     "intakeCallBtn": "",
     "intakeHint": ""
   },
-  "clinics": {
-    "filterDental": "",
-    "dentalFilterNote": "",
-    "dentalBadge": "",
-    "dentalBadgeShort": "",
-    "dentalCaveat": ""
-  },
   "prescriptions": {
     "bannerTitle": "Ahorre en recetas",
     "bannerSub": "",

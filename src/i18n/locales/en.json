@@ -460,13 +460,6 @@
     "intakeCallBtn": "Call intake",
     "intakeHint": "Intake handles new patients — this is usually faster."
   },
-  "clinics": {
-    "filterDental": "Dental",
-    "dentalFilterNote": "Showing health centers whose organization offers dental. Call the location — not every site has a dentist.",
-    "dentalBadge": "Dental services",
-    "dentalBadgeShort": "Dental",
-    "dentalCaveat": "This health center offers dental services. Call this location to confirm — not every site has a dentist."
-  },
   "prescriptions": {
     "bannerTitle": "Save on prescriptions",
     "bannerSub": "Free discount card — savings vary by medication and pharmacy.",

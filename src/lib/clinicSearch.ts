@@ -26,18 +26,15 @@ export async function findClinicsNear(
   lng: number,
   radiusMiles = 25,
   limit = 50,
-  dentalOnly = false,
 ): Promise<ClinicWithDistance[]> {
   const latDelta = radiusMiles / MI_PER_DEG_LAT;
   const cosLat = Math.cos((lat * Math.PI) / 180) || 1e-6;
   const lngDelta = radiusMiles / (MI_PER_DEG_LAT * cosLat);
 
-  const dentalClause = dentalOnly ? "AND dental_signal IN ('strong','medium')" : '';
   const rows = await db.getAllAsync<ClinicRow>(
     `SELECT * FROM clinics
       WHERE latitude  BETWEEN ? AND ?
-        AND longitude BETWEEN ? AND ?
-        ${dentalClause}`,
+        AND longitude BETWEEN ? AND ?`,
     [lat - latDelta, lat + latDelta, lng - lngDelta, lng + lngDelta],
   );
 
@@ -94,14 +91,11 @@ export async function findClinicsInBounds(
   minLat: number, maxLat: number,
   minLng: number, maxLng: number,
   limit = 300,
-  dentalOnly = false,
 ): Promise<MapClinic[]> {
-  const dentalClause = dentalOnly ? "AND dental_signal IN ('strong','medium')" : '';
   return db.getAllAsync<MapClinic>(
     `SELECT id, name, address, city, latitude, longitude FROM clinics
       WHERE latitude  BETWEEN ? AND ?
         AND longitude BETWEEN ? AND ?
-        ${dentalClause}
       LIMIT ?`,
     [minLat, maxLat, minLng, maxLng, limit],
   );
@@ -132,14 +126,11 @@ export async function searchClinicsByText(
   db: SQLite.SQLiteDatabase,
   query: string,
   limit = 100,
-  dentalOnly = false,
 ): Promise<ClinicWithDistance[]> {
   const q = `%${query.trim().toLowerCase()}%`;
-  const dentalClause = dentalOnly ? "AND dental_signal IN ('strong','medium')" : '';
   const rows = await db.getAllAsync<ClinicRow>(
     `SELECT * FROM clinics
       WHERE (LOWER(name) LIKE ? OR LOWER(city) LIKE ?)
-        ${dentalClause}
       ORDER BY name
       LIMIT ?`,
     [q, q, limit],

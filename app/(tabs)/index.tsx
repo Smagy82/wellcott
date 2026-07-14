@@ -223,11 +223,6 @@ const ClinicCard = memo(function ClinicCard({
                     <AppText variant="chip" style={[styles.badgeText, { color: colors.tagTealText }]}>{t('clinicList.slidingScale')}</AppText>
                   </View>
                 )}
-                {(item.dentalSignal === 'strong' || item.dentalSignal === 'medium') && (
-                  <View style={[styles.badge, { backgroundColor: colors.tintSky }]}>
-                    <AppText variant="chip" style={[styles.badgeText, { color: colors.tintSkyIcon }]}>{t('clinics.dentalBadgeShort')}</AppText>
-                  </View>
-                )}
               </View>
 
               <View style={styles.actions}>
@@ -470,7 +465,6 @@ export default function ClinicsScreen() {
   const [mode, setMode] = useState<Mode>('clinics');
   const [radiusMi, setRadiusMi] = useState<RadiusValue>(25);
   const [slidingFeeOnly, setSlidingFeeOnly] = useState(false);
-  const [dentalOnly, setDentalOnly] = useState(false);
   const [query, setQuery] = useState('');
   const [textResults, setTextResults] = useState<ClinicWithDistance[]>([]);
   const [mhTextResults, setMhTextResults] = useState<MhWithDistance[]>([]);
@@ -482,7 +476,7 @@ export default function ClinicsScreen() {
   useEffect(() => { initSaved().catch(() => {}); }, []);
 
   // Both hooks run from mount — data is ready when user switches mode
-  const { clinics, status: clinicStatus, retry: clinicRetry } = useNearbyClinics(radiusMi, dentalOnly);
+  const { clinics, status: clinicStatus, retry: clinicRetry } = useNearbyClinics(radiusMi);
   const { facilities: mhFacilities, status: mhStatus, retry: mhRetry } = useNearbyMh(radiusMi, slidingFeeOnly);
 
   const status = mode === 'clinics' ? clinicStatus : mhStatus;
@@ -506,10 +500,10 @@ export default function ClinicsScreen() {
     if (!q.trim()) { setTextResults([]); return; }
     try {
       const db = await getDb();
-      const results = await searchClinicsByText(db, q, 100, dentalOnly);
+      const results = await searchClinicsByText(db, q, 100);
       setTextResults(results);
     } catch (e) { console.error(e); }
-  }, [dentalOnly]);
+  }, []);
 
   useEffect(() => { runClinicSearch(query); }, [query, runClinicSearch]);
 
@@ -584,7 +578,6 @@ export default function ClinicsScreen() {
     setCitySuggestions([]);
     setShowSuggestions(false);
     if (m === 'clinics') setSlidingFeeOnly(false);
-    if (m === 'mh') setDentalOnly(false);
   };
 
   const requestLocation = async () => {
@@ -706,34 +699,20 @@ export default function ClinicsScreen() {
               onPress={() => { setRadiusMi(r); setQuery(''); setShowSuggestions(false); }}
             />
           ))}
-          <View style={styles.chipDivider} />
           {mode === 'mh' && (
-            <Pressable
-              onPress={() => setSlidingFeeOnly((v) => !v)}
-              style={[styles.chip, slidingFeeOnly && styles.chipActive]}
-            >
-              <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
-                {t('mh.slidingFeeOnly')}
-              </AppText>
-            </Pressable>
-          )}
-          {mode === 'clinics' && (
-            <Pressable
-              onPress={() => setDentalOnly((v) => !v)}
-              style={[styles.chip, dentalOnly && styles.chipActive]}
-            >
-              <AppText variant="button" style={[styles.chipText, dentalOnly && styles.chipTextActive]}>
-                {t('clinics.filterDental')}
-              </AppText>
-            </Pressable>
+            <>
+              <View style={styles.chipDivider} />
+              <Pressable
+                onPress={() => setSlidingFeeOnly((v) => !v)}
+                style={[styles.chip, slidingFeeOnly && styles.chipActive]}
+              >
+                <AppText variant="button" style={[styles.chipText, slidingFeeOnly && styles.chipTextActive]}>
+                  {t('mh.slidingFeeOnly')}
+                </AppText>
+              </Pressable>
+            </>
           )}
         </ScrollView>
-
-        {mode === 'clinics' && dentalOnly && (
-          <View style={styles.dentalNote}>
-            <AppText variant="caption" style={styles.dentalNoteText}>{t('clinics.dentalFilterNote')}</AppText>
-          </View>
-        )}
 
         {!isSearching && (
           <AppText variant="caption" style={styles.listHeader}>
@@ -886,14 +865,6 @@ const styles = StyleSheet.create({
     opacity: 0.2,
     marginHorizontal: 4,
   },
-  dentalNote: {
-    backgroundColor: colors.tintSky,
-    borderRadius: radius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
-  },
-  dentalNoteText: { color: colors.tintSkyIcon, lineHeight: 18 },
   chip: {
     borderRadius: radius.pill, paddingVertical: 7, paddingHorizontal: 18,
     backgroundColor: colors.card, borderWidth: 1.5,
